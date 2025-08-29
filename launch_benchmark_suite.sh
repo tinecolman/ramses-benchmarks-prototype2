@@ -118,7 +118,6 @@ if [[ "$HASH" != "current" ]]; then
    git stash
    # checkout the version and make sure it is up-to-date with the latest fetch
    git checkout "$HASH" | tee -a $LOGFILE
-   git merge  >> $LOGFILE
    set +e
 fi
 
