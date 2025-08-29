@@ -1,5 +1,5 @@
 from io_timings import add_data
-from analyse_progress import *
+from visualisation import *
 
 # MERGED Optimization of getcubefather (on meluxina)
 def load_data_refactor_nbor_utils(test, cluster='meluxina'):

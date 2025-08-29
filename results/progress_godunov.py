@@ -1,5 +1,5 @@
 from io_timings import add_data
-from analyse_progress import *
+from visualisation import *
 
 # MERGED optimize godunov solver: ctoprim
 def load_data_refactoring_ctoprim(test, cluster='meluxina'):
