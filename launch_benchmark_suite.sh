@@ -115,7 +115,7 @@ cd $RAMSES_BIN_DIR
 if [[ "$HASH" != "current" ]]; then
    set -e
    # make sure the copy is clean
-   git stash --include-untracked
+   git stash
    # checkout the version and make sure it is up-to-date with the latest fetch
    git checkout "$HASH" | tee -a $LOGFILE
    git merge  >> $LOGFILE
