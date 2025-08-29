@@ -89,6 +89,7 @@ done
 #######################################################################
 
 RAMSES_BENCHMARK_DIR=$(pwd);                      # The benchmark suite directory
+RAMSES_SOURCE_DIR="${RAMSES_BENCHMARK_DIR}/../ramses_tine_github";
 EXECNAME="benchmark_exe_";
 BEFORETEST="before-test.sh";
 AFTERTEST="after-test.sh";
@@ -107,7 +108,7 @@ echo > $LOGFILE;
 # Setup code repository
 #######################################################################
 
-RAMSES_BIN_DIR="${RAMSES_BENCHMARK_DIR}/../bin";
+RAMSES_BIN_DIR="${RAMSES_SOURCE_DIR}/bin";
 cd $RAMSES_BIN_DIR
 
 # If a commit or branch is given as input, checkout the correct branch/commit
