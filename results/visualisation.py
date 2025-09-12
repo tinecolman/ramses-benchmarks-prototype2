@@ -87,6 +87,47 @@ def plot_execution_time_cpu_speedup_multicluster(clusters, data_arr, mapping_com
     plt.savefig(outname, bbox_inches='tight', dpi=200)
     plt.close() 
 
+''' Plot evolution of execution time for different number of nodes '''
+''' Make a figure of the execution time comparing different commits '''
+def plot_execution_time_multinode(data, mapping_commits, reso, arr_nodes, axes=None, outname='check_refactor.png'):
+
+    # create colors
+    cmap = plt.get_cmap('managua')
+    cNorm  = colorsx.LogNorm(vmin=1, vmax=max(arr_nodes)/2.)
+    colorVals = {}
+    for val in arr_nodes:
+        colorVals[val] = cmap(cNorm(val))
+
+    if axes==None:
+        fig, axes = plt.subplots(nrows=1, ncols=1, figsize=(5,4))
+
+    for nodes in arr_nodes:
+        times = []
+        labels = []
+        for entry in data:
+            if entry['resolution']!=reso:
+                continue
+            if entry['nodes']!=nodes:
+                continue
+            commit = entry['commit']
+            # reduce time data
+            time, error_min, error_max = process_times(entry['timings'])
+            times.append(float(time))
+            labels.append(mapping_commits[commit])
+            axes.scatter(np.full(len(entry['timings']),mapping_commits[commit]),entry['timings'],marker='o',s=3,color=colorVals[nodes])
+
+        axes.errorbar(labels, times, fmt='x',markersize=10, color=colorVals[nodes])
+
+        # write overall performance gain to screen
+        diff = (times[-1]-times[0])/times[0]*100
+        print(f'performance diff: {diff} %')
+
+    axes.tick_params(axis='x', labelrotation=90)
+    axes.set_ylabel('time [s]')
+    plt.savefig(outname, bbox_inches='tight', dpi=200)
+    plt.close()
+
+
 ''' Spit out a latex table comparing two commits '''
 def make_table_cpu_speedup(data, reso, arr_nodes, first_column=True):
 
@@ -178,4 +219,86 @@ def make_table_openmp(data, reso, arr_nodes):
         diff = (-1)*(min(times[1],times[2],times[3]) - times[0])/times[0] * 100
         space_report_string = '{} & {:.3f} & {:.3f} & {:.3f}& {:.3f}& {:.1f} \\\\ \\hline'.format(str(nodes).rjust(2),times[0],times[1],times[2],times[3],diff)
         print(space_report_string)
+
+''' make a simple strong scaling plot of a benchmark'''
+def plot_strong_scaling(data,reso):
+
+    arr_nodes=[1,2,4,8,16,32,64]
+
+    fig, axes = plt.subplots(nrows=1, ncols=1, figsize=(4.5,4.5))
+
+    times = []
+    for nodes in arr_nodes:
+        for entry in data:
+            if entry['resolution']!=reso:
+                continue
+            if entry['nodes']!=nodes:
+                continue
+            if entry['omp_threads']!=0:
+                continue
+            # reduce time data
+            time, error_min, error_max = process_times(entry['timings'])
+            times.append(float(time))
+    axes.plot(arr_nodes,np.array(times[0])/np.array(times), color='black')
+
+    axes.plot(arr_nodes,arr_nodes,color='black',lw=1,ls='--')
+
+    axes.set_xscale('log')
+    axes.set_yscale('log')
+    axes.set_xlabel('nodes')
+    axes.set_ylabel('speedup')
+    axes.set_xticks([])
+    axes.set_xticks([],minor=True)
+    axes.set_xticks(arr_nodes, labels=arr_nodes)
+    axes.set_title('strong scaling')
+    plt.savefig('strong_scaling.png', bbox_inches='tight', dpi=150)
+    plt.close()
+
+''' make a simple weak scaling plot of a benchmark'''
+def plot_weak_scaling(data,resos,arr_nodes):
+
+    fig, axes = plt.subplots(nrows=1, ncols=1, figsize=(4.5,4.5))
+
+    times = []
+    for reso,nodes in zip(resos,arr_nodes):
+        for entry in data:
+            if entry['resolution']!=reso:
+                continue
+            if entry['nodes']!=nodes:
+                continue
+            if entry['omp_threads']!=0:
+                continue
+            # reduce time data
+            time, error_min, error_max = process_times(entry['timings'])
+            times.append(float(time))
+    print(times)
+    axes.plot(arr_nodes,np.array(times[0])/np.array(times), color='black')
+
+    axes.plot(arr_nodes,np.ones(len(arr_nodes)),color='black',lw=1,ls='--',marker='o')
+
+    axes.set_xscale('log')
+    axes.set_yscale('log')
+    axes.set_xlabel('nodes')
+    axes.set_ylabel('efficiency')
+    axes.set_xticks([])
+    axes.set_xticks([],minor=True)
+    axes.set_xticks(arr_nodes, labels=arr_nodes)
+    axes.set_title('weak scaling')
+    plt.savefig('weak_scaling.png', bbox_inches='tight', dpi=150)
+    plt.close()
+
+if __name__ == '__main__':
+
+    from io_timings import add_data
+
+    bench_dir = '/home/tcolman/Dropbox/SPACE/DATA_ARCHIVE/meluxina/benchmark_openmp_cosmo_0c73de54'
+
+    test='cosmo'
+
+    data = []
+    mapping_commits = {}
+    data = add_data(data, bench_dir, test, which='total')
+
+    plot_strong_scaling(data,reso='1024')
+    plot_weak_scaling(data,resos=['256','512','1024'], arr_nodes=[1,8,64])
 
