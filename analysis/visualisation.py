@@ -152,7 +152,7 @@ def make_table_cpu_speedup(data, reso, arr_nodes, first_column=True):
 
 # ---- OpenMP implementation ----
 
-''' Plot the strong scaling vor MPI+OpenMP versus MPI-only'''
+''' Plot the strong scaling for MPI+OpenMP versus MPI-only'''
 def make_plot_openmp(data, reso, arr_nodes, outname='scaling_openmp.png'):
 
     labels=['MPI only', 'MPI + 2 OpenMP','MPI + 4 OpenMP','MPI + 8 OpenMP']
@@ -221,14 +221,12 @@ def make_table_openmp(data, reso, arr_nodes):
         print(space_report_string)
 
 ''' make a simple strong scaling plot of a benchmark'''
-def plot_strong_scaling(data,reso):
-
-    arr_nodes=[1,2,4,8,16,32,64]
-
-    fig, axes = plt.subplots(nrows=1, ncols=1, figsize=(4.5,4.5))
+def plot_strong_scaling(axes, data, reso):
 
     times = []
-    for nodes in arr_nodes:
+    arr_nodes=[]
+    for nodes in range(512):
+        # search the entry
         for entry in data:
             if entry['resolution']!=reso:
                 continue
@@ -239,9 +237,14 @@ def plot_strong_scaling(data,reso):
             # reduce time data
             time, error_min, error_max = process_times(entry['timings'])
             times.append(float(time))
-    axes.plot(arr_nodes,np.array(times[0])/np.array(times), color='black')
+            arr_nodes.append(nodes)
+    axes.plot(arr_nodes,np.array(times[0])/np.array(times),
+              color='black', marker='o', markersize=4)
 
     axes.plot(arr_nodes,arr_nodes,color='black',lw=1,ls='--')
+
+    print('Strong scaling efficiency at nodes', arr_nodes)
+    print(np.array(times[0])/np.array(times)/arr_nodes)
 
     axes.set_xscale('log')
     axes.set_yscale('log')
@@ -250,9 +253,9 @@ def plot_strong_scaling(data,reso):
     axes.set_xticks([])
     axes.set_xticks([],minor=True)
     axes.set_xticks(arr_nodes, labels=arr_nodes)
+    axes.set_xlim([min(arr_nodes), max(arr_nodes)])
+    axes.set_ylim([min(arr_nodes), max(arr_nodes)])
     axes.set_title('strong scaling')
-    plt.savefig('strong_scaling.png', bbox_inches='tight', dpi=150)
-    plt.close()
 
 ''' make a simple weak scaling plot of a benchmark'''
 def plot_weak_scaling(data,resos,arr_nodes):

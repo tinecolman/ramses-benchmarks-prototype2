@@ -5,6 +5,8 @@
 * `launch_benchmark_suite.sh`: the script for launching the benchmarks
 * `setups/`: a directory containing the different predefined benchmark setups.
 * `HPCclusters/`: a directory containing presets for different machines.
+* `analysis/`: python scripts to extract the results from the log files and make figures
+* `results/`: directory where the results are gathered
 * `doc/`: collection of markdown files containing with documentation on how to use and extend the package
 
 ### Launching the benchmarks

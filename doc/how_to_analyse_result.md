@@ -1,6 +1,10 @@
 ## How to process the results
 
-TODO
+To avoid dependence on the python distribution on the cluster, it is recommended to simply download the full benchmark directory to your local computer and run the analysis scripts locally.
+
+In the directory `analysis/` you can find a collection of scripts to extract, analyse and visulaize the results:
+*  io_timings.py: routines to extract timings from log files and add them to a database
+* visualisation.py: 
 
 ### Gathering the results [TODO]
 

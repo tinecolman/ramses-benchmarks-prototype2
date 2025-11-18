@@ -76,7 +76,6 @@ def read_timers(logfile):
 
 ''' Load benchmark results for a specified test '''
 def add_data(data, benchmark_dir, test_name, which='total'):
-    """Extract new benchmark data and add it to the dataset efficiently."""
     branch, commit = get_info_from_benchmark_dir_name(benchmark_dir)
 
     data_dir = benchmark_dir+'/'+test_name
