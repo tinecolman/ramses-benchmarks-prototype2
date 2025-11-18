@@ -258,12 +258,12 @@ def plot_strong_scaling(axes, data, reso):
     axes.set_title('strong scaling')
 
 ''' make a simple weak scaling plot of a benchmark'''
-def plot_weak_scaling(data,resos,arr_nodes):
+def plot_weak_scaling(axes, data,resos):
 
-    fig, axes = plt.subplots(nrows=1, ncols=1, figsize=(4.5,4.5))
-
+    nodes = 1
     times = []
-    for reso,nodes in zip(resos,arr_nodes):
+    arr_nodes = []
+    for reso in resos:
         for entry in data:
             if entry['resolution']!=reso:
                 continue
@@ -274,10 +274,17 @@ def plot_weak_scaling(data,resos,arr_nodes):
             # reduce time data
             time, error_min, error_max = process_times(entry['timings'])
             times.append(float(time))
-    print(times)
-    axes.plot(arr_nodes,np.array(times[0])/np.array(times), color='black')
+            arr_nodes.append(nodes)
+        nodes = nodes*8
+    
+    eff = np.array(times[0])/np.array(times)
+    axes.plot(arr_nodes,eff, 
+              color='black', marker='o', markersize=4)
 
-    axes.plot(arr_nodes,np.ones(len(arr_nodes)),color='black',lw=1,ls='--',marker='o')
+    axes.plot(arr_nodes,np.ones(len(arr_nodes)),color='black',lw=1,ls='--')
+
+    print('Weak scaling efficiency at nodes', arr_nodes)
+    print(eff)
 
     axes.set_xscale('log')
     axes.set_yscale('log')
@@ -285,23 +292,7 @@ def plot_weak_scaling(data,resos,arr_nodes):
     axes.set_ylabel('efficiency')
     axes.set_xticks([])
     axes.set_xticks([],minor=True)
+    axes.set_xlim([min(arr_nodes), max(arr_nodes)])
+    axes.set_ylim([min(eff)*0.8, 1.1])
     axes.set_xticks(arr_nodes, labels=arr_nodes)
     axes.set_title('weak scaling')
-    plt.savefig('weak_scaling.png', bbox_inches='tight', dpi=150)
-    plt.close()
-
-if __name__ == '__main__':
-
-    from io_timings import add_data
-
-    bench_dir = '/home/tcolman/Dropbox/SPACE/DATA_ARCHIVE/meluxina/benchmark_openmp_cosmo_0c73de54'
-
-    test='cosmo'
-
-    data = []
-    mapping_commits = {}
-    data = add_data(data, bench_dir, test, which='total')
-
-    plot_strong_scaling(data,reso='1024')
-    plot_weak_scaling(data,resos=['256','512','1024'], arr_nodes=[1,8,64])
-

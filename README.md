@@ -23,7 +23,7 @@ Strong scaling for the sedov test on the EuroHPC systems
 
 | Cluster  | Benchmark results |
 | -------- | ------------------|
-| [MeluXina](HPCclusters/meluxina/cluster_description.md) | [SEDOV](results/eurohpc_dashboard_strong_sedov.png)
+| [MeluXina](HPCclusters/meluxina/cluster_description.md) | [SEDOV](results/results_meluxina.md)
 
 
 
