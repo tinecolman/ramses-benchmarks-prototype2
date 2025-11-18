@@ -9,17 +9,13 @@
 # Options:
 #   -c: (mandatory) specify on which cluster you are
 #       ./launch_benchmark_suite.sh -c meluxina
-#   -a: specify allocation ID
-#       ./launch_benchmark_suite.sh -a EUR123456
-#   -h: select a specific branch or commit to test
-#       Make sure the branch is up-to-date!
-#       ./launch_benchmark_suite.sh -h ab01cd23
-#       ./launch_benchmark_suite.sh -h mybranch
 #   -t: select setup
 #       ./launch_benchmark_suite.sh -t 2
+#   -a: specify allocation ID
+#       ./launch_benchmark_suite.sh -a EUR123456
 #   -w: also do weak scaling
 #       ./launch_benchmark_suite.sh -w
-#   -n: set maximum number of nodes (default is 32)
+#   -n: set maximum number of nodes (default is 4)
 #       ./launch_benchmark_suite.sh -n 40
 #   -l: set a list of which number of nodes to use
 #       ./launch_benchmark_suite.sh -l "1 2 4"
@@ -36,17 +32,18 @@
 # Determine the parameters for running the performance tests
 #######################################################################
 
-HASH="current"
-NODESMAX=32
+RAMSES_SOURCE_DIR="$HOME/ramses_tine_github";
+
+NODESMAX=4
 NODELIST="0"
-CLUSTER=zapus;
+CLUSTER=default;
 CLUSTER_ALLOCATION_ID="none"
 SELECTTEST=false;
 WEAKSCALING=false
 DELDATA=true;
 OPENMP=0;
 OMP_THREAD_LIST="0"
-ITERS=3
+ITERS=1
 while getopts "c:a:h:t:wn:l:m:i:d" OPTION; do
    case $OPTION in
       c)
@@ -54,9 +51,6 @@ while getopts "c:a:h:t:wn:l:m:i:d" OPTION; do
       ;;
       a)
          CLUSTER_ALLOCATION_ID=$OPTARG;
-      ;;
-      h)
-         HASH=$OPTARG;
       ;;
       t)
          SELECTTEST=true;
@@ -89,7 +83,6 @@ done
 #######################################################################
 
 RAMSES_BENCHMARK_DIR=$(pwd);                      # The benchmark suite directory
-RAMSES_SOURCE_DIR="${RAMSES_BENCHMARK_DIR}/../ramses_tine_github";
 EXECNAME="benchmark_exe_";
 BEFORETEST="before-test.sh";
 AFTERTEST="after-test.sh";
@@ -110,16 +103,6 @@ echo > $LOGFILE;
 
 RAMSES_BIN_DIR="${RAMSES_SOURCE_DIR}/bin";
 cd $RAMSES_BIN_DIR
-
-# If a commit or branch is given as input, checkout the correct branch/commit
-if [[ "$HASH" != "current" ]]; then
-   set -e
-   # make sure the copy is clean
-   git stash
-   # checkout the version and make sure it is up-to-date with the latest fetch
-   git checkout "$HASH" | tee -a $LOGFILE
-   set +e
-fi
 
 # get info of repo
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
@@ -190,7 +173,9 @@ source ${CLUSTER_INFO}
 
 # create directory on scratch
 BENCHMARK_DIR=$CLUSTER_SCRATCH/benchmark_${BRANCH}_${COMMIT}
+set -e
 mkdir -p ${BENCHMARK_DIR} >> $LOGFILE 2>&1;
+set +e
 
 #######################################################################
 # Generate list of tests by scanning directory
@@ -464,8 +449,5 @@ if ${DELDATA} ; then
    cd ${RAMSES_BIN_DIR};
    make clean >> $LOGFILE 2>&1;
    rm -f ${EXECNAME}*d;
-   if [[ "$HASH" != "current" ]]; then
-      rm -rf "$RAMSES_TEMP_DIR"
-   fi
 fi
 
