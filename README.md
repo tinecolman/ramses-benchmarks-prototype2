@@ -12,7 +12,7 @@ Strong scaling for the sedov test on the EuroHPC systems
 ![strong scaling for the sedov test on the EuroHPC systems](results/eurohpc_dashboard_strong_sedov.png)
 
 
-## List of benchmark setups
+## Benchmark setups
 
 * [SEDOV](setups/sedov/description.md): classic Sedov explosion in 3D
 * COSMO: dark matter-only cosmological box on a uniform grid
@@ -20,10 +20,10 @@ Strong scaling for the sedov test on the EuroHPC systems
 
 ## Benchmark results per cluster
 
-
 | Cluster  | Benchmark results |
 | -------- | ------------------|
 | [MeluXina](HPCclusters/meluxina/cluster_description.md) | [SEDOV](results/results_meluxina.md)
+| MareNostrum |
 
 
 

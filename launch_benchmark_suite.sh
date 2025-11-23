@@ -279,7 +279,7 @@ for ((i=0;i<$ntests;i++)); do
 
    # Construct the make command for compilation (pass options to it)
    set -e
-   MAKESTRING="make EXEC=${EXECNAME} COMPILER=${COMPILER_FLAVOR} MPI=1 OPENMP=${OPENMP} ${FLAGS}";
+   MAKESTRING="make EXEC=${EXECNAME} COMPILER=${COMPILER_FLAVOR} MPI=1 OPENMP=${OPENMP} MPIF90=\"${MPIF90}\" ${FLAGS}";
    TEST_EXECUTABLE=${EXECNAME}3d
 
    cd ${RAMSES_BIN_DIR};
