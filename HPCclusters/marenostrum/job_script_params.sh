@@ -2,6 +2,11 @@
 
 CLUSTER_PARTITION=gpp
 CLUSTER_QOS=gp_ehpc
+MEM_NODE=lowmem
+
+if [[ $NBNODES -eq 1 ]]; then
+    MEM_NODE=highmem
+fi
 
 cat <<JOBSCRIPT > "$OUTPUT_FILE"
 #!/bin/bash -l
@@ -9,6 +14,7 @@ cat <<JOBSCRIPT > "$OUTPUT_FILE"
 #SBATCH --account=${CLUSTER_ALLOCATION_ID}
 #SBATCH --partition=${CLUSTER_PARTITION}
 #SBATCH --qos=${CLUSTER_QOS}
+#SBATCH --constraint=${MEM_NODE}
 #SBATCH --nodes=${NBNODES}
 #SBATCH --ntasks-per-node=${NTASKS_PER_NODE}
 #SBATCH --cpus-per-task=${CPUS_PER_TASK}
