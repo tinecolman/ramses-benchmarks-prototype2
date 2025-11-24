@@ -118,7 +118,7 @@ def plot_execution_time_multinode(data, mapping_commits, reso, arr_nodes, input_
             labels.append(mapping_commits[commit])
             axes.scatter(np.full(len(entry['timings']),mapping_commits[commit]),entry['timings'],marker='o',s=3,color=colorVals[nodes])
 
-        axes.errorbar(labels, times, fmt='x',markersize=10, color=colorVals[nodes], label=str(nodes)+'nodes')
+        axes.errorbar(labels, times, fmt='o',markersize=6, color=colorVals[nodes], label=str(nodes)+'nodes')
 
         # plot a line from the last point to make comparison easier
         if len(labels)>0:
