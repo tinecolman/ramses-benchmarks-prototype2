@@ -37,19 +37,6 @@ def load_data_openmp(test, cluster='meluxina', timer='total'):
 
     return data, mapping_commits
 
-# Finished openmp for SEDOV and COSMO
-def load_data_openmp_v2(test, cluster='meluxina', timer='total'):
-    bench_home = '/home/tcolman/Dropbox/SPACE/DATA_ARCHIVE'
-
-    data = []
-    mapping_commits = {}
-
-    # full openMP implemenation for cosmo, including poisson multigrid and particles
-    data = add_data(data, bench_home+'/'+cluster+'/'+'benchmark_openmp_2b1a9794', test, which=timer)
-
-    return data, mapping_commits
-
-
 if __name__ == '__main__':
 
     # ---- D2.6 ----
@@ -58,13 +45,6 @@ if __name__ == '__main__':
     #make_table_cpu_speedup(data, reso='1024', arr_nodes=[1,2,4,8,16,32,64])
 
     #particles, poisson-savephi, poisson-rho, poisson-phimultigrid, poisson-force
-    #data, mapping_commits = load_data_openmp('cosmo','meluxina','poisson-phimultigrid')
-    #make_table_openmp(data, reso='1024', arr_nodes=[1,2,4,8,16,32,64])
-    #make_plot_openmp(data, reso='1024', arr_nodes=[1,2,4,8,16,32,64], outname='scaling_openmp_cosmo_phimultigrid.png')
-
-    # ---- Nov 2025 ----
-
-    #particles, poisson-savephi, poisson-rho, poisson-phimultigrid, poisson-force
-    data, mapping_commits = load_data_openmp_v2('cosmo','meluxina','total')
+    data, mapping_commits = load_data_openmp('cosmo','meluxina','poisson-phimultigrid')
     make_table_openmp(data, reso='1024', arr_nodes=[1,2,4,8,16,32,64])
-    make_plot_openmp(data, reso='1024', arr_nodes=[1,2,4,8,16,32,64], outname='scaling_openmp_cosmo.png')
+    make_plot_openmp(data, reso='1024', arr_nodes=[1,2,4,8,16,32,64], outname='scaling_openmp_cosmo_phimultigrid.png')

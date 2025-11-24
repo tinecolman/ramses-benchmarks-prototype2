@@ -6,12 +6,6 @@ As of 2025, we continuously assess the performance of RAMSES on various supercom
 * for maintainers, to verify code quality on PR
 
 
-## Highlights
-
-Strong scaling for the sedov test on the EuroHPC systems
-![strong scaling for the sedov test on the EuroHPC systems](results/eurohpc_dashboard_strong_sedov.png)
-
-
 ## Benchmark setups
 
 * [SEDOV](setups/sedov/description.md): classic Sedov explosion in 3D
@@ -33,3 +27,16 @@ Strong scaling for the sedov test on the EuroHPC systems
 * [How to process the results](doc/how_to_analyse_result.md)
 * [How to add a setup](doc/how_to_add_setup.md)
 * [How to add a cluster](doc/how_to_add_cluster.md)
+
+
+## Highlights
+
+### Strong scaling SEDOV on the EuroHPC systems
+![](results/images/eurohpc_dashboard_sedov_strong.png)
+
+### Progress hydro solver optimisation
+<img src="results/images/eurohpc_dashboard_sedov_time.png" width="600"/>
+
+### Progress OpenMP implementation
+
+<img src="results/images/scaling_openmp_cosmo_meluxina.png" width="300"/>
