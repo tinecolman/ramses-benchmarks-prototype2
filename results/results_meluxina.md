@@ -2,10 +2,17 @@
 
 ## SEDOV
 
-<img src="images/strong_scaling_meluxina_sedov_1024.png" alt="Strong scaling" width="300"/>
-<img src="images/weak_scaling_meluxina_sedov_1024.png" alt="Weak scaling" width="300"/>
 
-| nodes |  strong scaling efficiency  |
+Strong scaling             |  Weak scaling
+:-------------------------:|:-------------------------:
+![](images/strong_scaling_meluxina_sedov_1024.png)  |  ![](images/weak_scaling_meluxina_sedov_1024.png)
+
+
+<table>
+<tr><th>Strong scaling </th><th>Weak scaling</th></tr>
+<tr><td>
+
+| nodes |  efficiency  |
 |-------|-----------------------------|
 | 1     | 100% |
 | 2     | 97%  |
@@ -15,8 +22,13 @@
 | 32    | 92%  |
 | 64    | 79%  |
 
-| nodes | resolution | weak scaling efficiency  |
+</td><td>
+
+| nodes | resolution | efficiency  |
 |-------|------------|--------------------------|
 | 1     | 256  | 100% |
 | 8     | 512  | 92%  |
 | 64    | 1024 | 86%  |
+
+</td></tr> </table>
+
