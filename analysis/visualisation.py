@@ -135,7 +135,6 @@ def plot_execution_time_multinode(data, mapping_commits, reso, arr_nodes, input_
         plt.savefig(outname, bbox_inches='tight', dpi=200)
         plt.close()
 
-
 ''' Spit out a latex table comparing two commits '''
 def make_table_cpu_speedup(data, reso, arr_nodes, first_column=True):
 
@@ -157,6 +156,126 @@ def make_table_cpu_speedup(data, reso, arr_nodes, first_column=True):
         else:
             space_report_string = '{:.3f} & {:.3f} & {:.1f} \\\\ \\hline'.format(times[0],times[-1],diff)
         print(space_report_string)
+
+''' Make a figure of the strong scaling comparing different commits '''
+def plot_strong_scaling_compare(data, mapping_commits, reso, input_axes=None, outname='check_refactor.png'):
+
+    ls = {0:'-', 4:'--'}
+
+    # create colors
+    cmap = plt.get_cmap('gray_r')
+    cNorm  = colorsx.Normalize(vmin=0, vmax=len(mapping_commits))
+    colorVals =  {}
+    for val,commit in zip(range(1,len(mapping_commits)+1),mapping_commits):
+        colorVals[commit] = cmap(cNorm(val))
+
+    # create figure if none is given
+    if input_axes==None:
+        fig, axes = plt.subplots(nrows=1, ncols=1, figsize=(5,4))
+    else:
+        axes = input_axes
+
+    max_nodes = 1
+    for commit in mapping_commits:
+        omp=set([])
+        times = []
+        arr_nodes=[]
+        for nodes in range(512):
+            # search the entry
+            for entry in data:
+                if entry['commit']!=commit:
+                    continue
+                if entry['resolution']!=reso:
+                    continue
+                if entry['nodes']!=nodes:
+                    continue
+                #if entry['omp_threads']!=0:
+                #    continue
+                # reduce time data
+                time, error_min, error_max = process_times(entry['timings'])
+                times.append(float(time))
+                arr_nodes.append(nodes)
+                max_nodes=max(max_nodes,nodes)
+                omp.add(entry['omp_threads'])
+        if len(arr_nodes)>0:
+            omp = sorted(list(omp))
+            if len(omp)>1:
+                print('waring: various omp threads in this data')
+            axes.plot(arr_nodes,np.array(times[0])/np.array(times), ls=ls[omp[0]],
+                  color=colorVals[commit], marker='o', markersize=4, label=mapping_commits[commit])
+
+    # add ideal scaling line
+    axes.plot([1,max_nodes],[1,max_nodes], c=(0.25,0.85,0.25),ls=':', lw=2)
+
+    if input_axes==None:
+        axes.set_xlabel('number of nodes')
+        axes.set_ylabel('speedup')
+        axes.set_xscale('log')
+        axes.set_yscale('log')
+        axes.legend()
+        plt.savefig(outname, bbox_inches='tight', dpi=200)
+        plt.close()
+
+''' Make a figure of the strong scaling comparing different commits '''
+def plot_weak_scaling_compare(data, mapping_commits, arr_nodes_in, resos, input_axes=None, outname='check_refactor.png'):
+
+    ls = {0:'-', 4:'--'}
+
+    # create colors
+    cmap = plt.get_cmap('gray_r')
+    cNorm  = colorsx.Normalize(vmin=0, vmax=len(mapping_commits))
+    colorVals =  {}
+    for val,commit in zip(range(1,len(mapping_commits)+1),mapping_commits):
+        colorVals[commit] = cmap(cNorm(val))
+
+    # create figure if none is given
+    if input_axes==None:
+        fig, axes = plt.subplots(nrows=1, ncols=1, figsize=(5,4))
+    else:
+        axes = input_axes
+
+    max_nodes = 1
+    for commit in mapping_commits:
+        omp=set([])
+        times = []
+        arr_nodes=[]
+        for nodes,reso in zip(arr_nodes_in, resos):
+            # search the entry
+            for entry in data:
+                if entry['commit']!=commit:
+                    continue
+                if entry['resolution']!=reso:
+                    continue
+                if entry['nodes']!=nodes:
+                    continue
+                #if entry['omp_threads']!=0:
+                #    continue
+                # reduce time data
+                time, error_min, error_max = process_times(entry['timings'])
+                times.append(float(time))
+                arr_nodes.append(nodes)
+                max_nodes=max(max_nodes,nodes)
+                omp.add(entry['omp_threads'])
+        if len(times)>0:
+            omp = sorted(list(omp))
+            if len(omp)>1:
+                print('waring: various omp threads in this data')
+            eff = np.array(times[0])/np.array(times)
+            axes.plot(arr_nodes,eff, ls=ls[omp[0]],
+                  color=colorVals[commit], marker='o', markersize=4,
+                  label=mapping_commits[commit])
+
+    # add ideal scaling line
+    axes.plot([1,max_nodes],[1,1], c=(0.25,0.85,0.25), ls=':', lw=2)
+
+    if input_axes==None:
+        axes.set_xlabel('number of nodes')
+        axes.set_ylabel('efficiency')
+        axes.set_xscale('log')
+        axes.set_yscale('log')
+        axes.legend()
+        plt.savefig(outname, bbox_inches='tight', dpi=200)
+        plt.close()
 
 # ---- OpenMP implementation ----
 

@@ -85,7 +85,7 @@ def read_timers(logfile):
 # -------- database IO -----------
 
 ''' Load benchmark results for a specified test '''
-def add_data(data, benchmark_dir, test_name, which='total'):
+def add_data(data, benchmark_dir, test_name, which='total', omp_nthr=0):
     branch, commit = get_info_from_benchmark_dir_name(benchmark_dir)
 
     data_dir = benchmark_dir+'/'+test_name
@@ -99,7 +99,6 @@ def add_data(data, benchmark_dir, test_name, which='total'):
         if os.path.isdir(name) and item.startswith('nodes'):
             nodes, reso, omp = get_info_from_subdir_name(item)
             total_times = get_timings_from_log(name, which)
-
             new_entry = {
                 "branch": branch,
                 "commit": commit,
@@ -108,7 +107,8 @@ def add_data(data, benchmark_dir, test_name, which='total'):
                 "omp_threads": int(omp),
                 "timings": total_times
             }
-            data.append(new_entry)
+            if int(omp)==int(omp_nthr):
+                data.append(new_entry)
 
     print('Added data from', benchmark_dir)
 

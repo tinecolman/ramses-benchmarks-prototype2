@@ -41,7 +41,7 @@ def load_data_dev_branch(test, cluster='meluxina', timer='total'):
 
     # DEV Reference of public ramses version, after clean up etc (Apr 16, 2025)
     data = add_data(data, bench_home+'/'+cluster+'/'+'benchmark_dev_9c518f8a', test, which=timer)
-    #data = add_data(data, bench_home+'/'+cluster+'/'+'benchmark_HEAD_9c518f8a', test, which=timer)
+    data = add_data(data, bench_home+'/'+cluster+'/'+'benchmark_HEAD_9c518f8a', test, which=timer)
     mapping_commits['9c518f8a'] = 'dev\n Apr 2025'
 
     # nbor optims
@@ -51,6 +51,11 @@ def load_data_dev_branch(test, cluster='meluxina', timer='total'):
     # DEV Reference of public ramses version, SNO meeting 2025
     data = add_data(data, bench_home+'/'+cluster+'/'+'benchmark_dev_456b33e2', test, which=timer)
     mapping_commits['456b33e2'] = 'dev\n Nov 2025'
+
+    # OPENMP Reference of public ramses version, SNO meeting 2025
+    # full openMP implemenation for cosmo, including poisson multigrid and particles
+    data = add_data(data, bench_home+'/'+cluster+'/'+'benchmark_openmp_2b1a9794', test, which=timer, omp_nthr=4)
+    mapping_commits['2b1a9794'] = 'OpenMP\n Nov 2025'
 
     return data, mapping_commits
 
@@ -80,9 +85,55 @@ def dashboard_execution_time(clusters, arr_data, arr_commits, reso, arr_nodes, o
     plt.savefig(outname, bbox_inches='tight', dpi=200)
     plt.close()
 
+''' Show evolution of strong scaling on EuroHPC systems '''
+def dashboard_strong_scaling(clusters, arr_data, arr_commits, reso, outname='dashboard.png'):
+
+    fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(8,5), sharex=True, sharey=True)
+
+    for data, mapping_commits, cluster, ax in zip(arr_data, arr_commits, clusters, axes.flatten()):
+
+        plot_strong_scaling_compare(data, mapping_commits, reso, input_axes=ax)
+
+        ax.set_title(cluster)
+
+    axes[0].set_ylabel('speedup')
+    axes[1].set_ylabel('speedup')
+    axes[0].set_xscale('log')
+    axes[0].set_yscale('log')
+    axes[0].legend()
+    axes[1].legend()
+
+    #fig.subplots_adjust(wspace=0.1)
+    fig.tight_layout()
+    plt.savefig(outname, bbox_inches='tight', dpi=200)
+    plt.close()
+
+''' Show evolution of strong scaling on EuroHPC systems '''
+def dashboard_weak_scaling(clusters, arr_data, arr_commits, arr_nodes, resos, outname='dashboard.png'):
+
+    fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(8,5), sharex=True, sharey=True)
+
+    for data, mapping_commits, cluster, ax in zip(arr_data, arr_commits, clusters, axes.flatten()):
+
+        plot_weak_scaling_compare(data, mapping_commits, arr_nodes, resos, input_axes=ax)
+
+        ax.set_title(cluster)
+
+    axes[0].set_ylabel('speedup')
+    axes[1].set_ylabel('speedup')
+    axes[0].set_xscale('log')
+    axes[0].set_yscale('log')
+    axes[0].legend()
+    axes[1].legend()
+
+    #fig.subplots_adjust(wspace=0.1)
+    fig.tight_layout()
+    plt.savefig(outname, bbox_inches='tight', dpi=200)
+    plt.close()
+
 if __name__ == '__main__':
 
-    test = 'sedov'
+    test = 'cosmo'
 
     data_meluxina, commits_meluxina = load_data_dev_branch(test,'meluxina')
     data_marenostrum, commits_marenostrum = load_data_dev_branch(test,'marenostrum')
@@ -93,3 +144,7 @@ if __name__ == '__main__':
     dashboard_execution_time(clusters, arr_data, arr_commits, 
                              reso='1024', arr_nodes=[1,2,4,8,16,32],
                              outname=f'../results/images/eurohpc_dashboard_{test}_time.png')
+    #dashboard_strong_scaling(clusters, arr_data, arr_commits, reso='1024',
+    #                         outname=f'../results/images/eurohpc_dashboard_{test}_strong.png')
+    #dashboard_weak_scaling(clusters, arr_data, arr_commits, arr_nodes=[1,8,64], resos=['256','512','1024'],
+    #                         outname=f'../results/images/eurohpc_dashboard_{test}_weak.png')
