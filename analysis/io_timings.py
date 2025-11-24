@@ -16,6 +16,9 @@ import numpy as np
     benchmark_<branch>_<commit> '''
 def get_info_from_benchmark_dir_name(benchmark_dir):
     parts = benchmark_dir.split('/')
+    # if dir name ends with /, remove last item which is empty
+    if parts[-1]=='':
+        parts.pop()
     commit = parts[-1][-8:]     # last 8 characters
     branch = parts[-1][10:-9]
     return branch, commit
@@ -50,6 +53,13 @@ def get_timings_from_log(run_dir, which='total'):
                     times.append(timers[which])
                 except:
                     continue
+    if len(times)>0:
+        # check for outlyers
+        max_time = max(times)
+        min_time = min(times)
+        if max_time > min_time*2:
+            times.remove(max_time)
+            print('WARNING: removed outlyer', max_time, 'from', times)
     return times
 
 ''' retrieve timers for individual parts of the code from the end of the logfile '''
@@ -99,6 +109,8 @@ def add_data(data, benchmark_dir, test_name, which='total'):
                 "timings": total_times
             }
             data.append(new_entry)
+
+    print('Added data from', benchmark_dir)
 
     return data
 

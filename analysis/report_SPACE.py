@@ -66,5 +66,5 @@ if __name__ == '__main__':
 
     #particles, poisson-savephi, poisson-rho, poisson-phimultigrid, poisson-force
     data, mapping_commits = load_data_openmp_v2('cosmo','meluxina','total')
-    #make_table_openmp(data, reso='1024', arr_nodes=[1,2,4,8,16,32,64])
+    make_table_openmp(data, reso='1024', arr_nodes=[1,2,4,8,16,32,64])
     make_plot_openmp(data, reso='1024', arr_nodes=[1,2,4,8,16,32,64], outname='scaling_openmp_cosmo.png')

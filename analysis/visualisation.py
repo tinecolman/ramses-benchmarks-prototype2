@@ -89,17 +89,19 @@ def plot_execution_time_cpu_speedup_multicluster(clusters, data_arr, mapping_com
 
 ''' Plot evolution of execution time for different number of nodes '''
 ''' Make a figure of the execution time comparing different commits '''
-def plot_execution_time_multinode(data, mapping_commits, reso, arr_nodes, axes=None, outname='check_refactor.png'):
+def plot_execution_time_multinode(data, mapping_commits, reso, arr_nodes, input_axes=None, outname='check_refactor.png'):
 
     # create colors
     cmap = plt.get_cmap('managua')
-    cNorm  = colorsx.LogNorm(vmin=1, vmax=max(arr_nodes)/2.)
+    cNorm  = colorsx.LogNorm(vmin=1, vmax=max(arr_nodes))
     colorVals = {}
     for val in arr_nodes:
         colorVals[val] = cmap(cNorm(val))
 
-    if axes==None:
+    if input_axes==None:
         fig, axes = plt.subplots(nrows=1, ncols=1, figsize=(5,4))
+    else:
+        axes = input_axes
 
     for nodes in arr_nodes:
         times = []
@@ -116,16 +118,22 @@ def plot_execution_time_multinode(data, mapping_commits, reso, arr_nodes, axes=N
             labels.append(mapping_commits[commit])
             axes.scatter(np.full(len(entry['timings']),mapping_commits[commit]),entry['timings'],marker='o',s=3,color=colorVals[nodes])
 
-        axes.errorbar(labels, times, fmt='x',markersize=10, color=colorVals[nodes])
+        axes.errorbar(labels, times, fmt='x',markersize=10, color=colorVals[nodes], label=str(nodes)+'nodes')
+
+        # plot a line from the last point to make comparison easier
+        if len(labels)>0:
+            axes.plot([labels[0],labels[-1]], [times[0],times[0]], ls=':', lw=1.3, color=colorVals[nodes])
+
 
         # write overall performance gain to screen
-        diff = (times[-1]-times[0])/times[0]*100
-        print(f'performance diff: {diff} %')
+        #diff = (times[-1]-times[0])/times[0]*100
+        #print(f'performance diff: {diff} %')
 
-    axes.tick_params(axis='x', labelrotation=90)
-    axes.set_ylabel('time [s]')
-    plt.savefig(outname, bbox_inches='tight', dpi=200)
-    plt.close()
+    if input_axes==None:
+        axes.tick_params(axis='x', labelrotation=90)
+        axes.set_ylabel('time [s]')
+        plt.savefig(outname, bbox_inches='tight', dpi=200)
+        plt.close()
 
 
 ''' Spit out a latex table comparing two commits '''
@@ -155,7 +163,8 @@ def make_table_cpu_speedup(data, reso, arr_nodes, first_column=True):
 ''' Plot the strong scaling for MPI+OpenMP versus MPI-only'''
 def make_plot_openmp(data, reso, arr_nodes, outname='scaling_openmp.png'):
 
-    labels=['MPI only', 'MPI + 2 OpenMP','MPI + 4 OpenMP','MPI + 8 OpenMP']
+    #labels=['MPI only', 'MPI + 2 OpenMP','MPI + 4 OpenMP','MPI + 8 OpenMP']
+    labels=['MPI only', 'MPI + 4 OpenMP']
 
     # create colors
     cmap = plt.get_cmap('Greens')
@@ -168,7 +177,7 @@ def make_plot_openmp(data, reso, arr_nodes, outname='scaling_openmp.png'):
     fig, axes = plt.subplots(nrows=1, ncols=1, figsize=(4.5,4.5))
 
     ref_value = 1
-    for omp,lab,col in zip([0,2,4,8],labels,colorVals):
+    for omp,lab,col in zip([0,4],labels,colorVals):
         times = []
         for nodes in arr_nodes:
             for entry in data:
@@ -183,7 +192,7 @@ def make_plot_openmp(data, reso, arr_nodes, outname='scaling_openmp.png'):
                 times.append(float(time))
                 if omp==0 and nodes==1:
                     ref_value=float(time)
-        axes.plot(arr_nodes,ref_value/np.array(times),label=lab,color=col)
+        axes.plot(arr_nodes,ref_value/np.array(times),label=lab,color=col,marker='o',markersize=3)
 
     axes.plot(arr_nodes,arr_nodes,color='black',lw=1,ls='--')
 
@@ -201,9 +210,12 @@ def make_plot_openmp(data, reso, arr_nodes, outname='scaling_openmp.png'):
 ''' Spit out a latex table comparing different number of openMP threads '''
 def make_table_openmp(data, reso, arr_nodes):
 
+    nthr = [0,4]#[0,2,4,8]
+
+    ref = 0
     for nodes in arr_nodes:
         times = []
-        for omp in [0,2,4,8]:
+        for omp in nthr:
             for entry in data:
                 if entry['resolution']!=reso:
                     continue
@@ -215,10 +227,20 @@ def make_table_openmp(data, reso, arr_nodes):
                 time, error_min, error_max = process_times(entry['timings'])
                 times.append(float(time))
 
+        if nodes==1:
+            ref = min(times)
+
         # nodes MPI 2th 4th 8thr gain
-        diff = (-1)*(min(times[1],times[2],times[3]) - times[0])/times[0] * 100
-        space_report_string = '{} & {:.3f} & {:.3f} & {:.3f}& {:.3f}& {:.1f} \\\\ \\hline'.format(str(nodes).rjust(2),times[0],times[1],times[2],times[3],diff)
+        space_report_string = '{} & {:.3f} & {:.3f}'.format(str(nodes).rjust(2),times[0],times[1])
+        best_time = times[1]
+        for i in range(2,len(nthr)):
+            best_time = min(best_time,times[i])
+            space_report_string = space_report_string + '& {:.3f}'.format(times[i])
+        diff = (-1)*(best_time - times[0])/times[0] * 100
+        space_report_string = space_report_string + '& {:.1f} \\\\ \\hline'.format(diff)
         print(space_report_string)
+
+    print('scaling efficiencity at', arr_nodes[-1], 'nodes:', ref/times[1]/arr_nodes[-1])
 
 ''' make a simple strong scaling plot of a benchmark'''
 def plot_strong_scaling(axes, data, reso):
