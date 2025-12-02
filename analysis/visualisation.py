@@ -160,7 +160,7 @@ def make_table_cpu_speedup(data, reso, arr_nodes, first_column=True):
 ''' Make a figure of the strong scaling comparing different commits '''
 def plot_strong_scaling_compare(data, mapping_commits, reso, input_axes=None, outname='check_refactor.png'):
 
-    ls = {0:'-', 4:'--'}
+    ls = {0:'-', 4:'--', 8:'--'}
 
     # create colors
     cmap = plt.get_cmap('gray_r')
@@ -280,7 +280,7 @@ def plot_weak_scaling_compare(data, mapping_commits, arr_nodes_in, resos, input_
 # ---- OpenMP implementation ----
 
 ''' Plot the strong scaling for MPI+OpenMP versus MPI-only'''
-def make_plot_openmp(data, reso, arr_nodes, outname='scaling_openmp.png'):
+def make_plot_openmp(data, reso, arr_nodes, outname='scaling_openmp.png', title=None):
 
     #labels=['MPI only', 'MPI + 2 OpenMP','MPI + 4 OpenMP','MPI + 8 OpenMP']
     labels=['MPI only', 'MPI + 4 OpenMP']
@@ -323,13 +323,20 @@ def make_plot_openmp(data, reso, arr_nodes, outname='scaling_openmp.png'):
     axes.set_xticks([],minor=True)
     axes.set_xticks(arr_nodes, labels=arr_nodes)
     axes.legend()
-    plt.savefig(outname, bbox_inches='tight', dpi=300)
+    if title!=None:
+        axes.set_title(title)
+    plt.savefig(outname, bbox_inches='tight', dpi=200)
     plt.close()
 
 ''' Spit out a latex table comparing different number of openMP threads '''
 def make_table_openmp(data, reso, arr_nodes):
 
-    nthr = [0,4]#[0,2,4,8]
+    nthr = [0,2,4,8]
+    space_report_string = 'Nodes & MPI '
+    for i in range(1,len(nthr)):
+        space_report_string = space_report_string + f'& omp {nthr[i]}'
+    space_report_string = space_report_string + '& diff'
+    print(space_report_string)
 
     ref = 0
     for nodes in arr_nodes:
@@ -350,13 +357,14 @@ def make_table_openmp(data, reso, arr_nodes):
             ref = min(times)
 
         # nodes MPI 2th 4th 8thr gain
-        space_report_string = '{} & {:.3f} & {:.3f}'.format(str(nodes).rjust(2),times[0],times[1])
-        best_time = times[1]
-        for i in range(2,len(nthr)):
-            best_time = min(best_time,times[i])
-            space_report_string = space_report_string + '& {:.3f}'.format(times[i])
-        diff = (-1)*(best_time - times[0])/times[0] * 100
-        space_report_string = space_report_string + '& {:.1f} \\\\ \\hline'.format(diff)
+        space_report_string = '{} & {:.3f}'.format(str(nodes).rjust(2),times[0])
+        best_time = 1e10
+        if len(times)>1:
+            for i in range(1,len(nthr)):
+                best_time = min(best_time,times[i])
+                space_report_string = space_report_string + '& {:.3f}'.format(times[i])
+            diff = (-1)*(best_time - times[0])/times[0] * 100
+            space_report_string = space_report_string + '& {:.1f} \\\\ \\hline'.format(diff)
         print(space_report_string)
 
     print('scaling efficiencity at', arr_nodes[-1], 'nodes:', ref/times[1]/arr_nodes[-1])
