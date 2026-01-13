@@ -40,22 +40,27 @@ def load_data_dev_branch(test, cluster='meluxina', timer='total'):
     mapping_commits['8c72f569'] = 'dev\n Nov 2024' #'starting\n reference'
 
     # DEV Reference of public ramses version, after clean up etc (Apr 16, 2025)
-    data = add_data(data, bench_home+'/'+cluster+'/'+'benchmark_dev_9c518f8a', test, which=timer)
-    data = add_data(data, bench_home+'/'+cluster+'/'+'benchmark_HEAD_9c518f8a', test, which=timer)
-    mapping_commits['9c518f8a'] = 'dev\n Apr 2025'
+    #data = add_data(data, bench_home+'/'+cluster+'/'+'benchmark_dev_9c518f8a', test, which=timer)
+    #data = add_data(data, bench_home+'/'+cluster+'/'+'benchmark_HEAD_9c518f8a', test, which=timer)
+    #mapping_commits['9c518f8a'] = 'dev\n Apr 2025'
 
     # nbor optims
     #data = add_data(data, bench_home+'/'+cluster+'/'+'benchmark_refactor_3cube_nbor_utils_e3a620c3', test, which=timer)
     #mapping_commits['e3a620c3'] = 'nbor\n optims'
 
     # DEV Reference of public ramses version, SNO meeting 2025
-    data = add_data(data, bench_home+'/'+cluster+'/'+'benchmark_dev_456b33e2', test, which=timer)
+    data = add_data(data, bench_home+'/'+cluster+'/'+'benchmark_dev_456b33e2', test, which=timer, omp_nthr=[0])
     mapping_commits['456b33e2'] = 'dev\n Nov 2025'
 
     # OPENMP Reference of public ramses version, SNO meeting 2025
     # full openMP implemenation for cosmo, including poisson multigrid and particles
-    data = add_data(data, bench_home+'/'+cluster+'/'+'benchmark_openmp_2b1a9794', test, which=timer, omp_nthr=4)
-    mapping_commits['2b1a9794'] = 'OpenMP\n Nov 2025'
+    #BUGGED in make_tree_fine
+    #data = add_data(data, bench_home+'/'+cluster+'/'+'benchmark_openmp_2b1a9794', test, which=timer, omp_nthr=[4])
+    #mapping_commits['2b1a9794'] = 'OpenMP\n Nov 2025'
+
+    # FIX openmp
+    data = add_data(data, bench_home+'/'+cluster+'/'+'benchmark_openmp_5560e020', test, which=timer, omp_nthr=[8])
+    mapping_commits['5560e020'] = 'OpenMP\n Nov 2025'
 
     return data, mapping_commits
 

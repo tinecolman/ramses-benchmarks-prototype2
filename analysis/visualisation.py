@@ -282,8 +282,8 @@ def plot_weak_scaling_compare(data, mapping_commits, arr_nodes_in, resos, input_
 ''' Plot the strong scaling for MPI+OpenMP versus MPI-only'''
 def make_plot_openmp(data, reso, arr_nodes, outname='scaling_openmp.png', title=None):
 
-    #labels=['MPI only', 'MPI + 2 OpenMP','MPI + 4 OpenMP','MPI + 8 OpenMP']
-    labels=['MPI only', 'MPI + 4 OpenMP']
+    labels=['MPI only', 'MPI + 2 OpenMP','MPI + 4 OpenMP','MPI + 8 OpenMP']
+    #labels=['MPI only', 'MPI + 4 OpenMP']
 
     # create colors
     cmap = plt.get_cmap('Greens')
@@ -296,7 +296,7 @@ def make_plot_openmp(data, reso, arr_nodes, outname='scaling_openmp.png', title=
     fig, axes = plt.subplots(nrows=1, ncols=1, figsize=(4.5,4.5))
 
     ref_value = 1
-    for omp,lab,col in zip([0,4],labels,colorVals):
+    for omp,lab,col in zip([0,2,4,8],labels,colorVals):
         times = []
         for nodes in arr_nodes:
             for entry in data:
@@ -368,6 +368,58 @@ def make_table_openmp(data, reso, arr_nodes):
         print(space_report_string)
 
     print('scaling efficiencity at', arr_nodes[-1], 'nodes:', ref/times[1]/arr_nodes[-1])
+
+''' Plot the strong scaling for MPI+OpenMP versus MPI-only'''
+def make_plot_openmp_weak_scaling(data, resos, arr_nodes, outname='scaling_openmp.png'):
+
+    labels=['MPI only', 'MPI + 2 OpenMP','MPI + 4 OpenMP','MPI + 8 OpenMP']
+
+    # create colors
+    cmap = plt.get_cmap('Greens')
+    cNorm  = colorsx.Normalize(vmin=0.25, vmax=3.75)
+    colorVals = {}
+    colorVals = [(0.1,0.1,0.7)]
+    for val in [1,2,3]:
+        colorVals.append(cmap(cNorm(val)))
+
+    fig, axes = plt.subplots(nrows=1, ncols=1, figsize=(4.5,4.5))
+
+    ref_value = 1
+    for omp,lab,col in zip([0,2,4,8],labels,colorVals):
+        nodes = 1
+        times = []
+        for nodes,reso in zip(arr_nodes,resos):
+            for entry in data:
+                if entry['resolution']!=reso:
+                    continue
+                if entry['nodes']!=nodes:
+                    continue
+                if entry['omp_threads']!=omp:
+                    continue
+                # reduce time data
+                time, error_min, error_max = process_times(entry['timings'])
+                times.append(float(time))
+                if omp==0 and nodes==1:
+                    ref_value=float(time)
+
+        print(times)
+        eff = np.array(times[0])/np.array(times)
+        print(eff)
+        axes.plot(arr_nodes,eff,label=lab,color=col,marker='o',markersize=3)
+
+    axes.plot(arr_nodes,np.ones(len(arr_nodes)),color='black',lw=1,ls='--')
+
+    axes.set_xscale('log')
+    axes.set_yscale('log')
+    axes.set_xlabel('nodes')
+    axes.set_ylabel('spefficiencyeedup')
+    axes.set_xticks([])
+    axes.set_xticks([],minor=True)
+    axes.set_xticks(arr_nodes, labels=arr_nodes)
+    axes.set_xlim([min(arr_nodes), max(arr_nodes)])
+    axes.legend()
+    plt.savefig(outname, bbox_inches='tight', dpi=300)
+    plt.close()
 
 ''' make a simple strong scaling plot of a benchmark'''
 def plot_strong_scaling(axes, data, reso):
