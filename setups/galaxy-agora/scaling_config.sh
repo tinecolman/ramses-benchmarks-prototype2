@@ -1,0 +1,6 @@
+STRONG_SCALING_RESO="mediumres"
+
+WEAK_SCALING_NNODES=(1 8 64)
+WEAK_SCALING_RESO=("lowres" "mediumres" "highres")
+
+TEST_TIME=00:20:00
