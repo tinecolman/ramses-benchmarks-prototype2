@@ -11,7 +11,7 @@ nstepmax=10
 /
 
 &OUTPUT_PARAMS
-foutput=10
+foutput=0
 tend=1000
 /
 
