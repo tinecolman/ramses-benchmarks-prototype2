@@ -24,7 +24,7 @@ initfile(1)='../../../ICs/ICs_highres'
 &AMR_PARAMS
 levelmin=9
 levelmax=14
-ngridtot=32000000
+ngridtot=100000000
 npartmax=26000000
 boxlen=400.0
 /
