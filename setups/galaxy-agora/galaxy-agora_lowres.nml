@@ -18,7 +18,7 @@ tend=1000
 &INIT_PARAMS
 condinit_kind='merger'
 filetype='ascii'
-initfile(1)='../ICs/ICs_lowres'
+initfile(1)='../../../ICs/ICs_lowres'
 /
 
 &AMR_PARAMS
@@ -87,8 +87,8 @@ z_profile='exponential'
 IG_density_factor=1.0D-5
 ic_part_file_gal1='ic_part'
 ic_part_file_gal2='ic_part'
-Vcirc_dat_file1='../ICs/ICs_lowres/Vcirc.dat'
-Vcirc_dat_file2='../ICs/ICs_lowres/Vcirc.dat'
+Vcirc_dat_file1='../../../ICs/ICs_lowres/Vcirc.dat'
+Vcirc_dat_file2='../../../ICs/ICs_lowres/Vcirc.dat'
 gal_axis1=0.0D0,0.0D0,1.0D0
 gal_axis2=0.0D0,0.0D0,1.0D0
 Vgal1=0.0D0,0.0D0,0.0D0
