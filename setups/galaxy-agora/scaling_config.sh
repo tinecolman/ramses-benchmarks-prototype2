@@ -1,4 +1,4 @@
-STRONG_SCALING_RESO="mediumres"
+STRONG_SCALING_RESO="highres"
 
 WEAK_SCALING_NNODES=(1 8 64)
 WEAK_SCALING_RESO=("lowres" "mediumres" "highres")

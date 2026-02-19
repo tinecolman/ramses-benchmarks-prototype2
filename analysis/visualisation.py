@@ -283,7 +283,7 @@ def plot_weak_scaling_compare(data, mapping_commits, arr_nodes_in, resos, input_
 def make_plot_openmp(data, reso, arr_nodes, outname='scaling_openmp.png', title=None):
 
     labels=['MPI only', 'MPI + 2 OpenMP','MPI + 4 OpenMP','MPI + 8 OpenMP']
-    #labels=['MPI only', 'MPI + 4 OpenMP']
+    #labels=['MPI only']#, 'MPI + 4 OpenMP']
 
     # create colors
     cmap = plt.get_cmap('Greens')

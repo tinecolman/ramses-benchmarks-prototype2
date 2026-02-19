@@ -10,7 +10,7 @@ As of 2025, we continuously assess the performance of RAMSES on various supercom
 
 * [SEDOV](setups/sedov/description.md): classic Sedov explosion in 3D
 * COSMO: dark matter-only cosmological box on a uniform grid
-
+* [GALAXY](setups/galaxy-agora/description.md): an isolated galaxy from the Agora comparison project
 
 ## Benchmark results per cluster
 

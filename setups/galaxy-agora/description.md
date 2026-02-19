@@ -17,10 +17,48 @@ For this benchmark, the simulation is evolved for a limited number of coarse tim
 * load balancing
 * communication
 
-
 ### How to generate the initial conditions
 
-The initial conditions are generated with MAKEDISK, originally written by Volker Springel and adapted to make ICs readable for RAMSES (see [Rosdahl et al. 2015](https://ui.adsabs.harvard.edu/abs/2015MNRAS.451...34R/abstract)). The IC generation code is written in C and is part of the public version of the RAMSES code (under ramses/utils/ic/galaxy ic/galics). 
+The code to generate the initial conditions is included in the source code of RAMSES (ramses/utils/ic/galaxy ic/Galic). It is written in C and the default Makefile uses `gcc` to compile the code. The only thing you may need to change is the number of particles, which is hardcoded in `main.c`:
+```
+  N_HALO= 125000;  /* desired number of particles in dark halo */
+  N_DISK= 125000;  /* desired number of collisionless particles in disk */
+  N_GAS=  125000;  /* number of gas particles in disk */
+  N_BULGE= 12500;  /* number of bulge particles */
+```
+To generate the ICs:
+```
+cd ramses/utils/ic/galaxy ic/Galic
+make clean
+make
+mkdir ICs_mediumres
+./galic_MakeDiskGalaxy ICs_mediumres/ > ic.log
+```
+This will generate the following files in the directory `ICs_mediumres`:
+```
+ic_part
+info.txt
+params.txt
+Vcirc.dat
+```
+(remark that the `/` in the folder name is important, otherwise the files will be outputted in the current directory with names such as `ICs_mediumresVcirc.dat`).
+
+For this benchmark, we provide namelists for three different resolutions:
+
+
+ The resolution and computational cost is defined by a combination of the number of particles for each component (dark matter -- DM, stellar disk -- SD, stellar bulge -- SB) and the resolution of the grid as set by the minimum and maximum refinement level (ℓ_min and ℓ_max). We specify three setups:
+
+| Parameter | low | medium  | high |
+|----------|----------------|-------------------|-----------------|
+| N_HALO      | 1.25 × 10⁵     | 10⁶               | 8 × 10⁶         |
+| N_DISK      | 1.25 × 10⁵     | 10⁶               | 8 × 10⁶         |
+| N_BULGE     | 1.25 × 10⁴     | 10⁵               | 8 × 10⁵         |
+
+TODO: does it matter what to take for N_GAS?
+
+### Detailed description of the initial conditions
+
+The initial conditions are generated with MAKEDISK, originally written by Volker Springel and adapted to make ICs readable for RAMSES (see [Rosdahl et al. 2015](https://ui.adsabs.harvard.edu/abs/2015MNRAS.451...34R/abstract)). The IC generation code is written in C and is part of the public version of the RAMSES code (under ramses/utils/ic/galaxy ic/Galic). 
   
 The setup consists of a dark matter halo with an NFW density profile (Navarro et al. 1997) in which the galaxy is embedded and the galaxy itself which is composed of an exponential disk of stars and gas, and a stellar bulge with a Hernquist (1990) profile. The total mass of the system is divided amongst its components as follows (set in the IC generator):
 * bulge mass fraction = 0.004
