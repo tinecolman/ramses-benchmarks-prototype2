@@ -16,9 +16,14 @@ As of 2025, we continuously assess the performance of RAMSES on various supercom
 
 | Cluster  | Benchmark results |
 | -------- | ------------------|
-| [MeluXina](HPCclusters/meluxina/cluster_description.md) | [SEDOV](results/results_meluxina.md)
-| MareNostrum |
-
+| [LUMI](HPCclusters/lumi/cluster_description.md)               |
+| [Leonardo](HPCclusters/leonardo/cluster_description.md)       |
+| [MareNostrum](HPCclusters/marenostrum/cluster_description.md) |
+| [MeluXina](HPCclusters/meluxina/cluster_description.md)       | [SEDOV](results/results_meluxina.md) |
+| [Discoverer](HPCclusters/discoverer/cluster_description.md)   |
+| [Vega](HPCclusters/vega/cluster_description.md)               |
+| [Karolina](HPCclusters/karolina/cluster_description.md)       |
+| [Deucalion](HPCclusters/deucalion/cluster_description.md)     |
 
 
 ## How to do your own benchmarking
