@@ -16,7 +16,7 @@ Support: https://lumi-supercomputer.eu/user-support/need-help/ (submit a ticket 
 ## Access
 
 ### Applying for time
-Time on the Discoverer cluster can be obtained through [EuroHPC](https://access.eurohpc-ju.europa.eu/).
+Time on the LUMI cluster can be obtained through [EuroHPC](https://access.eurohpc-ju.europa.eu/).
 
 ### Account creation
 
@@ -68,8 +68,6 @@ ssh lumi
 
 ### Getting and compiling the code
 You can get the code through the usual way with git clone on the login node.
-
-
 
 LUMI is a Cray system, so if we load the correct modules and use the cray wrappers, the system will automatically find the right compiler versions and libraries. See
 https://docs.lumi-supercomputer.eu/development/compiling/prgenv/
