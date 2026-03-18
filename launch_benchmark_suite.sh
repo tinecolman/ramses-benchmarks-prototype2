@@ -25,6 +25,7 @@
 #       ./launch_benchmark_suite.sh -i 5
 #   -d: do not clean up
 #       ./launch_benchmark_suite.sh -d
+#   -v: use mini-ramses
 #
 #######################################################################
 
@@ -33,6 +34,7 @@
 #######################################################################
 
 RAMSES_SOURCE_DIR="$HOME/ramses_tine_github";
+MINI_RAMSES_SOURCE_DIR="$HOME/mini-ramses";
 
 NODESMAX=4
 NODELIST="0"
@@ -44,7 +46,8 @@ DELDATA=true;
 OPENMP=0;
 OMP_THREAD_LIST="0"
 ITERS=1
-while getopts "c:a:h:t:wn:l:m:i:d" OPTION; do
+USE_MINIRAMSES=false;
+while getopts "c:a:h:t:wn:l:m:i:dv" OPTION; do
    case $OPTION in
       c)
          CLUSTER=$OPTARG;
@@ -75,6 +78,9 @@ while getopts "c:a:h:t:wn:l:m:i:d" OPTION; do
       d)
          DELDATA=false;
       ;;
+      v)
+         USE_MINIRAMSES=true;
+      ;;
    esac
 done
 
@@ -101,7 +107,11 @@ echo > $LOGFILE;
 # Setup code repository
 #######################################################################
 
-RAMSES_BIN_DIR="${RAMSES_SOURCE_DIR}/bin";
+if $USE_MINIRAMSES; then
+   RAMSES_BIN_DIR="${MINI_RAMSES_SOURCE_DIR}/bin";
+else
+   RAMSES_BIN_DIR="${RAMSES_SOURCE_DIR}/bin";
+fi
 cd $RAMSES_BIN_DIR
 
 # get info of repo
@@ -182,7 +192,11 @@ set +e
 #######################################################################
 
 # list subdirectories of setups base directory, which contain individual tests
-testlist="setups/*";
+if $USE_MINIRAMSES ; then
+   testlist="setups-mini-ramses/*";
+else
+   testlist="setups/*";
+fi
 
 # Count number of tests
 testname=( $testlist );
