@@ -182,7 +182,12 @@ fi
 source ${CLUSTER_INFO}
 
 # create directory on scratch
-BENCHMARK_DIR=$CLUSTER_SCRATCH/benchmark_${BRANCH}_${COMMIT}
+if $USE_MINIRAMSES ; then
+   BENCHMARK_DIR=$CLUSTER_SCRATCH/mini-benchmark_${BRANCH}_${COMMIT}
+else
+   BENCHMARK_DIR=$CLUSTER_SCRATCH/benchmark_${BRANCH}_${COMMIT}
+fi
+
 set -e
 mkdir -p ${BENCHMARK_DIR} >> $LOGFILE 2>&1;
 set +e
