@@ -92,19 +92,9 @@ RAMSES_BENCHMARK_DIR=$(pwd);                      # The benchmark suite director
 EXECNAME="benchmark_exe_";
 BEFORETEST="before-test.sh";
 AFTERTEST="after-test.sh";
-CLUSTER_DIR="${RAMSES_BENCHMARK_DIR}/HPCclusters/${CLUSTER}"
-CLUSTER_INFO="${CLUSTER_DIR}/cluster_info.sh"
-MODULES="${CLUSTER_DIR}/modules.sh"
-
-if $USE_MINIRAMSES; then
-   RAMSES_BIN_DIR="${MINI_RAMSES_SOURCE_DIR}/bin";
-   BENCHMARK_DIR=$CLUSTER_SCRATCH/mini-benchmark_${BRANCH}_${COMMIT}
-   SETUPS_DIR="setups-mini-ramses"
-else
-   RAMSES_BIN_DIR="${RAMSES_SOURCE_DIR}/bin";
-   BENCHMARK_DIR=$CLUSTER_SCRATCH/benchmark_${BRANCH}_${COMMIT}
-   SETUPS_DIR="setups"
-fi
+CLUSTER_DIR="${RAMSES_BENCHMARK_DIR}/HPCclusters/${CLUSTER}";
+CLUSTER_INFO="${CLUSTER_DIR}/cluster_info.sh";
+MODULES="${CLUSTER_DIR}/modules.sh";
 
 DATE=`date +%F`
 LOGFILE="${RAMSES_BENCHMARK_DIR}/benchmark_suite.log";
@@ -117,6 +107,11 @@ echo > $LOGFILE;
 # Setup code repository
 #######################################################################
 
+if $USE_MINIRAMSES ; then
+   RAMSES_BIN_DIR="${MINI_RAMSES_SOURCE_DIR}/bin";
+else
+   RAMSES_BIN_DIR="${RAMSES_SOURCE_DIR}/bin";
+fi
 cd $RAMSES_BIN_DIR
 
 # get info of repo
@@ -187,6 +182,13 @@ fi
 source ${CLUSTER_INFO}
 
 # create directory on scratch
+
+if $USE_MINIRAMSES ; then
+   BENCHMARK_DIR=$CLUSTER_SCRATCH/mini-benchmark_${BRANCH}_${COMMIT};
+else
+   BENCHMARK_DIR=$CLUSTER_SCRATCH/benchmark_${BRANCH}_${COMMIT};
+fi
+
 set -e
 mkdir -p ${BENCHMARK_DIR} >> $LOGFILE 2>&1;
 set +e
@@ -194,6 +196,12 @@ set +e
 #######################################################################
 # Generate list of tests by scanning directory
 #######################################################################
+
+if $USE_MINIRAMSES ; then
+   SETUPS_DIR="setups-mini-ramses";
+else
+   SETUPS_DIR="setups";
+fi
 
 # list subdirectories of setups base directory, which contain individual tests
 testlist="${SETUPS_DIR}/*";
@@ -289,7 +297,7 @@ for ((i=0;i<$ntests;i++)); do
    FLAGS=$(grep FLAGS ${RAMSES_BENCHMARK_DIR}/${testname[n]}/config.txt | cut -d ':' -f2);
 
    # load modules
-   source $MODULES >> $LOGFILE 2>&1
+   #source $MODULES >> $LOGFILE 2>&1
 
    # Construct the make command for compilation (pass options to it)
    set -e
