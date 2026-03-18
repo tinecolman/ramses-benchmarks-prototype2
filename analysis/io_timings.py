@@ -35,7 +35,7 @@ def get_info_from_subdir_name(subdir):
 # -------- Reading ramses logs --------
 
 ''' Use grep to get the timings for a specified timer from all logfiles in a directory '''
-def get_timings_from_log(run_dir, which='total'):
+def get_timings_from_log(run_dir, which='total', version="ramses"):
     if which=='total':
         # take the total time at the bottom
         subprocess.call("grep --no-filename 'Total elapsed time' {}/*.log".format(run_dir) +" | awk '{print $4}' > total_time.txt", shell=True)
@@ -47,7 +47,10 @@ def get_timings_from_log(run_dir, which='total'):
         times = []
         for item in os.listdir(run_dir):
             if item.endswith('.log'):
-                timers = read_timers(os.path.join(run_dir, item))
+                if version=="ramses":
+                    timers = read_timers(os.path.join(run_dir, item))
+                elif version=="mini-ramses":
+                    timers = read_timers_miniramses(os.path.join(run_dir, item))
                 # store the data for the requested timer
                 try:
                     times.append(timers[which])
@@ -81,11 +84,27 @@ def read_timers(logfile):
     #timings['total'] = total_time
     return timings
 
+# -------- Reading mini-ramses logs --------
+
+''' retrieve timers for individual parts of the code from the end of the logfile '''
+def read_timers_miniramses(logfile):
+    # get timers that are printed in between pattern STEP and TOTAL
+    subprocess.call("awk '/STEP/{flag=1; next}/TOTAL/{flag=0} flag' " + logfile +" | awk '{print $1}' > indiv_times.txt", shell=True)
+    subprocess.call("awk '/STEP/{flag=1; next}/TOTAL/{flag=0} flag' " + logfile +" | awk '{print substr($0,27,51)}' | sed 's/ //g' > timer_names.txt", shell=True)
+    # read data and put into dict
+    indiv_times = np.loadtxt('indiv_times.txt')
+    timer_names = np.genfromtxt('timer_names.txt',dtype='str')
+    timings = {}
+    for timer_name, indiv_time in zip(timer_names, indiv_times):
+        timings[timer_name] = indiv_time
+    os.remove('indiv_times.txt')
+    os.remove('timer_names.txt')
+    return timings
 
 # -------- database IO -----------
 
 ''' Load benchmark results for a specified test '''
-def add_data(data, benchmark_dir, test_name, which='total', omp_nthr=None):
+def add_data(data, benchmark_dir, test_name, which='total', omp_nthr=None, version='ramses'):
     branch, commit = get_info_from_benchmark_dir_name(benchmark_dir)
 
     data_dir = benchmark_dir+'/'+test_name
@@ -98,7 +117,7 @@ def add_data(data, benchmark_dir, test_name, which='total', omp_nthr=None):
         name = os.path.join(data_dir, item)
         if os.path.isdir(name) and item.startswith('nodes'):
             nodes, reso, omp = get_info_from_subdir_name(item)
-            total_times = get_timings_from_log(name, which)
+            total_times = get_timings_from_log(name, which, version)
             new_entry = {
                 "branch": branch,
                 "commit": commit,
