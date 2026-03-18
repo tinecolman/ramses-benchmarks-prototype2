@@ -85,16 +85,26 @@ while getopts "c:a:h:t:wn:l:m:i:dv" OPTION; do
 done
 
 #######################################################################
-# Useful definitions
+# Useful definitions and paths
 #######################################################################
 
 RAMSES_BENCHMARK_DIR=$(pwd);                      # The benchmark suite directory
 EXECNAME="benchmark_exe_";
 BEFORETEST="before-test.sh";
 AFTERTEST="after-test.sh";
-CLUSTER_INFO="${RAMSES_BENCHMARK_DIR}/HPCclusters/${CLUSTER}/cluster_info.sh"
-UPDATECODE="${RAMSES_BENCHMARK_DIR}/HPCclusters/${CLUSTER}/update-code.sh"
-MODULES="${RAMSES_BENCHMARK_DIR}/HPCclusters/${CLUSTER}/modules.sh"
+CLUSTER_DIR="${RAMSES_BENCHMARK_DIR}/HPCclusters/${CLUSTER}"
+CLUSTER_INFO="${CLUSTER_DIR}/cluster_info.sh"
+MODULES="${CLUSTER_DIR}/modules.sh"
+
+if $USE_MINIRAMSES; then
+   RAMSES_BIN_DIR="${MINI_RAMSES_SOURCE_DIR}/bin";
+   BENCHMARK_DIR=$CLUSTER_SCRATCH/mini-benchmark_${BRANCH}_${COMMIT}
+   SETUPS_DIR="setups-mini-ramses"
+else
+   RAMSES_BIN_DIR="${RAMSES_SOURCE_DIR}/bin";
+   BENCHMARK_DIR=$CLUSTER_SCRATCH/benchmark_${BRANCH}_${COMMIT}
+   SETUPS_DIR="setups"
+fi
 
 DATE=`date +%F`
 LOGFILE="${RAMSES_BENCHMARK_DIR}/benchmark_suite.log";
@@ -107,11 +117,6 @@ echo > $LOGFILE;
 # Setup code repository
 #######################################################################
 
-if $USE_MINIRAMSES; then
-   RAMSES_BIN_DIR="${MINI_RAMSES_SOURCE_DIR}/bin";
-else
-   RAMSES_BIN_DIR="${RAMSES_SOURCE_DIR}/bin";
-fi
 cd $RAMSES_BIN_DIR
 
 # get info of repo
@@ -182,12 +187,6 @@ fi
 source ${CLUSTER_INFO}
 
 # create directory on scratch
-if $USE_MINIRAMSES ; then
-   BENCHMARK_DIR=$CLUSTER_SCRATCH/mini-benchmark_${BRANCH}_${COMMIT}
-else
-   BENCHMARK_DIR=$CLUSTER_SCRATCH/benchmark_${BRANCH}_${COMMIT}
-fi
-
 set -e
 mkdir -p ${BENCHMARK_DIR} >> $LOGFILE 2>&1;
 set +e
@@ -197,11 +196,7 @@ set +e
 #######################################################################
 
 # list subdirectories of setups base directory, which contain individual tests
-if $USE_MINIRAMSES ; then
-   testlist="setups-mini-ramses/*";
-else
-   testlist="setups/*";
-fi
+testlist="${SETUPS_DIR}/*";
 
 # Count number of tests
 testname=( $testlist );
@@ -291,7 +286,7 @@ for ((i=0;i<$ntests;i++)); do
    #------------------
 
    # Read test configuration file
-   FLAGS=$(grep FLAGS ${RAMSES_BENCHMARK_DIR}/setups/${TEST_NAME}/config.txt | cut -d ':' -f2);
+   FLAGS=$(grep FLAGS ${RAMSES_BENCHMARK_DIR}/${testname[n]}/config.txt | cut -d ':' -f2);
 
    # load modules
    source $MODULES >> $LOGFILE 2>&1
@@ -314,7 +309,7 @@ for ((i=0;i<$ntests;i++)); do
    JOB_NAME=compile
    TEST_TIME="00:05:00"
    # write SBATCH parameters block for current cluster
-   source ${RAMSES_BENCHMARK_DIR}/HPCclusters/${CLUSTER}/job_script_params.sh
+   source ${CLUSTER_DIR}/job_script_params.sh
    # append modules to load to jobscript
    cat $MODULES >> $OUTPUT_FILE
    # add compile command
@@ -411,7 +406,7 @@ for ((i=0;i<$ntests;i++)); do
          # Copy executable and input file   
          cp ${RAMSES_BIN_DIR}/${EXECNAME}3d .
          TEST_NAMELIST=${TEST_NAME}_${RESO}.nml
-         cp ${RAMSES_BENCHMARK_DIR}/setups/${TEST_NAME}/${TEST_NAMELIST} .
+         cp ${RAMSES_BENCHMARK_DIR}/${testname[n]}/${TEST_NAMELIST} .
 
          # create job script by combining job params, modules and run command
          OUTPUT_FILE="job.sh"
