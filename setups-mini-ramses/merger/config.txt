@@ -1,0 +1,1 @@
+FLAGS: NDIM=3 UNITS=MERGER PATCH=../patch/init/merger HYDRO=1 GRAV=1
