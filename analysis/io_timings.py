@@ -38,7 +38,8 @@ def get_info_from_subdir_name(subdir):
 def get_timings_from_log(run_dir, which='total', version="ramses"):
     if which=='total':
         # take the total time at the bottom
-        subprocess.call("grep --no-filename 'Total elapsed time' {}/*.log".format(run_dir) +" | awk '{print $4}' > total_time.txt", shell=True)
+        #subprocess.call("grep --no-filename 'Total elapsed time' {}/*.log".format(run_dir) +" | awk '{print $4}' > total_time.txt", shell=True)
+        subprocess.call("grep --no-filename 'TOTAL' {}/*.log".format(run_dir) +" | awk '{print $1}' > total_time.txt", shell=True)
         with open('total_time.txt', 'r') as file:
             times = [float(line.strip()) for line in file]
         os.remove('total_time.txt')
