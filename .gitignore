@@ -1,1 +1,12 @@
 __pycache__
+output_*
+*.png
+*.log
+*.txt
+ramses3d
+setups/galaxy-agora/ICs_lowres
+setups/galaxy-agora/ICs_mediumres
+setups/galaxy-agora/ICs_highres
+setups-mini-ramses/cosmo/cosmo_128
+setups-mini-ramses/merger/ICs_lowres
+setups-mini-ramses/galaxy-agora/ICs_lowres
