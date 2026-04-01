@@ -2,12 +2,10 @@ from io_timings import add_data
 from visualisation import *
 
 #def plot_time_vs_nodes(data, mapping_commits, reso, nodes, outname='compare.png'):
-   
 
-if __name__ == '__main__':
-    
+def load_cosmo(cluster):
+ 
     test='cosmo'
-    cluster='meluxina'
     timer='total'
     reso="1024"
 
@@ -31,6 +29,51 @@ if __name__ == '__main__':
     labels = ['ramses MPI-only',
               'ramses MPI + 8 OMP',
               'mini-ramses']
+
+    return data_sets, labels, reso
+
+def load_galaxy(cluster):
+   
+    test='galaxy-agora'
+    timer='total'
+    reso="mediumres"
+
+    bench_home = '/home/tcolman/Dropbox/SPACE/DATA_ARCHIVE'
+
+    data_ramses = add_data([], bench_home+'/'+cluster+'/'+'benchmark_openmp_galaxy_7bb705d5',
+                           test, which=timer, omp_nthr=[0])
+    data_ramses_omp2 = add_data([], bench_home+'/'+cluster+'/'+'benchmark_openmp_galaxy_7bb705d5',
+                           test, which=timer, omp_nthr=[2])
+    data_ramses_omp4 = add_data([], bench_home+'/'+cluster+'/'+'benchmark_openmp_galaxy_7bb705d5',
+                           test, which=timer, omp_nthr=[4])
+    data_ramses_omp8 = add_data([], bench_home+'/'+cluster+'/'+'benchmark_openmp_galaxy_7bb705d5',
+                           test, which=timer, omp_nthr=[8])
+
+    test='merger'
+
+    data_miniramses = add_data([], bench_home+'/'+cluster+'/'+'mini-benchmark_develop_3b48347b',
+                               test, which=timer, version="mini-ramses")
+
+    data_sets = [data_ramses,
+                 data_ramses_omp8,
+                 data_miniramses]
+    labels = ['ramses MPI-only (galaxy-agora)',
+              'ramses MPI + 8 OMP',
+              'mini-ramses (merger)']
+
+    return data_sets, labels, reso
+
+if __name__ == '__main__':
+
+    cluster='meluxina'
+    test='galaxy'
+
+    if test=='galaxy':
+        data_sets, labels, reso = load_galaxy(cluster)
+    elif test=='cosmo':
+        data_sets, labels, reso = load_cosmo(cluster)
+
+
     show_ideal=[1,0,1]
     lines=['-','-','-']
     colorVals =["#182e8f", "#3f86c9", "#a035c0"]

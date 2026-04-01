@@ -1,21 +1,30 @@
 
 ## How to add a new computing cluster
 
-The information specific to each computing cluster is stored in the directory `HPCclusters`. There is a subdirectory for each cluster. To add a new cluster, create a new subdirectory with the name of the cluster. Following the example of the existing entries, add the following files:
-   * `cluster_description.md`: Information on how to use the cluster.
+The information specific to each computing cluster is stored in the directory `HPCclusters`, which contains a subdirectory for each cluster. To add a new cluster, create a new subdirectory with the name of the cluster. Following the example of the existing entries, add the following files:
+   * `cluster_description.md`: information on how to use the cluster
    * `cluster_info.sh`: a set of bash variables that describe the configuration of the cluster
    * `modules.sh`: a list of commands that load the modules required to compile ramses
-   * `job_script_params.sh`: A here document with a template of what the parameters that should be set at the top of the job script
+   * `job_script_params.sh`: a Here document with a template of the job script parameters
 
 Remark that currently only systems with the SLURM job scheduler are supported by the script (but this can be extended in the future).
 
 
 ### cluster_description.md
 
-To make the life of future users easier, provide a short summary of information of the cluster:
-* General info with links to the documentation
-* A section on the procedure of how to activate your account
-* A section on how to run RAMSES, including how to compile the code and submit a job.
+To make the life of future users easier, provide a some basic information about the cluster, using the following section structure:
+* Info: some basic info and quick links to the cluster's documentation pages
+* Access: a summary of the procedure of how to apply for time, activate your account and login to the cluster
+* Running RAMSES: how to get the code, compile it and submit a job
+
+Then add the link to your description file to the table in the README.md of this repository. For example:
+```
+## Benchmark results per cluster
+
+| Cluster  | Benchmark results |
+| -------- | ------------------|
+| [MeluXina](HPCclusters/meluxina/cluster_description.md)
+```
 
 ### cluster_info.sh
 
