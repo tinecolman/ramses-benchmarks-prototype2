@@ -424,8 +424,8 @@ for ((i=0;i<$ntests;i++)); do
          echo "export DATE=\$(date +%F_%Hh%M)" >> "$OUTPUT_FILE"
          if (( $OMP_THREADS != 0 )); then
             echo "export OMP_NUM_THREADS=$OMP_THREADS" >> "$OUTPUT_FILE"
-            echo "export OMP_PLACES=cores" >> "$OUTPUT_FILE"
-            echo "export OMP_PROC_BIND=true" >> "$OUTPUT_FILE"
+            #echo "export OMP_PLACES=cores" >> "$OUTPUT_FILE"
+            #echo "export OMP_PROC_BIND=true" >> "$OUTPUT_FILE"
             echo "export OMP_STACKSIZE=2048M" >> "$OUTPUT_FILE"
          fi
          cat $MODULES >> $OUTPUT_FILE
