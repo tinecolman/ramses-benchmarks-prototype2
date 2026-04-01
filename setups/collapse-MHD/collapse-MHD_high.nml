@@ -31,7 +31,7 @@ delta_rho=0.1d0
 
 &OUTPUT_PARAMS
 noutput=1
-foutput=25
+!foutput=25
 tout=9.2e-05
 /
 
