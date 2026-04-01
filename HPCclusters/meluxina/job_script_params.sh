@@ -18,4 +18,6 @@ cat <<JOBSCRIPT > "$OUTPUT_FILE"
 #SBATCH --output=slurm_%j.out
 #SBATCH --error=slurm_%j.err
 
+export UCX_TLS=self,shm,dc
+
 JOBSCRIPT
