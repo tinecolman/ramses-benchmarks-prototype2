@@ -277,21 +277,21 @@ fi
 # Check which types of configurations are requested
 #######################################################################
 
-C_SERIAL=0;
-MAKESTRING_SER="make EXEC=${EXECNAME}_ser COMPILER=${COMPILER_FLAVOR} MPI=0 OPENMP=0 MPIF90=\"${MPIF90}\" MACHINE=${CLUSTER}";
-TEST_EXECUTABLE_SER=${EXECNAME}_ser_3d
+C_SERIAL=false;
+MAKESTRING_SER="make EXEC=${EXECNAME}ser COMPILER=${COMPILER_FLAVOR} MPI=0 OPENMP=0 MPIF90=\"${MPIF90}\" MACHINE=${CLUSTER}";
+TEST_EXECUTABLE_SER=${EXECNAME}ser3d
 
-C_MPI=0;
-MAKESTRING_MPI="make EXEC=${EXECNAME}_mpi COMPILER=${COMPILER_FLAVOR} MPI=1 OPENMP=0 MPIF90=\"${MPIF90}\" MACHINE=${CLUSTER}";
-TEST_EXECUTABLE_MPI=${EXECNAME}_mpi_3d
+C_MPI=false;
+MAKESTRING_MPI="make EXEC=${EXECNAME}mpi COMPILER=${COMPILER_FLAVOR} MPI=1 OPENMP=0 MPIF90=\"${MPIF90}\" MACHINE=${CLUSTER}";
+TEST_EXECUTABLE_MPI=${EXECNAME}mpi3d
 
-C_OPENMP=0;
-MAKESTRING_OMP="make EXEC=${EXECNAME}_omp COMPILER=${COMPILER_FLAVOR} MPI=0 OPENMP=1 MPIF90=\"${MPIF90}\" MACHINE=${CLUSTER}";
-TEST_EXECUTABLE_OMP=${EXECNAME}_omp_3d
+C_OPENMP=false;
+MAKESTRING_OMP="make EXEC=${EXECNAME}omp COMPILER=${COMPILER_FLAVOR} MPI=0 OPENMP=1 MPIF90=\"${MPIF90}\" MACHINE=${CLUSTER}";
+TEST_EXECUTABLE_OMP=${EXECNAME}omp3d
 
-C_HYBRID=0;
-MAKESTRING_HYB="make EXEC=${EXECNAME}_hyb COMPILER=${COMPILER_FLAVOR} MPI=1 OPENMP=1 MPIF90=\"${MPIF90}\" MACHINE=${CLUSTER}";
-TEST_EXECUTABLE_HYB=${EXECNAME}_hyb_3d
+C_HYBRID=false;
+MAKESTRING_HYB="make EXEC=${EXECNAME}hyb COMPILER=${COMPILER_FLAVOR} MPI=1 OPENMP=1 MPIF90=\"${MPIF90}\" MACHINE=${CLUSTER}";
+TEST_EXECUTABLE_HYB=${EXECNAME}hyb3d
 
 for MPI_PROC in "${MPI_PROC_LIST[@]}"; do
    for OMP_THREADS in "${OMP_THREAD_LIST[@]}"; do
@@ -307,18 +307,18 @@ for MPI_PROC in "${MPI_PROC_LIST[@]}"; do
       if (( $OMP_THREADS == 0 )); then
          if (( $MPI_PROC == 0 )); then
             # compile serial
-            C_SERIAL=1
+            C_SERIAL=true;
          else
             # compile MPI-only
-            C_MPI=0;
+            C_MPI=true;
          fi
       else
          if (( $MPI_PROC == 0 )); then
             # compile OpenMP-only
-            C_OPENMP=1
+            C_OPENMP=true;
          else
             # compile MPI+OpenMP hybrid
-            C_HYBRID=0;
+            C_HYBRID=true;
          fi
       fi
    done
@@ -375,29 +375,33 @@ for ((i=0;i<$ntests;i++)); do
       NTASKS_PER_NODE=1
       CPUS_PER_TASK=1
       JOB_NAME=compile
-      TEST_TIME="00:20:00"
+      TEST_TIME="00:15:00"
       # write SBATCH parameters block for current cluster
       source ${CLUSTER_DIR}/job_script_params.sh
       # append modules to load to jobscript
       cat $MODULES >> $OUTPUT_FILE
       # add compile commands
       if ${C_SERIAL}; then
-         make clean >> $LOGFILE 2>&1;
+	 echo "" >> $OUTPUT_FILE
+         echo "make clean >> $LOGFILE 2>&1;"  >> $OUTPUT_FILE
          echo "Compiling in serial mode..."  >> $LOGFILE 2>&1;
          echo "$MAKESTRING_SER >> $LOGFILE 2>&1;"  >> $OUTPUT_FILE
       fi
       if ${C_MPI}; then
-         make clean >> $LOGFILE 2>&1;
+	 echo "" >> $OUTPUT_FILE
+         echo "make clean >> $LOGFILE 2>&1;"  >> $OUTPUT_FILE
          echo "Compiling in MPI-only mode..."  >> $LOGFILE 2>&1;
          echo "$MAKESTRING_MPI >> $LOGFILE 2>&1;"  >> $OUTPUT_FILE
       fi
       if ${C_OPENMP}; then
-         make clean >> $LOGFILE 2>&1;
+	 echo "" >> $OUTPUT_FILE
+         echo "make clean >> $LOGFILE 2>&1;"  >> $OUTPUT_FILE
          echo "Compiling in OpenMP-only mode..."  >> $LOGFILE 2>&1;
          echo "$MAKESTRING_OMP >> $LOGFILE 2>&1;"  >> $OUTPUT_FILE
       fi
       if ${C_HYBRID}; then
-         make clean >> $LOGFILE 2>&1;
+	 echo "" >> $OUTPUT_FILE
+         echo "make clean >> $LOGFILE 2>&1;"  >> $OUTPUT_FILE
          echo "Compiling in hybrid MPI+OpenMP mode..."  >> $LOGFILE 2>&1;
          echo "$MAKESTRING_HYB >> $LOGFILE 2>&1;"  >> $OUTPUT_FILE
       fi
@@ -470,22 +474,21 @@ for ((i=0;i<$ntests;i++)); do
       NBNODES=${NODES_LIST[c]}
       RESO=${RESO_LIST[c]}
 
-      for MPI_PROC in "${MPI_PROC_LIST[@]}"; do
 
-         for OMP_THREADS in "${OMP_THREAD_LIST[@]}"; do
-
-            # check which type of config and set the number of MPI processes
+      for OMP_THREADS in "${OMP_THREAD_LIST[@]}"; do
+         for MPI_PROC in "${MPI_PROC_LIST[@]}"; do
+            # Resolve special keyword BEFORE arithmetic
             if [[ "$MPI_PROC" == "max" ]]; then
-               if (( $OMP_THREADS == 0 )); then
+               if (( OMP_THREADS == 0 )); then
                   MPI_PROC=$CLUSTER_CORES_PER_NODE
                else
-                  # remark: integer division
-                  MPI_PROC=$(($CLUSTER_CORES_PER_NODE / $OMP_THREADS))
+                  MPI_PROC=$(( CLUSTER_CORES_PER_NODE / OMP_THREADS ))
                fi
             fi
 
-            if (( $OMP_THREADS == 0 )); then
-               if (( $MPI_PROC == 0 )); then
+            # check which type of config and set the number of MPI processes
+            if (( OMP_THREADS == 0 )); then
+               if (( MPI_PROC == 0 )); then
                   # serial
                   THIS_EXEC=$TEST_EXECUTABLE_SER
                   NTASKS_PER_NODE=1
@@ -496,7 +499,7 @@ for ((i=0;i<$ntests;i++)); do
                fi
                CPUS_PER_TASK=1
             else
-               if (( $MPI_PROC == 0 )); then
+               if (( MPI_PROC == 0 )); then
                   # OpenMP-only
                   THIS_EXEC=$TEST_EXECUTABLE_OMP
                   NTASKS_PER_NODE=1
@@ -517,7 +520,7 @@ for ((i=0;i<$ntests;i++)); do
             fi
 
             # make subdirectory
-            RUN_DIR=${RESO}_nodes${NBNODES}_cores${CORES_PER_NODE}_mpi${MPI_PROC}_omp${OMP_THREADS}
+            RUN_DIR=reso${RESO}_nodes${NBNODES}_cores${CORES_PER_NODE}_mpi${MPI_PROC}_omp${OMP_THREADS}
             mkdir -p ${RUN_DIR} >> $LOGFILE 2>&1;
             cd ${RUN_DIR}
 
@@ -528,7 +531,7 @@ for ((i=0;i<$ntests;i++)); do
 
             # create job script by combining job params, modules and run command
             OUTPUT_FILE="job.sh"
-            if (( $MPI_PROC == 0 )); then
+            if (( MPI_PROC == 0 )); then
                COMMANDSTRING="./${THIS_EXEC} ${TEST_NAMELIST} > run_\${DATE}_\${SLURM_JOBID}.log"
             else
                COMMANDSTRING="$(eval echo ${RUN_COMMAND}) ./${THIS_EXEC} ${TEST_NAMELIST} > run_\${DATE}_\${SLURM_JOBID}.log"
@@ -548,10 +551,10 @@ for ((i=0;i<$ntests;i++)); do
 
             # launch job multiple times
             for iter in $(seq $ITERS); do
-               SUBMIT_MESSAGE=$(sbatch job.sh)
-               STRINGARRAY=($SUBMIT_MESSAGE)
-               JOB_ID=${STRINGARRAY[-1]}
-               echo "Launched benchmark ${TEST_NAME} on ${NBNODES} nodes with ${OMP_THREADS} threads [JOB ID ${JOB_ID}]" | tee -a $LOGFILE;
+               #SUBMIT_MESSAGE=$(sbatch job.sh)
+               #STRINGARRAY=($SUBMIT_MESSAGE)
+               #JOB_ID=${STRINGARRAY[-1]}
+               echo "Launched ${TEST_NAME} on ${NBNODES} nodes with ${MPI_PROC} procs/node and ${OMP_THREADS} threads/proc [JOB ID ${JOB_ID}]" | tee -a $LOGFILE;
             done
             cd ..
          done
