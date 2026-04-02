@@ -403,6 +403,7 @@ for ((i=0;i<$ntests;i++)); do
       RESO=${RESO_LIST[c]}
 
       for CORES_PER_NODE in "${CORES_PER_NODE_LIST[@]}"; do
+         echo $CORES_PER_NODE
 
          for OMP_THREADS in "${OMP_THREAD_LIST[@]}"; do
 
