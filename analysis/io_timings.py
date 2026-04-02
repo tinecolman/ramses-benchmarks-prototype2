@@ -25,12 +25,22 @@ def get_info_from_benchmark_dir_name(benchmark_dir):
 
 ''' Dissect name of the benchmark configuration subdirectory:
     nodes<N>_<resolution>_omp<threads> '''
-def get_info_from_subdir_name(subdir):
-    [nodes, reso, omp] = subdir.split('_')
-    nodes = int(nodes[5:])
-    reso = reso[4:]
-    omp = omp[3:]
-    return nodes, reso, omp
+def get_info_from_subdir_name(subdir, version=2):
+    if version==1:
+        # nodes<N>_reso<resolution>_omp<threads>
+        [nodes, reso, omp] = subdir.split('_')
+        nodes = int(nodes[5:])
+        reso = reso[4:]
+        omp = omp[3:]
+        mpi = "max"
+    else:
+        # reso<resolution>_nodes<N>_mpi<tasks/node>_omp<threads/task>
+        [reso, nodes, mpi, omp] = subdir.split('_')
+        nodes = int(nodes[5:])
+        reso = reso[4:]
+        omp = omp[3:]
+        mpi = mpi[3:]
+    return reso, nodes, mpi, omp
 
 # -------- Reading ramses logs --------
 
@@ -105,7 +115,7 @@ def read_timers_miniramses(logfile):
 # -------- database IO -----------
 
 ''' Load benchmark results for a specified test '''
-def add_data(data, benchmark_dir, test_name, which='total', omp_nthr=None, version='ramses'):
+def add_data(data, benchmark_dir, test_name, which='total', omp_nthr=None, version='ramses', cpu_per_node=128):
     branch, commit = get_info_from_benchmark_dir_name(benchmark_dir)
 
     data_dir = benchmark_dir+'/'+test_name
@@ -117,13 +127,16 @@ def add_data(data, benchmark_dir, test_name, which='total', omp_nthr=None, versi
     for item in os.listdir(data_dir):
         name = os.path.join(data_dir, item)
         if os.path.isdir(name) and item.startswith('nodes'):
-            nodes, reso, omp = get_info_from_subdir_name(item)
+            reso, nodes, mpi, omp = get_info_from_subdir_name(item)
+            if mpi=="max":
+                mpi = cpu_per_node
             total_times = get_timings_from_log(name, which, version)
             new_entry = {
                 "branch": branch,
                 "commit": commit,
                 "nodes": int(nodes),
                 "resolution": reso,
+                "mpi_procs_per_node": int(mpi),
                 "omp_threads": int(omp),
                 "timings": total_times
             }

@@ -19,6 +19,8 @@
 #       ./launch_benchmark_suite.sh -n 40
 #   -l: set a list of which number of nodes to use
 #       ./launch_benchmark_suite.sh -l "1 2 4"
+#   -r: set the number of cores used per node, allows to use partial nodes
+#       ./launch_benchmark_suite.sh -r "1 32 64 128"
 #   -m: run with openmp with different number of omp threads (code will be compiled with OpenMP!)
 #       ./launch_benchmark_suite.sh -m "1 2 4 8 16"
 #   -i: how many runs to launch of a benchmark, to take the average time (default 3)
@@ -45,9 +47,10 @@ WEAKSCALING=false
 DELDATA=true;
 OPENMP=0;
 OMP_THREAD_LIST="0"
+CORES_PER_NODE_LIST="max"
 ITERS=1
 USE_MINIRAMSES=false;
-while getopts "c:a:h:t:wn:l:m:i:dv" OPTION; do
+while getopts "c:a:h:t:wn:l:r:m:i:dv" OPTION; do
    case $OPTION in
       c)
          CLUSTER=$OPTARG;
@@ -66,11 +69,14 @@ while getopts "c:a:h:t:wn:l:m:i:dv" OPTION; do
          NODESMAX=$OPTARG;
       ;;
       l)
-         NODELIST=($OPTARG);
+         NODELIST=($OPTARG);   # Convert input string into an array
+      ;;
+      r)
+         CORES_PER_NODE_LIST=($OPTARG);
       ;;
       m)
          OPENMP=1;
-         OMP_THREAD_LIST=($OPTARG);  # Convert input string into an array
+         OMP_THREAD_LIST=($OPTARG);
       ;;
       i)
          ITERS=$OPTARG;
@@ -192,6 +198,12 @@ fi
 set -e
 mkdir -p ${BENCHMARK_DIR} >> $LOGFILE 2>&1;
 set +e
+
+# if number of cores per ndoe was not set explicitly with -r, use the full node
+if [[ "$CORES_PER_NODE_LIST" == "max" ]]; then
+   CORES_PER_NODE_LIST="$CLUSTER_CORES_PER_NODE"
+fi
+
 
 #######################################################################
 # Generate list of tests by scanning directory
@@ -390,56 +402,59 @@ for ((i=0;i<$ntests;i++)); do
       NBNODES=${NODES_LIST[c]}
       RESO=${RESO_LIST[c]}
 
-      for OMP_THREADS in "${OMP_THREAD_LIST[@]}"; do
+      for CORES_PER_NODE in "${CORES_PER_NODE_LIST[@]}"; do
 
-         # set the number of MPI processes and OpenMP threads
-         if (( $OMP_THREADS != 0 && $CLUSTER_CORES_PER_NODE % OMP_THREADS != 0 )); then
-            echo "Skipping OMP_THREADS=${OMP_THREADS} (not divisible into ${CLUSTER_CORES_PER_NODE} cores)."
-            continue
-         fi
-         if (( $OMP_THREADS != 0 )); then
-            NTASKS_PER_NODE=$(($CLUSTER_CORES_PER_NODE / $OMP_THREADS))
-            CPUS_PER_TASK=$OMP_THREADS
-         else
-            NTASKS_PER_NODE=$CLUSTER_CORES_PER_NODE
-            CPUS_PER_TASK=1
-         fi
-         NUMPROCS=$(($NBNODES * $NTASKS_PER_NODE)) 
+         for OMP_THREADS in "${OMP_THREAD_LIST[@]}"; do
 
-         # make subdirectory
-         RUN_DIR=nodes${NBNODES}_reso${RESO}_omp${OMP_THREADS}
-         mkdir -p ${RUN_DIR} >> $LOGFILE 2>&1;
-         cd ${RUN_DIR}
+            # set the number of MPI processes and OpenMP threads
+            if (( $OMP_THREADS != 0 && $CORES_PER_NODE % OMP_THREADS != 0 )); then
+               echo "Skipping OMP_THREADS=${OMP_THREADS} (not divisible into ${CORES_PER_NODE} cores)."
+               continue
+            fi
+            if (( $OMP_THREADS != 0 )); then
+               NTASKS_PER_NODE=$(($CORES_PER_NODE / $OMP_THREADS))
+               CPUS_PER_TASK=$OMP_THREADS
+            else
+               NTASKS_PER_NODE=$CORES_PER_NODE
+               CPUS_PER_TASK=1
+            fi
+            NUMPROCS=$(($NBNODES * $NTASKS_PER_NODE)) 
 
-         # Copy executable and input file   
-         cp ${RAMSES_BIN_DIR}/${EXECNAME}3d .
-         TEST_NAMELIST=${TEST_NAME}_${RESO}.nml
-         cp ${RAMSES_BENCHMARK_DIR}/${testname[n]}/${TEST_NAMELIST} .
+            # make subdirectory
+            RUN_DIR=reso${RESO}_nodes${NBNODES}_mpi${NTASKS_PER_NODE}_omp${OMP_THREADS}
+            mkdir -p ${RUN_DIR} >> $LOGFILE 2>&1;
+            cd ${RUN_DIR}
 
-         # create job script by combining job params, modules and run command
-         OUTPUT_FILE="job.sh"
-         COMMANDSTRING="$(eval echo ${RUN_COMMAND}) ./${TEST_EXECUTABLE} ${TEST_NAMELIST} > run_\${DATE}_\${SLURM_JOBID}.log"
-         source ${RAMSES_BENCHMARK_DIR}/HPCclusters/${CLUSTER}/job_script_params.sh
-         # add the date, which is used to add the execution timestamp to the name of the log-file of the simulation.
-         echo "export DATE=\$(date +%F_%Hh%M)" >> "$OUTPUT_FILE"
-         if (( $OMP_THREADS != 0 )); then
-            echo "export OMP_NUM_THREADS=$OMP_THREADS" >> "$OUTPUT_FILE"
-            #echo "export OMP_PLACES=cores" >> "$OUTPUT_FILE"
-            #echo "export OMP_PROC_BIND=true" >> "$OUTPUT_FILE"
-            echo "export OMP_STACKSIZE=2048M" >> "$OUTPUT_FILE"
-         fi
-         cat $MODULES >> $OUTPUT_FILE
-         echo "" >> "$OUTPUT_FILE"
-         echo "$COMMANDSTRING" >> "$OUTPUT_FILE"
+            # Copy executable and input file   
+            cp ${RAMSES_BIN_DIR}/${EXECNAME}3d .
+            TEST_NAMELIST=${TEST_NAME}_${RESO}.nml
+            cp ${RAMSES_BENCHMARK_DIR}/${testname[n]}/${TEST_NAMELIST} .
 
-         # launch job multiple times
-         for iter in $(seq $ITERS); do
-            SUBMIT_MESSAGE=$(sbatch job.sh)
-            STRINGARRAY=($SUBMIT_MESSAGE)
-            JOB_ID=${STRINGARRAY[-1]}
-            echo "Launched benchmark ${TEST_NAME} on ${NBNODES} nodes with ${OMP_THREADS} threads [JOB ID ${JOB_ID}]" | tee -a $LOGFILE;
+            # create job script by combining job params, modules and run command
+            OUTPUT_FILE="job.sh"
+            COMMANDSTRING="$(eval echo ${RUN_COMMAND}) ./${TEST_EXECUTABLE} ${TEST_NAMELIST} > run_\${DATE}_\${SLURM_JOBID}.log"
+            source ${RAMSES_BENCHMARK_DIR}/HPCclusters/${CLUSTER}/job_script_params.sh
+            # add the date, which is used to add the execution timestamp to the name of the log-file of the simulation.
+            echo "export DATE=\$(date +%F_%Hh%M)" >> "$OUTPUT_FILE"
+            if (( $OMP_THREADS != 0 )); then
+               echo "export OMP_NUM_THREADS=$OMP_THREADS" >> "$OUTPUT_FILE"
+               #echo "export OMP_PLACES=cores" >> "$OUTPUT_FILE"
+               #echo "export OMP_PROC_BIND=true" >> "$OUTPUT_FILE"
+               echo "export OMP_STACKSIZE=2048M" >> "$OUTPUT_FILE"
+            fi
+            cat $MODULES >> $OUTPUT_FILE
+            echo "" >> "$OUTPUT_FILE"
+            echo "$COMMANDSTRING" >> "$OUTPUT_FILE"
+
+            # launch job multiple times
+            for iter in $(seq $ITERS); do
+               SUBMIT_MESSAGE=$(sbatch job.sh)
+               STRINGARRAY=($SUBMIT_MESSAGE)
+               JOB_ID=${STRINGARRAY[-1]}
+               echo "Launched benchmark ${TEST_NAME} on ${NBNODES} nodes with ${OMP_THREADS} threads [JOB ID ${JOB_ID}]" | tee -a $LOGFILE;
+            done
+            cd ..
          done
-         cd ..
       done
    done
 
