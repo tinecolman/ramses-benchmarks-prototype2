@@ -19,7 +19,7 @@
 #       ./launch_benchmark_suite.sh -n 40
 #   -l: set a list of which number of nodes to use
 #       ./launch_benchmark_suite.sh -l "1 2 4"
-#   -r: set the number of cores used per node, allows to use partial nodes
+#   -p: set the number of MPI processes used per node, allows to use partial nodes (0=no MPI)
 #       ./launch_benchmark_suite.sh -r "1 32 64 128"
 #   -m: run with openmp with different number of omp threads (code will be compiled with OpenMP!)
 #       ./launch_benchmark_suite.sh -m "1 2 4 8 16"
@@ -45,12 +45,12 @@ CLUSTER_ALLOCATION_ID="none"
 SELECTTEST=false;
 WEAKSCALING=false
 DELDATA=true;
-OPENMP=0;
+MPI_PROC_LIST="max"
 OMP_THREAD_LIST="0"
-CORES_PER_NODE_LIST="max"
 ITERS=1
 USE_MINIRAMSES=false;
-while getopts "c:a:h:t:wn:l:r:m:i:dv" OPTION; do
+COMPILE=true;
+while getopts "c:a:h:t:wn:l:p:m:i:dvs" OPTION; do
    case $OPTION in
       c)
          CLUSTER=$OPTARG;
@@ -71,11 +71,10 @@ while getopts "c:a:h:t:wn:l:r:m:i:dv" OPTION; do
       l)
          NODELIST=($OPTARG);   # Convert input string into an array
       ;;
-      r)
-         CORES_PER_NODE_LIST=($OPTARG);
+      p)
+         MPI_PROC_LIST=($OPTARG);
       ;;
       m)
-         OPENMP=1;
          OMP_THREAD_LIST=($OPTARG);
       ;;
       i)
@@ -86,6 +85,9 @@ while getopts "c:a:h:t:wn:l:r:m:i:dv" OPTION; do
       ;;
       v)
          USE_MINIRAMSES=true;
+      ;;
+      s)
+         COMPILE=false;
       ;;
    esac
 done
@@ -199,11 +201,6 @@ set -e
 mkdir -p ${BENCHMARK_DIR} >> $LOGFILE 2>&1;
 set +e
 
-# if number of cores per ndoe was not set explicitly with -r, use the full node
-if [[ "$CORES_PER_NODE_LIST" == "max" ]]; then
-   CORES_PER_NODE_LIST="$CLUSTER_CORES_PER_NODE"
-fi
-
 
 #######################################################################
 # Generate list of tests by scanning directory
@@ -276,6 +273,56 @@ else
    done
 fi
 
+#######################################################################
+# Check which types of configurations are requested
+#######################################################################
+
+C_SERIAL=0;
+MAKESTRING_SER="make EXEC=${EXECNAME}_ser COMPILER=${COMPILER_FLAVOR} MPI=0 OPENMP=0 MPIF90=\"${MPIF90}\" MACHINE=${CLUSTER}";
+TEST_EXECUTABLE_SER=${EXECNAME}_ser_3d
+
+C_MPI=0;
+MAKESTRING_MPI="make EXEC=${EXECNAME}_mpi COMPILER=${COMPILER_FLAVOR} MPI=1 OPENMP=0 MPIF90=\"${MPIF90}\" MACHINE=${CLUSTER}";
+TEST_EXECUTABLE_MPI=${EXECNAME}_mpi_3d
+
+C_OPENMP=0;
+MAKESTRING_OMP="make EXEC=${EXECNAME}_omp COMPILER=${COMPILER_FLAVOR} MPI=0 OPENMP=1 MPIF90=\"${MPIF90}\" MACHINE=${CLUSTER}";
+TEST_EXECUTABLE_OMP=${EXECNAME}_omp_3d
+
+C_HYBRID=0;
+MAKESTRING_HYB="make EXEC=${EXECNAME}_hyb COMPILER=${COMPILER_FLAVOR} MPI=1 OPENMP=1 MPIF90=\"${MPIF90}\" MACHINE=${CLUSTER}";
+TEST_EXECUTABLE_HYB=${EXECNAME}_hyb_3d
+
+for MPI_PROC in "${MPI_PROC_LIST[@]}"; do
+   for OMP_THREADS in "${OMP_THREAD_LIST[@]}"; do
+      if [[ "$MPI_PROC" == "max" ]]; then
+         if (( $OMP_THREADS == 0 )); then
+            MPI_PROC=$CLUSTER_CORES_PER_NODE
+         else
+            # remark: integer division
+            MPI_PROC=$(($CLUSTER_CORES_PER_NODE / $OMP_THREADS))
+         fi
+      fi
+
+      if (( $OMP_THREADS == 0 )); then
+         if (( $MPI_PROC == 0 )); then
+            # compile serial
+            C_SERIAL=1
+         else
+            # compile MPI-only
+            C_MPI=0;
+         fi
+      else
+         if (( $MPI_PROC == 0 )); then
+            # compile OpenMP-only
+            C_OPENMP=1
+         else
+            # compile MPI+OpenMP hybrid
+            C_HYBRID=0;
+         fi
+      fi
+   done
+done
 
 #######################################################################
 # Loop through all tests
@@ -305,54 +352,75 @@ for ((i=0;i<$ntests;i++)); do
    # Code compilation
    #------------------
 
-   # Read test configuration file
-   FLAGS=$(grep FLAGS ${RAMSES_BENCHMARK_DIR}/${testname[n]}/config.txt | cut -d ':' -f2);
+   if ${COMPILE}; then
+      # Read test configuration file
+      FLAGS=$(grep FLAGS ${RAMSES_BENCHMARK_DIR}/${testname[n]}/config.txt | cut -d ':' -f2);
 
-   # load modules
-   #source $MODULES >> $LOGFILE 2>&1
+      # Construct the make command for compilation (pass options to it)
+      set -e
 
-   # Construct the make command for compilation (pass options to it)
-   set -e
-   MAKESTRING="make EXEC=${EXECNAME} COMPILER=${COMPILER_FLAVOR} MPI=1 OPENMP=${OPENMP} MPIF90=\"${MPIF90}\" MACHINE=${CLUSTER} ${FLAGS}";
-   TEST_EXECUTABLE=${EXECNAME}3d
+      # add test specific compiler flags
+      MAKESTRING_SER="${MAKESTRING_SER} ${FLAGS}";
+      MAKESTRING_MPI="${MAKESTRING_MPI} ${FLAGS}";
+      MAKESTRING_OMP="${MAKESTRING_OMP} ${FLAGS}";
+      MAKESTRING_HYB="${MAKESTRING_HYB} ${FLAGS}";
 
-   cd ${RAMSES_BIN_DIR};
-   make clean >> $LOGFILE 2>&1;
+      cd ${RAMSES_BIN_DIR};
 
-   # write a job script to compile the code
-   # name of the job script file
-   OUTPUT_FILE="compile_job.sh"
-   # set jobscript params
-   NBNODES=1
-   NTASKS_PER_NODE=1
-   CPUS_PER_TASK=1
-   JOB_NAME=compile
-   TEST_TIME="00:05:00"
-   # write SBATCH parameters block for current cluster
-   source ${CLUSTER_DIR}/job_script_params.sh
-   # append modules to load to jobscript
-   cat $MODULES >> $OUTPUT_FILE
-   # add compile command
-   echo "$MAKESTRING >> $LOGFILE 2>&1;"  >> $OUTPUT_FILE
-
-   # submit the job script and wait until compilation is done
-   compile_job_id=$(sbatch compile_job.sh | awk '{print $4}')
-   echo "Compile job submitted with Job ID: $compile_job_id"
-   echo "Waiting for compile job to finish..."
-   # Poll the job status and wait until it's completed
-   while true; do
-      job_status=$(sacct --jobs=$compile_job_id --noheader --format=JobID,State | awk -v job_id="$compile_job_id" '$1 == job_id {print $2}')
-      if [[ "$job_status" == "COMPLETED" ]]; then
-         echo "Compile job completed successfully."
-         break
-      elif [[ "$job_status" == "FAILED" || "$job_status" == "CANCELLED" ]]; then
-         echo "Compile job failed or was cancelled. Exiting..."
-         exit 1
+      # write a job script to compile the code
+      # name of the job script file
+      OUTPUT_FILE="compile_job.sh"
+      # set jobscript params
+      NBNODES=1
+      NTASKS_PER_NODE=1
+      CPUS_PER_TASK=1
+      JOB_NAME=compile
+      TEST_TIME="00:20:00"
+      # write SBATCH parameters block for current cluster
+      source ${CLUSTER_DIR}/job_script_params.sh
+      # append modules to load to jobscript
+      cat $MODULES >> $OUTPUT_FILE
+      # add compile commands
+      if ${C_SERIAL}; then
+         make clean >> $LOGFILE 2>&1;
+         echo "Compiling in serial mode..."  >> $LOGFILE 2>&1;
+         echo "$MAKESTRING_SER >> $LOGFILE 2>&1;"  >> $OUTPUT_FILE
       fi
-      # Sleep for a while before checking the status again
-      sleep 15
-   done
-   set +e
+      if ${C_MPI}; then
+         make clean >> $LOGFILE 2>&1;
+         echo "Compiling in MPI-only mode..."  >> $LOGFILE 2>&1;
+         echo "$MAKESTRING_MPI >> $LOGFILE 2>&1;"  >> $OUTPUT_FILE
+      fi
+      if ${C_OPENMP}; then
+         make clean >> $LOGFILE 2>&1;
+         echo "Compiling in OpenMP-only mode..."  >> $LOGFILE 2>&1;
+         echo "$MAKESTRING_OMP >> $LOGFILE 2>&1;"  >> $OUTPUT_FILE
+      fi
+      if ${C_HYBRID}; then
+         make clean >> $LOGFILE 2>&1;
+         echo "Compiling in hybrid MPI+OpenMP mode..."  >> $LOGFILE 2>&1;
+         echo "$MAKESTRING_HYB >> $LOGFILE 2>&1;"  >> $OUTPUT_FILE
+      fi
+
+      # submit the job script and wait until compilation is done
+      compile_job_id=$(sbatch compile_job.sh | awk '{print $4}')
+      echo "Compile job submitted with Job ID: $compile_job_id"
+      echo "Waiting for compile job to finish..."
+      # Poll the job status and wait until it's completed
+      while true; do
+         job_status=$(sacct --jobs=$compile_job_id --noheader --format=JobID,State | awk -v job_id="$compile_job_id" '$1 == job_id {print $2}')
+         if [[ "$job_status" == "COMPLETED" ]]; then
+            echo "Compile job completed successfully."
+            break
+         elif [[ "$job_status" == "FAILED" || "$job_status" == "CANCELLED" ]]; then
+            echo "Compile job failed or was cancelled. Exiting..."
+            exit 1
+         fi
+         # Sleep for a while before checking the status again
+         sleep 15
+      done
+      set +e
+   fi
 
    #------------------------------------------------------------
    # Setup scratch benchmark directory and benchmark parameters
@@ -402,42 +470,69 @@ for ((i=0;i<$ntests;i++)); do
       NBNODES=${NODES_LIST[c]}
       RESO=${RESO_LIST[c]}
 
-      for CORES_PER_NODE in "${CORES_PER_NODE_LIST[@]}"; do
-         echo $CORES_PER_NODE
+      for MPI_PROC in "${MPI_PROC_LIST[@]}"; do
 
          for OMP_THREADS in "${OMP_THREAD_LIST[@]}"; do
 
-            # set the number of MPI processes and OpenMP threads
-            if [ ${OMP_THREADS} -gt ${CORES_PER_NODE} ]; then
-               echo "Skipping OMP_THREADS=${OMP_THREADS} > ${CORES_PER_NODE} cores per node)."
-               continue
+            # check which type of config and set the number of MPI processes
+            if [[ "$MPI_PROC" == "max" ]]; then
+               if (( $OMP_THREADS == 0 )); then
+                  MPI_PROC=$CLUSTER_CORES_PER_NODE
+               else
+                  # remark: integer division
+                  MPI_PROC=$(($CLUSTER_CORES_PER_NODE / $OMP_THREADS))
+               fi
             fi
-            if (( $OMP_THREADS != 0 && $CORES_PER_NODE % OMP_THREADS != 0 )); then
-               echo "Skipping OMP_THREADS=${OMP_THREADS} (not divisible into ${CORES_PER_NODE} cores)."
-               continue
-            fi
-            if (( $OMP_THREADS != 0 )); then
-               NTASKS_PER_NODE=$(($CORES_PER_NODE / $OMP_THREADS))
-               CPUS_PER_TASK=$OMP_THREADS
-            else
-               NTASKS_PER_NODE=$CORES_PER_NODE
+
+            if (( $OMP_THREADS == 0 )); then
+               if (( $MPI_PROC == 0 )); then
+                  # serial
+                  THIS_EXEC=$TEST_EXECUTABLE_SER
+                  NTASKS_PER_NODE=1
+               else
+                  # MPI-only
+                  THIS_EXEC=$TEST_EXECUTABLE_MPI
+                  NTASKS_PER_NODE=$MPI_PROC
+               fi
                CPUS_PER_TASK=1
+            else
+               if (( $MPI_PROC == 0 )); then
+                  # OpenMP-only
+                  THIS_EXEC=$TEST_EXECUTABLE_OMP
+                  NTASKS_PER_NODE=1
+               else
+                  # hybrid MPI+OpenMP
+                  THIS_EXEC=$TEST_EXECUTABLE_HYB
+                  NTASKS_PER_NODE=$MPI_PROC
+               fi
+               CPUS_PER_TASK=$OMP_THREADS
             fi
-            NUMPROCS=$(($NBNODES * $NTASKS_PER_NODE)) 
+
+            CORES_PER_NODE=$(($NTASKS_PER_NODE * $CPUS_PER_TASK))
+            NUMPROCS=$(($NBNODES * $NTASKS_PER_NODE))
+
+            # skip invalid configs
+            if [ ${CORES_PER_NODE} -gt ${CLUSTER_CORES_PER_NODE} ]; then
+               continue
+            fi
 
             # make subdirectory
-            RUN_DIR=reso${RESO}_nodes${NBNODES}_mpi${NTASKS_PER_NODE}_omp${OMP_THREADS}
+            RUN_DIR=${RESO}_nodes${NBNODES}_cores${CORES_PER_NODE}_mpi${MPI_PROC}_omp${OMP_THREADS}
             mkdir -p ${RUN_DIR} >> $LOGFILE 2>&1;
             cd ${RUN_DIR}
 
-            # Copy executable and input file   
-            cp ${RAMSES_BIN_DIR}/${EXECNAME}3d .
+            # Copy executable and input file
+            cp ${RAMSES_BIN_DIR}/${THIS_EXEC} .
             TEST_NAMELIST=${TEST_NAME}_${RESO}.nml
             cp ${RAMSES_BENCHMARK_DIR}/${testname[n]}/${TEST_NAMELIST} .
 
             # create job script by combining job params, modules and run command
             OUTPUT_FILE="job.sh"
-            COMMANDSTRING="$(eval echo ${RUN_COMMAND}) ./${TEST_EXECUTABLE} ${TEST_NAMELIST} > run_\${DATE}_\${SLURM_JOBID}.log"
+            if (( $MPI_PROC == 0 )); then
+               COMMANDSTRING="./${THIS_EXEC} ${TEST_NAMELIST} > run_\${DATE}_\${SLURM_JOBID}.log"
+            else
+               COMMANDSTRING="$(eval echo ${RUN_COMMAND}) ./${THIS_EXEC} ${TEST_NAMELIST} > run_\${DATE}_\${SLURM_JOBID}.log"
+            fi
             source ${RAMSES_BENCHMARK_DIR}/HPCclusters/${CLUSTER}/job_script_params.sh
             # add the date, which is used to add the execution timestamp to the name of the log-file of the simulation.
             echo "export DATE=\$(date +%F_%Hh%M)" >> "$OUTPUT_FILE"
@@ -491,6 +586,6 @@ if ${DELDATA} ; then
    done
    cd ${RAMSES_BIN_DIR};
    make clean >> $LOGFILE 2>&1;
-   rm -f ${EXECNAME}*d;
+   #rm -f ${EXECNAME}*d;
 fi
 
