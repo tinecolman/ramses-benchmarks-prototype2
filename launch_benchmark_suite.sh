@@ -407,7 +407,7 @@ for ((i=0;i<$ntests;i++)); do
          for OMP_THREADS in "${OMP_THREAD_LIST[@]}"; do
 
             # set the number of MPI processes and OpenMP threads
-            if (( $OMP_THREADS -gt $CORES_PER_NODE )); then
+            if [ ${OMP_THREADS} -gt ${CORES_PER_NODE} ]; then
                echo "Skipping OMP_THREADS=${OMP_THREADS} > ${CORES_PER_NODE} cores per node)."
                continue
             fi
