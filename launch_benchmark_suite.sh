@@ -407,6 +407,10 @@ for ((i=0;i<$ntests;i++)); do
          for OMP_THREADS in "${OMP_THREAD_LIST[@]}"; do
 
             # set the number of MPI processes and OpenMP threads
+            if (( $OMP_THREADS -gt $CORES_PER_NODE )); then
+               echo "Skipping OMP_THREADS=${OMP_THREADS} > ${CORES_PER_NODE} cores per node)."
+               continue
+            fi
             if (( $OMP_THREADS != 0 && $CORES_PER_NODE % OMP_THREADS != 0 )); then
                echo "Skipping OMP_THREADS=${OMP_THREADS} (not divisible into ${CORES_PER_NODE} cores)."
                continue
