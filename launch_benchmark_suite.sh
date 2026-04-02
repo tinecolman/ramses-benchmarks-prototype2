@@ -551,9 +551,9 @@ for ((i=0;i<$ntests;i++)); do
 
             # launch job multiple times
             for iter in $(seq $ITERS); do
-               #SUBMIT_MESSAGE=$(sbatch job.sh)
-               #STRINGARRAY=($SUBMIT_MESSAGE)
-               #JOB_ID=${STRINGARRAY[-1]}
+               SUBMIT_MESSAGE=$(sbatch job.sh)
+               STRINGARRAY=($SUBMIT_MESSAGE)
+               JOB_ID=${STRINGARRAY[-1]}
                echo "Launched ${TEST_NAME} on ${NBNODES} nodes with ${MPI_PROC} procs/node and ${OMP_THREADS} threads/proc [JOB ID ${JOB_ID}]" | tee -a $LOGFILE;
             done
             cd ..
