@@ -26,6 +26,7 @@ def get_info_from_benchmark_dir_name(benchmark_dir):
 ''' Dissect name of the benchmark configuration subdirectory:
     nodes<N>_<resolution>_omp<threads> '''
 def get_info_from_subdir_name(subdir, version=2):
+    print(subdir)
     if version==1:
         # nodes<N>_reso<resolution>_omp<threads>
         [nodes, reso, omp] = subdir.split('_')
@@ -35,7 +36,7 @@ def get_info_from_subdir_name(subdir, version=2):
         mpi = "max"
     else:
         # reso<resolution>_nodes<N>_mpi<tasks/node>_omp<threads/task>
-        [reso, nodes, mpi, omp] = subdir.split('_')
+        [reso, nodes, cores, mpi, omp] = subdir.split('_')
         nodes = int(nodes[5:])
         reso = reso[4:]
         omp = omp[3:]
@@ -123,10 +124,12 @@ def add_data(data, benchmark_dir, test_name, which='total', omp_nthr=None, versi
     if(not os.path.isdir(data_dir)):
         return data
 
+    #TODO version dir name
+
     # list subdirectories in benchmark test
     for item in os.listdir(data_dir):
         name = os.path.join(data_dir, item)
-        if os.path.isdir(name) and item.startswith('nodes'):
+        if os.path.isdir(name) and item.startswith('reso'):
             reso, nodes, mpi, omp = get_info_from_subdir_name(item)
             if mpi=="max":
                 mpi = cpu_per_node
