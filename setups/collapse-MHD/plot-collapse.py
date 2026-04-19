@@ -33,7 +33,7 @@ for out, zoom, name in zip(outs, zooms, names):
     unit_l = data["data"]["unit_l"]
     dx = data["data"]["dx"] * unit_l / AU 
     rho  =  data["data"]["density"] * unit_d
-    time = int(data["data"]["time"] * unit_l / MYR)
+    time = int(data["data"]["time"] * unit_t / MYR)
     ax.set_title(f'{time} MYR')
 
     print('Max resolution = ', dx, 'AU')
