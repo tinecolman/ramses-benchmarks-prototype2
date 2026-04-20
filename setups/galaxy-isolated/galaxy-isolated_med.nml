@@ -29,8 +29,8 @@ initfile(1)='../../../ICs/galaxy-isolated'
 boxlen=100                 ! 100 kpc
 levelmin=7                 ! 100 kpc / 2^7  = 780 pc resolution
 levelmax=12                ! 100 kpc / 2^12 = 25 pc resolution
-ngridmax=1000000
-npartmax=5000000
+ngridtot=12000000
+nparttot=36000000
 /
 
 !&POISSON_PARAMS
