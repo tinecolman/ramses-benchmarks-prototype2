@@ -30,7 +30,7 @@ boxlen=100                 ! 100 kpc
 levelmin=7                 ! 100 kpc / 2^7  = 780 pc resolution
 levelmax=12                ! 100 kpc / 2^12 = 25 pc resolution
 ngridtot=12000000
-nparttot=36000000
+nparttot=50000000
 /
 
 !&POISSON_PARAMS
