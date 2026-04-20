@@ -11,6 +11,7 @@ As of 2025, we continuously assess the performance of RAMSES on various supercom
 * [SEDOV](setups/sedov/description.md): classic Sedov explosion in 3D
 * COSMO: dark matter-only cosmological box on a uniform grid
 * [GALAXY](setups/galaxy-agora/description.md): an isolated galaxy from the Agora comparison project
+* [COLLAPSE](setups/collapse-MHD/description.md): a star-forming collapsing core (variations: mhd)
 
 ## Benchmark results per cluster
 
@@ -19,7 +20,7 @@ As of 2025, we continuously assess the performance of RAMSES on various supercom
 | [LUMI](HPCclusters/lumi/cluster_description.md)               |
 | [Leonardo](HPCclusters/leonardo/cluster_description.md)       |
 | [MareNostrum](HPCclusters/marenostrum/cluster_description.md) |
-| [MeluXina](HPCclusters/meluxina/cluster_description.md)       | [SEDOV](results/results_meluxina.md) |
+| [MeluXina](HPCclusters/meluxina/cluster_description.md)       | [SEDOV](results/results_sedov_meluxina.md) | (results/results_collapse_meluxina.md) |
 | [Discoverer](HPCclusters/discoverer/cluster_description.md)   |
 | [Vega](HPCclusters/vega/cluster_description.md)               |
 | [Karolina](HPCclusters/karolina/cluster_description.md)       |

@@ -1,6 +1,4 @@
-# Benchmark results meluxina
-
-## SEDOV
+# SEDOV benchmark results on MeluXina
 
 
 Strong scaling             |  Weak scaling
