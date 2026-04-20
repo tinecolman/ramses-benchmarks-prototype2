@@ -71,6 +71,7 @@ sf_trelax=100.0			! Linearly relax SFR over 100 Myr
 sf_log_properties=.true.	! Log SF properties
 T2_star=100                     ! Cooling floor (in Kelvin)
 g_star=1			! T floor
+randomize_sf=.false.		! don't randomize SF for tests
 /
 
 &FEEDBACK_PARAMS
