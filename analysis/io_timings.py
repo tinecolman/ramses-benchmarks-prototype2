@@ -116,7 +116,7 @@ def read_timers_miniramses(logfile):
 # -------- database IO -----------
 
 ''' Load benchmark results for a specified test '''
-def add_data(data, benchmark_dir, test_name, which='total', omp_nthr=None, version='ramses', cpu_per_node=128):
+def add_data(data, benchmark_dir, test_name, which='total', omp_nthr=None, version='ramses', cpu_per_node=128, bench_version=2):
     branch, commit = get_info_from_benchmark_dir_name(benchmark_dir)
 
     data_dir = benchmark_dir+'/'+test_name
@@ -129,8 +129,12 @@ def add_data(data, benchmark_dir, test_name, which='total', omp_nthr=None, versi
     # list subdirectories in benchmark test
     for item in os.listdir(data_dir):
         name = os.path.join(data_dir, item)
-        if os.path.isdir(name) and item.startswith('reso'):
-            reso, nodes, mpi, omp = get_info_from_subdir_name(item)
+        if bench_version==1:
+            starter='nodes'
+        else:# bench_version==2:
+            starter='reso'
+        if os.path.isdir(name) and item.startswith(starter):
+            reso, nodes, mpi, omp = get_info_from_subdir_name(item,bench_version)
             if mpi=="max":
                 mpi = cpu_per_node
             total_times = get_timings_from_log(name, which, version)
