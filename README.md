@@ -8,10 +8,23 @@ As of 2025, we continuously assess the performance of RAMSES on various supercom
 
 ## Benchmark setups
 
+SPACE benchmarks
 * [SEDOV](setups/sedov/description.md): classic Sedov explosion in 3D
 * COSMO: dark matter-only cosmological box on a uniform grid
 * [GALAXY](setups/galaxy-agora/description.md): an isolated galaxy from the Agora comparison project
-* [COLLAPSE](setups/collapse-MHD/description.md): a star-forming collapsing core (variations: mhd)
+
+Simulation types
+* [COSMO] a large scale cosmological simulation, studying structure formation in the universe
+* [COSMO-ZOOM]
+* [GALAXY-MERGER]
+* [GALAXY-ISOLATED]
+* [GALAXY-AGORA]
+* [GALAXY-DWARF]
+* [ISM/GALBOX] a 1 kpc piece of a galaxy studying the interstellar medium
+* [CLOUD] a star forming cloud of size 50 pc
+* [CLUMP] a star forming clump of size 1 pc
+* [COLLAPSE](setups/collapse-MHD/description.md): a star forming collapsing core forming a single star of binary (variations: mhd)
+* [TURB]
 
 ## Benchmark results per cluster
 
