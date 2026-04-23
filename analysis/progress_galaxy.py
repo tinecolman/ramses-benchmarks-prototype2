@@ -62,12 +62,16 @@ if __name__ == '__main__':
     cluster='meluxina'
     test='galaxy-agora'
     timer='total'
-    reso='mediumres'
 
     data, mapping_commits = load_data(test, cluster, timer)
 
+    reso='mediumres'
     plot_mpi_omp_grid(data, reso, 
                       fig_name=f'mpi_omp_grid_{test}_{reso}_{cluster}.png',
                       show_overhead=False)
-
+    
+    reso='highres'
+    make_plot_openmp(data, reso='highres', arr_nodes=[1,2,4,8,16,32,64],
+                     outname='../results/images/scaling_openmp_'+test+'_'+cluster+'_'+timer+'.png')
+    make_table_openmp(data, reso='highres', arr_nodes=[1,2,4,8,16,32,64])
 
