@@ -1,5 +1,5 @@
-module load gmp/6
-#module load gmp/latest
+#module load gmp/6
+module load gmp/latest
 #module load mpfr/latest
 #module load mpc/latest
 #module load isl/latest
