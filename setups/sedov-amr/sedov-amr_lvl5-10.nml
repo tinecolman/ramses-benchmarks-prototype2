@@ -36,7 +36,7 @@ p_region=1e-5,0.4
 
 &OUTPUT_PARAMS
 noutput=1
-!foutput=100
+foutput=0
 tout=1d-2
 /
 
