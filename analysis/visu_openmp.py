@@ -23,6 +23,8 @@ def plot_mpi_omp_grid(data, reso, fig_name='mpi_omp_grid', show_overhead=False):
             continue
         mpi = entry["mpi_procs_per_node"]
         omp = entry["omp_threads"]
+        nodes = entry["nodes"]
+        mpi = nodes*mpi
 
         avg_time, err_min, err_max = process_times(entry["timings"])
         grid[(mpi, omp)].append(avg_time)
@@ -83,23 +85,30 @@ def plot_mpi_omp_grid(data, reso, fig_name='mpi_omp_grid', show_overhead=False):
     plt.savefig(fig_name, dpi=150)
 
 ''' Plot the strong scaling for MPI+OpenMP versus MPI-only'''
-def make_plot_openmp(data, reso, arr_nodes, outname='scaling_openmp.png', title=None):
+def make_plot_openmp(data, reso, arr_nodes, omp_thrds=[0,2,4,8], outname='scaling_openmp.png', title=None):
 
-    labels=['MPI only', 'MPI + 2 OpenMP','MPI + 4 OpenMP','MPI + 8 OpenMP', 'MPI + 16 OpenMP']
-    #labels=['MPI only']#, 'MPI + 4 OpenMP']
+    labels={0: 'MPI only',
+            2: 'MPI + 2 OpenMP',
+            4: 'MPI + 4 OpenMP',
+            8: 'MPI + 8 OpenMP',
+            16:'MPI + 16 OpenMP'}
 
     # create colors
     cmap = plt.get_cmap('Greens')
-    cNorm  = colorsx.Normalize(vmin=0.25, vmax=4.75)
-    colorVals = {}
-    colorVals = [(0.1,0.1,0.7)]
-    for val in [1,2,3,4]:
-        colorVals.append(cmap(cNorm(val)))
+    cNorm  = colorsx.Normalize(vmin=0.50, vmax=4.1)
+    colorVals = {0: (0.1,0.1,0.7, 1),
+                 2: cmap(cNorm(1)),
+                 4: cmap(cNorm(2)),
+                 8: cmap(cNorm(3)),
+                 16:cmap(cNorm(4))}
+
+    print('DEBUG', colorVals)
 
     fig, axes = plt.subplots(nrows=1, ncols=1, figsize=(4.5,4.5))
 
     ref_value = 1
-    for omp,lab,col in zip([0,2,4,8,16],labels,colorVals):
+    mynodes = []
+    for omp in omp_thrds:
         times = []
         for nodes in arr_nodes:
             for entry in data:
@@ -114,7 +123,10 @@ def make_plot_openmp(data, reso, arr_nodes, outname='scaling_openmp.png', title=
                 times.append(float(time))
                 if omp==0 and nodes==1:
                     ref_value=float(time)
-        axes.plot(arr_nodes,ref_value/np.array(times),label=lab,color=col,marker='o',markersize=3)
+            
+                if len(times)>0:
+                    mynodes.append(nodes)
+        axes.plot(mynodes,ref_value/np.array(times),label=labels[omp],color=colorVals[omp],marker='o',markersize=3)
 
     axes.plot(arr_nodes,arr_nodes,color='black',lw=1,ls='--')
 
