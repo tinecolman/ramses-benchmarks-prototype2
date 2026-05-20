@@ -102,13 +102,11 @@ def make_plot_openmp(data, reso, arr_nodes, omp_thrds=[0,2,4,8], outname='scalin
                  8: cmap(cNorm(3)),
                  16:cmap(cNorm(4))}
 
-    print('DEBUG', colorVals)
-
     fig, axes = plt.subplots(nrows=1, ncols=1, figsize=(4.5,4.5))
 
     ref_value = 1
-    mynodes = []
     for omp in omp_thrds:
+        mynodes = []
         times = []
         for nodes in arr_nodes:
             for entry in data:
@@ -119,13 +117,12 @@ def make_plot_openmp(data, reso, arr_nodes, omp_thrds=[0,2,4,8], outname='scalin
                 if entry['omp_threads']!=omp:
                     continue
                 # reduce time data
-                time, error_min, error_max = process_times(entry['timings'])
-                times.append(float(time))
-                if omp==0 and nodes==1:
-                    ref_value=float(time)
-            
-                if len(times)>0:
+                if len(entry['timings'])>0:
+                    time, error_min, error_max = process_times(entry['timings'])
+                    times.append(float(time))
                     mynodes.append(nodes)
+                    if omp==0 and nodes==1:
+                        ref_value=float(time)
         axes.plot(mynodes,ref_value/np.array(times),label=labels[omp],color=colorVals[omp],marker='o',markersize=3)
 
     axes.plot(arr_nodes,arr_nodes,color='black',lw=1,ls='--')
