@@ -10,7 +10,7 @@
 #   -c: (mandatory) specify on which cluster you are
 #       ./launch_benchmark_suite.sh -c meluxina
 #   -t: select setup
-#       ./launch_benchmark_suite.sh -t 2
+#       ./launch_benchmark_suite.sh -t sedov
 #   -a: specify allocation ID
 #       ./launch_benchmark_suite.sh -a EUR123456
 #   -l: set a list of which number of nodes to use
@@ -37,9 +37,9 @@ MINI_RAMSES_SOURCE_DIR="$HOME/mini-ramses";
 NODESMAX=4
 NODELIST="0"
 RESO_LIST=""
+TEST_NAME=""
 CLUSTER=default;
 CLUSTER_ALLOCATION_ID="none"
-SELECTTEST=false;
 DELDATA=true;
 MPI_PROC_LIST="max"
 OMP_THREAD_LIST="0"
@@ -55,8 +55,7 @@ while getopts "c:a:h:t:wn:l:r:p:m:i:dvs" OPTION; do
          CLUSTER_ALLOCATION_ID=$OPTARG;
       ;;
       t)
-         SELECTTEST=true;
-         TESTNUMBER=$OPTARG;
+         TEST_NAME=$OPTARG;
       ;;
       n)
          NODESMAX=$OPTARG;
@@ -206,51 +205,7 @@ else
    SETUPS_DIR="setups";
 fi
 
-# list subdirectories of setups base directory, which contain individual tests
-testlist="${SETUPS_DIR}/*";
-
-# Count number of tests
-testname=( $testlist );
-ntests_all=${#testname[@]};
-all_tests_ok=true;
-
-if $SELECTTEST ; then
-   # Split test selection with commas
-   s1=$(echo $TESTNUMBER | sed 's/,/ /g');
-   testsegs=( $s1 );
-   nseg=${#testsegs[@]};
-
-   ntests=0;
-   # Search for dashes in individual segments
-   for ((n=0;n<$nseg;n++)); do
-      # No dash, just include test in list
-      if [ ${testsegs[n]} -gt 0 ] && [ ${testsegs[n]} -le ${ntests_all} ] ; then
-         testnum[${ntests}]=$((${testsegs[n]} - 1));
-         ntests=$((ntests + 1));
-      else
-         echo "Selected test ${testsegs[n]} does not exist! Ignoring test" | tee -a $LOGFILE;
-      fi
-   done
-
-else
-   # Include all tests by default
-   for ((n=0;n<$ntests_all;n++)); do
-      testnum[n]=$n;
-   done
-   ntests=$ntests_all
-fi
-
-# Write list of tests
-echo "Will launch the following benchmarks:" | tee -a $LOGFILE;
-for ((i=0;i<$ntests;i++)); do
-   n=${testnum[i]};
-   j=$(($n + 1));
-   if [ $j -lt 10 ] ; then
-      echo " [ ${j}] ${testname[n]}" | tee -a $LOGFILE;
-   else
-      echo " [${j}] ${testname[n]}" | tee -a $LOGFILE;
-   fi
-done
+echo "Will launch the following benchmark: ${TEST_NAME}" | tee -a $LOGFILE;
 echo $line | tee -a $LOGFILE;
 
 # setup number of nodes array
@@ -322,25 +277,8 @@ done
 # Loop through all tests
 #######################################################################
 
-for ((i=0;i<$ntests;i++)); do
 
    cd ${BENCHMARK_DIR}
-
-   # Get test number
-   n=${testnum[i]};
-   ip1=$(($i + 1));
-
-   # Get raw test name for namelist, pdf and tex files
-   nslash=$(grep -o "/" <<< "${testname[n]}" | wc -l);
-   if [ $nslash -gt 0 ] ; then
-      np1=$(($nslash + 1));
-      rawname[i]=$(echo ${testname[n]} | cut -d '/' -f$np1);
-   else
-      rawname[i]=${testname[n]};
-   fi
-   TEST_NAME=${rawname[i]}
-
-   echo "Test ${ip1}/${ntests}: ${TEST_NAME}" | tee -a $LOGFILE;
 
    #------------------
    # Code compilation
@@ -348,7 +286,7 @@ for ((i=0;i<$ntests;i++)); do
 
    if ${COMPILE}; then
       # Read test configuration file
-      FLAGS=$(grep FLAGS ${RAMSES_BENCHMARK_DIR}/${testname[n]}/config.txt | cut -d ':' -f2);
+      FLAGS=$(grep FLAGS ${RAMSES_BENCHMARK_DIR}/${SETUPS_DIR}/${TEST_NAME}/config.txt | cut -d ':' -f2);
 
       # Construct the make command for compilation (pass options to it)
       set -e
@@ -430,7 +368,7 @@ for ((i=0;i<$ntests;i++)); do
    cd ${LAUNCH_DIR}
 
    # load scaling configuration
-   source ${RAMSES_BENCHMARK_DIR}/${testname[n]}/scaling_config.sh
+   source ${RAMSES_BENCHMARK_DIR}/${SETUPS_DIR}/${TEST_NAME}/scaling_config.sh
    NODES_LIST=()
    for NBNODES in "${BENCHMARK_NBNODES_LIST[@]}"; do
       # Add strong scaling configs
@@ -500,7 +438,7 @@ for ((i=0;i<$ntests;i++)); do
             # Copy executable and input file
             cp ${RAMSES_BIN_DIR}/${THIS_EXEC} .
             TEST_NAMELIST=${TEST_NAME}_${RESO}.nml
-            cp ${RAMSES_BENCHMARK_DIR}/${testname[n]}/${TEST_NAMELIST} .
+            cp ${RAMSES_BENCHMARK_DIR}/${SETUPS_DIR}/${TEST_NAME}/${TEST_NAMELIST} .
 
             # create job script by combining job params, modules and run command
             OUTPUT_FILE="job.sh"
@@ -548,16 +486,10 @@ for ((i=0;i<$ntests;i++)); do
    #DEPS=$(squeue --noheader --format %i --name ${TEST_NAME} | paste -sd,)
    #sbatch --dependency=${DEPS} $OUTPUT_FILE
 
-done
-
 #######################################################################
 # Clean up
 #######################################################################
 if ${DELDATA} ; then
-   for ((i=0;i<$ntests;i++)); do
-      n=${testnum[i]};
-      cd ${RAMSES_BENCHMARK_DIR}/${testname[n]};
-   done
    cd ${RAMSES_BIN_DIR};
    make clean >> $LOGFILE 2>&1;
    #rm -f ${EXECNAME}*d;
