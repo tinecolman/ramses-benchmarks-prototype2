@@ -41,7 +41,7 @@ MINI_RAMSES_SOURCE_DIR="$HOME/mini-ramses";
 CLUSTER=""
 TEST_NAME=""
 RESO_LIST=""
-NODELIST=""
+NODES_LIST=""
 CLUSTER_ALLOCATION_ID="none"
 DELDATA=true
 MPI_PROC_LIST="max"
@@ -56,7 +56,7 @@ while getopts "c:a:b:n:r:p:m:i:dvs" OPTION; do
       c) CLUSTER=$OPTARG ;;
       a) CLUSTER_ALLOCATION_ID=$OPTARG ;;
       b) TEST_NAME=$OPTARG ;;
-      n) NODELIST=($OPTARG) ;;   # Convert input string into an array
+      n) NODES_LIST=($OPTARG) ;;   # Convert input string into an array
       r) RESO_LIST=($OPTARG) ;;
       p) MPI_PROC_LIST=($OPTARG) ;;
       m) OMP_THREAD_LIST=($OPTARG) ;;
@@ -80,7 +80,7 @@ if [[ -z "$RESO_LIST" ]]; then
    echo "ERROR: you must specify the resolutions with -r (e.g. \"256 512 1024\")" | tee log
    exit 1
 fi
-if [[ -z "$NODELIST" ]]; then
+if [[ -z "$NODES_LIST" ]]; then
    echo "ERROR: you must specify the number of nodes to use with -n (e.g. \"1 2 4\")" | tee log
    exit 1
 fi
@@ -206,9 +206,9 @@ fi
 echo "Will launch the following benchmark: ${TEST_NAME}" | tee -a $LOGFILE;
 echo $line | tee -a $LOGFILE;
 
-for n in "${NODELIST[@]}"; do
-   BENCHMARK_NBNODES_LIST+=(${n})
-done
+#for n in "${NODELIST[@]}"; do
+#   BENCHMARK_NBNODES_LIST+=(${n})
+#done
 
 #######################################################################
 # Check which types of configurations are requested
@@ -356,11 +356,11 @@ cd ${LAUNCH_DIR}
 
 # load scaling configuration
 source ${RAMSES_BENCHMARK_DIR}/${SETUPS_DIR}/${TEST_NAME}/scaling_config.sh
-NODES_LIST=()
-for NBNODES in "${BENCHMARK_NBNODES_LIST[@]}"; do
-   # Add strong scaling configs
-   NODES_LIST+=("$NBNODES")
-done
+#NODES_LIST=()
+#for NBNODES in "${BENCHMARK_NBNODES_LIST[@]}"; do
+#   # Add strong scaling configs
+#   NODES_LIST+=("$NBNODES")
+#done
 
 #----------------------------------------
 # Create job scripts and run simulations
