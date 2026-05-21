@@ -26,7 +26,7 @@ def get_info_from_benchmark_dir_name(benchmark_dir):
 ''' Dissect name of the benchmark configuration subdirectory:
     nodes<N>_<resolution>_omp<threads> '''
 def get_info_from_subdir_name(subdir, version=2):
-    print(subdir)
+    #print(subdir)
     if version==1:
         # nodes<N>_reso<resolution>_omp<threads>
         [nodes, reso, omp] = subdir.split('_')
