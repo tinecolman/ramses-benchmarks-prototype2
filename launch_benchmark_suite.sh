@@ -13,10 +13,6 @@
 #       ./launch_benchmark_suite.sh -t 2
 #   -a: specify allocation ID
 #       ./launch_benchmark_suite.sh -a EUR123456
-#   -w: also do weak scaling
-#       ./launch_benchmark_suite.sh -w
-#   -n: set maximum number of nodes (default is 4)
-#       ./launch_benchmark_suite.sh -n 40
 #   -l: set a list of which number of nodes to use
 #       ./launch_benchmark_suite.sh -l "1 2 4"
 #   -p: set the number of MPI processes used per node, allows to use partial nodes (0=no MPI)
@@ -40,17 +36,17 @@ MINI_RAMSES_SOURCE_DIR="$HOME/mini-ramses";
 
 NODESMAX=4
 NODELIST="0"
+RESO_LIST=""
 CLUSTER=default;
 CLUSTER_ALLOCATION_ID="none"
 SELECTTEST=false;
-WEAKSCALING=false
 DELDATA=true;
 MPI_PROC_LIST="max"
 OMP_THREAD_LIST="0"
 ITERS=1
 USE_MINIRAMSES=false;
 COMPILE=true;
-while getopts "c:a:h:t:wn:l:p:m:i:dvs" OPTION; do
+while getopts "c:a:h:t:wn:l:r:p:m:i:dvs" OPTION; do
    case $OPTION in
       c)
          CLUSTER=$OPTARG;
@@ -62,14 +58,14 @@ while getopts "c:a:h:t:wn:l:p:m:i:dvs" OPTION; do
          SELECTTEST=true;
          TESTNUMBER=$OPTARG;
       ;;
-      w)
-         WEAKSCALING=true;
-      ;;
       n)
          NODESMAX=$OPTARG;
       ;;
       l)
          NODELIST=($OPTARG);   # Convert input string into an array
+      ;;
+      r)
+         RESO_LIST=($OPTARG);
       ;;
       p)
          MPI_PROC_LIST=($OPTARG);
@@ -98,8 +94,6 @@ done
 
 RAMSES_BENCHMARK_DIR=$(pwd);                      # The benchmark suite directory
 EXECNAME="benchmark_exe_";
-BEFORETEST="before-test.sh";
-AFTERTEST="after-test.sh";
 CLUSTER_DIR="${RAMSES_BENCHMARK_DIR}/HPCclusters/${CLUSTER}";
 CLUSTER_INFO="${CLUSTER_DIR}/cluster_info.sh";
 MODULES="${CLUSTER_DIR}/modules.sh";
@@ -430,16 +424,6 @@ for ((i=0;i<$ntests;i++)); do
    # Setup scratch benchmark directory and benchmark parameters
    #------------------------------------------------------------
 
-   #TODO
-   # check if stuff needs to be downloaded
-   #if [ -f ${BEFORETEST} ]; then
-   #   ${SHELL} ${BEFORETEST} >> $LOGFILE 2>&1;
-   #fi
-   # move ICs to scratch if needed
-   # check if there are IC required
-   # check if ICs are already on scratch
-   # copy ICs to scratch if they are not present
-
    # create subdirectory for setup
    LAUNCH_DIR=$BENCHMARK_DIR/${TEST_NAME}
    mkdir -p ${LAUNCH_DIR} >> $LOGFILE 2>&1;
@@ -448,20 +432,10 @@ for ((i=0;i<$ntests;i++)); do
    # load scaling configuration
    source ${RAMSES_BENCHMARK_DIR}/${testname[n]}/scaling_config.sh
    NODES_LIST=()
-   RESO_LIST=()
    for NBNODES in "${BENCHMARK_NBNODES_LIST[@]}"; do
       # Add strong scaling configs
       NODES_LIST+=("$NBNODES")
-      RESO_LIST+=("$STRONG_SCALING_RESO")
    done
-   if ${WEAKSCALING}; then
-      # Add weak scaling cases if enabled
-      nconfigs=${#WEAK_SCALING_RESO[@]}
-      for ((w=0; w<nconfigs; w++)); do
-         NODES_LIST+=("${WEAK_SCALING_NNODES[w]}")
-         RESO_LIST+=("${WEAK_SCALING_RESO[w]}")
-      done
-   fi
 
    #----------------------------------------
    # Create job scripts and run simulations
@@ -472,9 +446,8 @@ for ((i=0;i<$ntests;i++)); do
    # Loop over configurations
    for ((c=0; c<${#NODES_LIST[@]}; c++)); do
       NBNODES=${NODES_LIST[c]}
-      RESO=${RESO_LIST[c]}
 
-
+      for RESO in "${RESO_LIST[@]}"; do
       for OMP_THREADS in "${OMP_THREAD_LIST[@]}"; do
          for MPI_PROC in "${MPI_PROC_LIST[@]}"; do
             # Resolve special keyword BEFORE arithmetic
@@ -554,10 +527,11 @@ for ((i=0;i<$ntests;i++)); do
                SUBMIT_MESSAGE=$(sbatch job.sh)
                STRINGARRAY=($SUBMIT_MESSAGE)
                JOB_ID=${STRINGARRAY[-1]}
-               echo "Launched ${TEST_NAME} on ${NBNODES} nodes with ${MPI_PROC} procs/node and ${OMP_THREADS} threads/proc [JOB ID ${JOB_ID}]" | tee -a $LOGFILE;
+               echo "Launched ${TEST_NAME} ${RESO} on ${NBNODES} nodes with ${MPI_PROC} procs/node and ${OMP_THREADS} threads/proc [JOB ID ${JOB_ID}]" | tee -a $LOGFILE;
             done
             cd ..
          done
+      done
       done
    done
 
@@ -583,9 +557,6 @@ if ${DELDATA} ; then
    for ((i=0;i<$ntests;i++)); do
       n=${testnum[i]};
       cd ${RAMSES_BENCHMARK_DIR}/${testname[n]};
-      if [ -f ${AFTERTEST} ]; then
-         ${SHELL} ${AFTERTEST};
-      fi
    done
    cd ${RAMSES_BIN_DIR};
    make clean >> $LOGFILE 2>&1;
