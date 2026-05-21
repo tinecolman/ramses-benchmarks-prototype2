@@ -21,9 +21,9 @@ def get_info_from_benchmark_dir_name(benchmark_dir, version=2):
         parts.pop()
     commit = parts[-1][-8:]     # last 8 characters
     if version==2:
-        date = parts[-1][-17:-9]
+        date = parts[-1][-19:-9]
         print('debug',date)
-        branch = parts[-1][10:-18]
+        branch = parts[-1][10:-20]
     else:
         branch = parts[-1][10:-9]
     return branch, commit

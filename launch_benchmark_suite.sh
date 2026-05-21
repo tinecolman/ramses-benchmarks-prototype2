@@ -24,7 +24,6 @@
 #   -i: how many runs to launch of a benchmark, to take the average time (default 3)
 #       ./launch_benchmark_suite.sh -i 5
 #   -d: do not clean up
-#       ./launch_benchmark_suite.sh -d
 #   -v: use mini-ramses
 #   -s: don't recompile the code
 #
@@ -136,25 +135,6 @@ COMMIT=$(git rev-parse --short HEAD)
 COMMIT_DATE=$(git show --no-patch --format=%cd --date=format:'%Y-%m-%d')
 GIT_URL=$(git config --get remote.origin.url | sed 's/git@github.com:/https:\/\/github.com\//g')
 GIT_URL=${GIT_URL:0:$((${#GIT_URL}-4))}
-
-#######################################################################
-# Create benchmark directory on scratch
-#######################################################################
-
-if $USE_MINIRAMSES ; then
-   BENCHMARK_DIR=$CLUSTER_SCRATCH/mini-benchmark_${BRANCH}_${COMMIT};
-else
-   BENCHMARK_DIR=$CLUSTER_SCRATCH/benchmark_${BRANCH}_${COMMIT_DATE}_${COMMIT};
-fi
-
-set -e
-mkdir -p ${BENCHMARK_DIR} >> $LOGFILE 2>&1;
-set +e
-
-# create subdirectory for setup
-LAUNCH_DIR=$BENCHMARK_DIR/${TEST_NAME}
-mkdir -p ${LAUNCH_DIR} >> $LOGFILE 2>&1;
-cd ${LAUNCH_DIR}
 
 
 #######################################################################
@@ -335,8 +315,28 @@ if ${COMPILE}; then
 fi
 
 #######################################################################
+# Create benchmark directory on scratch
+#######################################################################
+
+if $USE_MINIRAMSES ; then
+   BENCHMARK_DIR=$CLUSTER_SCRATCH/mini-benchmark_${BRANCH}_${COMMIT_DATE}_${COMMIT};
+else
+   BENCHMARK_DIR=$CLUSTER_SCRATCH/benchmark_${BRANCH}_${COMMIT_DATE}_${COMMIT};
+fi
+
+set -e
+mkdir -p ${BENCHMARK_DIR} >> $LOGFILE 2>&1;
+set +e
+
+# create subdirectory for setup
+LAUNCH_DIR=$BENCHMARK_DIR/${TEST_NAME}
+mkdir -p ${LAUNCH_DIR} >> $LOGFILE 2>&1;
+
+#######################################################################
 # Loop over configuration: create job scripts and run simulations
 #######################################################################
+
+cd ${LAUNCH_DIR}
 
 JOB_NAME=$TEST_NAME
 
