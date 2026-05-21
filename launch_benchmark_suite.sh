@@ -359,9 +359,7 @@ done
 JOB_NAME=$TEST_NAME
 
 # Loop over configurations
-for ((c=0; c<${#NODES_LIST[@]}; c++)); do
-   NBNODES=${NODES_LIST[c]}
-
+for NBNODES in "${NODES_LIST[@]}"; do
    for RESO in "${RESO_LIST[@]}"; do
    for OMP_THREADS in "${OMP_THREAD_LIST[@]}"; do
       for MPI_PROC in "${MPI_PROC_LIST[@]}"; do
