@@ -9,38 +9,39 @@
 # Options:
 #   -c: (mandatory) specify on which cluster you are
 #       ./launch_benchmark_suite.sh -c meluxina
-#   -t: select setup
+#   -b: (mandatory) select benchmark
 #       ./launch_benchmark_suite.sh -t sedov
+#   -r: (mandatory) set a list of which resolutions to use
+#       ./launch_benchmark_suite.sh -l "256 512 1024"
+#   -n: (mandatory) set a list of which number of nodes to use
+#       ./launch_benchmark_suite.sh -n "1 2 4"
 #   -a: specify allocation ID
 #       ./launch_benchmark_suite.sh -a EUR123456
-#   -l: set a list of which number of nodes to use
-#       ./launch_benchmark_suite.sh -l "1 2 4"
-#   -r: set a list of which resolutions to use
-#       ./launch_benchmark_suite.sh -l "256 512 1024"
 #   -p: set the number of MPI processes used per node, allows to use partial nodes (0=no MPI)
 #       ./launch_benchmark_suite.sh -r "1 32 64 128"
-#   -m: run with openmp with different number of omp threads (code will be compiled with OpenMP!)
+#   -m: run with openmp with different number of omp threads
 #       ./launch_benchmark_suite.sh -m "1 2 4 8 16"
 #   -i: how many runs to launch of a benchmark, to take the average time (default 3)
 #       ./launch_benchmark_suite.sh -i 5
 #   -d: do not clean up
 #       ./launch_benchmark_suite.sh -d
 #   -v: use mini-ramses
+#   -s: don't recompile the code
 #
 #######################################################################
 
 #######################################################################
-# Determine the parameters for running the performance tests
+# Parse input parameters
 #######################################################################
 
 RAMSES_SOURCE_DIR="$HOME/ramses_tine_github";
 MINI_RAMSES_SOURCE_DIR="$HOME/mini-ramses";
 
-NODESMAX=4
-NODELIST="0"
-RESO_LIST=""
+# Default options
+CLUSTER=""
 TEST_NAME=""
-CLUSTER=default
+RESO_LIST=""
+NODELIST=""
 CLUSTER_ALLOCATION_ID="none"
 DELDATA=true
 MPI_PROC_LIST="max"
@@ -49,12 +50,13 @@ ITERS=1
 USE_MINIRAMSES=false
 COMPILE=true
 
-while getopts "c:a:t:l:r:p:m:i:dvs" OPTION; do
+# Parse options
+while getopts "c:a:b:n:r:p:m:i:dvs" OPTION; do
    case $OPTION in
       c) CLUSTER=$OPTARG ;;
       a) CLUSTER_ALLOCATION_ID=$OPTARG ;;
-      t) TEST_NAME=$OPTARG ;;
-      l) NODELIST=($OPTARG) ;;   # Convert input string into an array
+      b) TEST_NAME=$OPTARG ;;
+      n) NODELIST=($OPTARG) ;;   # Convert input string into an array
       r) RESO_LIST=($OPTARG) ;;
       p) MPI_PROC_LIST=($OPTARG) ;;
       m) OMP_THREAD_LIST=($OPTARG) ;;
@@ -65,15 +67,33 @@ while getopts "c:a:t:l:r:p:m:i:dvs" OPTION; do
    esac
 done
 
+# Validate input
+if [[ -z "$CLUSTER" ]]; then
+   echo "ERROR: you must specify a cluster with -c (e.g. meluxina)" | tee log
+   exit 1
+fi
+if [[ -z "$TEST_NAME" ]]; then
+   echo "ERROR: you must specify a benchmark with -t (e.g. sedov)" | tee log
+   exit 1
+fi
+if [[ -z "$RESO_LIST" ]]; then
+   echo "ERROR: you must specify the resolutions with -r (e.g. \"256 512 1024\")" | tee log
+   exit 1
+fi
+if [[ -z "$NODELIST" ]]; then
+   echo "ERROR: you must specify the number of nodes to use with -n (e.g. \"1 2 4\")" | tee log
+   exit 1
+fi
+
 #######################################################################
 # Useful definitions and paths
 #######################################################################
 
-RAMSES_BENCHMARK_DIR=$(pwd);                      # The benchmark suite directory
-EXECNAME="benchmark_exe_";
-CLUSTER_DIR="${RAMSES_BENCHMARK_DIR}/HPCclusters/${CLUSTER}";
-CLUSTER_INFO="${CLUSTER_DIR}/cluster_info.sh";
-MODULES="${CLUSTER_DIR}/modules.sh";
+RAMSES_BENCHMARK_DIR=$(pwd)                     # The benchmark suite directory
+EXECNAME="benchmark_exe_"
+CLUSTER_DIR="${RAMSES_BENCHMARK_DIR}/HPCclusters/${CLUSTER}"
+CLUSTER_INFO="${CLUSTER_DIR}/cluster_info.sh"
+MODULES="${CLUSTER_DIR}/modules.sh"
 
 DATE=`date +%F`
 LOGFILE="${RAMSES_BENCHMARK_DIR}/benchmark_suite.log";
@@ -186,19 +206,9 @@ fi
 echo "Will launch the following benchmark: ${TEST_NAME}" | tee -a $LOGFILE;
 echo $line | tee -a $LOGFILE;
 
-# setup number of nodes array
-if [[ "$NODELIST" == "0" ]] ; then
-   BENCHMARK_NBNODES_LIST=(1)
-   n=2
-   while [ ${n} -le ${NODESMAX} ]; do
-      BENCHMARK_NBNODES_LIST+=(${n})
-      n=$((n*2))
-   done
-else
-   for n in "${NODELIST[@]}"; do
-      BENCHMARK_NBNODES_LIST+=(${n})
-   done
-fi
+#for n in "${NODELIST[@]}"; do
+#   BENCHMARK_NBNODES_LIST+=(${n})
+#done
 
 #######################################################################
 # Check which types of configurations are requested
