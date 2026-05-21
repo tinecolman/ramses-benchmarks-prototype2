@@ -423,23 +423,24 @@ for MPI_PROC in "${MPI_PROC_LIST[@]}"; do
    cat $MODULES >> $OUTPUT_FILE
    echo "" >> "$OUTPUT_FILE"
 
-   # add some info to the log
-   echo "######################################### > ${LOGFILE_RUN}" >> "$OUTPUT_FILE"
-   echo "Benchmark: ${TEST_NAME} > ${LOGFILE_RUN}" >> "$OUTPUT_FILE"
-   echo "Resolution: ${RESO} > ${LOGFILE_RUN}" >> "$OUTPUT_FILE"
-   echo "Cluster: ${CLUSTER} > ${LOGFILE_RUN}" >> "$OUTPUT_FILE"
-   echo "partition: ${CLUSTER_PARTITION} > ${LOGFILE_RUN}" >> "$OUTPUT_FILE"
-   echo "Nodes: ${NBNODES} > ${LOGFILE_RUN}" >> "$OUTPUT_FILE"
-   echo "mpi_per_node: ${MPI_PROC} > ${LOGFILE_RUN}" >> "$OUTPUT_FILE"
-   echo "omp_threads: ${OMP_THREADS} > ${LOGFILE_RUN}" >> "$OUTPUT_FILE"
-   echo "Job ID: \${SLURM_JOBID} > ${LOGFILE_RUN}" >> "$OUTPUT_FILE"
-   echo "######################################### > ${LOGFILE_RUN}" >> "$OUTPUT_FILE"
+   # add some additional info to the log
+   echo "echo \"#########################################\" > ${LOGFILE_RUN}" >> "$OUTPUT_FILE"
+   echo "echo \"Benchmark: ${TEST_NAME}\" >> ${LOGFILE_RUN}" >> "$OUTPUT_FILE"
+   echo "echo \"Resolution: ${RESO}\" >> ${LOGFILE_RUN}" >> "$OUTPUT_FILE"
+   echo "echo \"Cluster: ${CLUSTER}\" >> ${LOGFILE_RUN}" >> "$OUTPUT_FILE"
+   echo "echo \"Partition: ${CLUSTER_PARTITION}\" >> ${LOGFILE_RUN}" >> "$OUTPUT_FILE"
+   echo "echo \"Nodes: ${NBNODES}\" >> ${LOGFILE_RUN}" >> "$OUTPUT_FILE"
+   echo "echo \"MPI per node: ${ACT_MPI}\" >> ${LOGFILE_RUN}" >> "$OUTPUT_FILE"
+   echo "echo \"OMP threads: ${ACT_OMP}\" >> ${LOGFILE_RUN}" >> "$OUTPUT_FILE"
+   echo "echo \"Job ID: \${SLURM_JOBID}\" >> ${LOGFILE_RUN}" >> "$OUTPUT_FILE"
+   echo "echo \"#########################################\" >> ${LOGFILE_RUN}" >> "$OUTPUT_FILE"
+   echo "" >> "$OUTPUT_FILE"
 
    # run command
    if (( MPI_PROC == 0 )); then
-      COMMANDSTRING="./${THIS_EXEC} ${TEST_NAMELIST} > ${LOGFILE_RUN}"
+      COMMANDSTRING="./${THIS_EXEC} ${TEST_NAMELIST} >> ${LOGFILE_RUN}"
    else
-      COMMANDSTRING="$(eval echo ${RUN_COMMAND}) ./${THIS_EXEC} ${TEST_NAMELIST} > ${LOGFILE_RUN}"
+      COMMANDSTRING="$(eval echo ${RUN_COMMAND}) ./${THIS_EXEC} ${TEST_NAMELIST} >> ${LOGFILE_RUN}"
    fi   
    echo "$COMMANDSTRING" >> "$OUTPUT_FILE"
    echo "" >> "$OUTPUT_FILE"
