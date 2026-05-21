@@ -73,7 +73,7 @@ if [[ -z "$CLUSTER" ]]; then
    exit 1
 fi
 if [[ -z "$TEST_NAME" ]]; then
-   echo "ERROR: you must specify a benchmark with -t (e.g. sedov)" | tee log
+   echo "ERROR: you must specify a benchmark with -b (e.g. sedov)" | tee log
    exit 1
 fi
 if [[ -z "$RESO_LIST" ]]; then
@@ -206,9 +206,9 @@ fi
 echo "Will launch the following benchmark: ${TEST_NAME}" | tee -a $LOGFILE;
 echo $line | tee -a $LOGFILE;
 
-#for n in "${NODELIST[@]}"; do
-#   BENCHMARK_NBNODES_LIST+=(${n})
-#done
+for n in "${NODELIST[@]}"; do
+   BENCHMARK_NBNODES_LIST+=(${n})
+done
 
 #######################################################################
 # Check which types of configurations are requested
