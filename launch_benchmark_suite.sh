@@ -86,31 +86,36 @@ if [[ -z "$NODES_LIST" ]]; then
 fi
 
 #######################################################################
-# Useful definitions and paths
+# Define paths and load additional info
 #######################################################################
 
-RAMSES_BENCHMARK_DIR=$(pwd)                     # The benchmark suite directory
-EXECNAME="benchmark_exe_"
+RAMSES_BENCHMARK_DIR=$(pwd)
 CLUSTER_DIR="${RAMSES_BENCHMARK_DIR}/HPCclusters/${CLUSTER}"
 CLUSTER_INFO="${CLUSTER_DIR}/cluster_info.sh"
 MODULES="${CLUSTER_DIR}/modules.sh"
+if $USE_MINIRAMSES ; then
+   RAMSES_BIN_DIR="${MINI_RAMSES_SOURCE_DIR}/bin";
+   SETUPS_DIR="setups-mini-ramses";
+else
+   RAMSES_BIN_DIR="${RAMSES_SOURCE_DIR}/bin";
+   SETUPS_DIR="setups";
+fi
+
+EXECNAME="benchmark_exe_"
 
 DATE=`date +%F`
 LOGFILE="${RAMSES_BENCHMARK_DIR}/benchmark_suite.log";
-line="--------------------------------------------";
 
-# begin logfile
-echo > $LOGFILE;
+# load cluster info
+source ${CLUSTER_INFO}
+
+# load benchmark configuration
+source ${RAMSES_BENCHMARK_DIR}/${SETUPS_DIR}/${TEST_NAME}/scaling_config.sh
 
 #######################################################################
-# Setup code repository
+# Get code repository info
 #######################################################################
 
-if $USE_MINIRAMSES ; then
-   RAMSES_BIN_DIR="${MINI_RAMSES_SOURCE_DIR}/bin";
-else
-   RAMSES_BIN_DIR="${RAMSES_SOURCE_DIR}/bin";
-fi
 cd $RAMSES_BIN_DIR
 
 # get info of repo
@@ -123,16 +128,25 @@ COMMIT=$(git rev-parse --short HEAD)
 COMMIT_DATE=$(git show --no-patch --format=%ci ${COMMIT})
 GIT_URL=$(git config --get remote.origin.url | sed 's/git@github.com:/https:\/\/github.com\//g')
 GIT_URL=${GIT_URL:0:$((${#GIT_URL}-4))}
+#TODO: date of commit
+
 cd $RAMSES_BENCHMARK_DIR
 
+# begin logfile
+echo > $LOGFILE;
+
 # Welcome message
-echo "#################################################" | tee -a $LOGFILE
-echo "#    Launching RAMSES performance benchmarks    #" | tee -a $LOGFILE
-echo "#################################################" | tee -a $LOGFILE
-echo "Repository url: ${GIT_URL}" >> $LOGFILE
-echo "Branch: ${BRANCH}" >> $LOGFILE
-echo "Commit hash: ${COMMIT}" >> $LOGFILE
-echo $line >> $LOGFILE
+COLOR='\033[0;36m' #cyan
+NC='\033[0m' # No Color
+echo -e "${COLOR}################################################${NC}" | tee -a $LOGFILE
+echo -e "${COLOR}#    Launching RAMSES performance benchmark    #${NC}" | tee -a $LOGFILE
+echo -e "${COLOR}################################################${NC}" | tee -a $LOGFILE
+echo "Repository url: ${GIT_URL}" | tee -a $LOGFILE
+echo "Branch: ${BRANCH}" | tee -a $LOGFILE
+echo "Commit hash: ${COMMIT}" | tee -a $LOGFILE
+echo "Benchmark: ${TEST_NAME}" | tee -a $LOGFILE
+echo "--------------------------------------------" >> $LOGFILE
+
 
 #######################################################################
 # Select project allocation to run on, if not given by user
@@ -174,46 +188,12 @@ if [[ "$CLUSTER_ALLOCATION_ID" == "none" ]]; then
 
 fi
 
-#######################################################################
-# Set cluster parameters 
-#######################################################################
-
-source ${CLUSTER_INFO}
-
-# create directory on scratch
-
-if $USE_MINIRAMSES ; then
-   BENCHMARK_DIR=$CLUSTER_SCRATCH/mini-benchmark_${BRANCH}_${COMMIT};
-else
-   BENCHMARK_DIR=$CLUSTER_SCRATCH/benchmark_${BRANCH}_${COMMIT};
-fi
-
-set -e
-mkdir -p ${BENCHMARK_DIR} >> $LOGFILE 2>&1;
-set +e
-
 
 #######################################################################
-# Generate list of tests by scanning directory
+# Check which types of compilation configurations are requested
 #######################################################################
 
-if $USE_MINIRAMSES ; then
-   SETUPS_DIR="setups-mini-ramses";
-else
-   SETUPS_DIR="setups";
-fi
-
-echo "Will launch the following benchmark: ${TEST_NAME}" | tee -a $LOGFILE;
-echo $line | tee -a $LOGFILE;
-
-#for n in "${NODELIST[@]}"; do
-#   BENCHMARK_NBNODES_LIST+=(${n})
-#done
-
-#######################################################################
-# Check which types of configurations are requested
-#######################################################################
-
+# Define base make strings and executable names for different combinations of MPI/OMP compilation
 C_SERIAL=false;
 MAKESTRING_SER="make EXEC=${EXECNAME}ser COMPILER=${COMPILER_FLAVOR} MPI=0 OPENMP=0 MPIF90=\"${MPIF90}\" MACHINE=${CLUSTER}";
 TEST_EXECUTABLE_SER=${EXECNAME}ser3d
@@ -230,6 +210,7 @@ C_HYBRID=false;
 MAKESTRING_HYB="make EXEC=${EXECNAME}hyb COMPILER=${COMPILER_FLAVOR} MPI=1 OPENMP=1 MPIF90=\"${MPIF90}\" MACHINE=${CLUSTER}";
 TEST_EXECUTABLE_HYB=${EXECNAME}hyb3d
 
+# Check which compilation configs are requested
 for MPI_PROC in "${MPI_PROC_LIST[@]}"; do
    for OMP_THREADS in "${OMP_THREAD_LIST[@]}"; do
       if [[ "$MPI_PROC" == "max" ]]; then
@@ -262,14 +243,8 @@ for MPI_PROC in "${MPI_PROC_LIST[@]}"; do
 done
 
 #######################################################################
-# Loop through all tests
-#######################################################################
-
-cd ${BENCHMARK_DIR}
-
-#------------------
 # Code compilation
-#------------------
+#######################################################################
 
 if ${COMPILE}; then
    # Read test configuration file
@@ -345,26 +320,29 @@ if ${COMPILE}; then
    set +e
 fi
 
-#------------------------------------------------------------
-# Setup scratch benchmark directory and benchmark parameters
-#------------------------------------------------------------
+#######################################################################
+# Create benchmark directory on scratch
+#######################################################################
+
+if $USE_MINIRAMSES ; then
+   BENCHMARK_DIR=$CLUSTER_SCRATCH/mini-benchmark_${BRANCH}_${COMMIT};
+else
+   BENCHMARK_DIR=$CLUSTER_SCRATCH/benchmark_${BRANCH}_${COMMIT};
+fi
+
+set -e
+mkdir -p ${BENCHMARK_DIR} >> $LOGFILE 2>&1;
+set +e
 
 # create subdirectory for setup
 LAUNCH_DIR=$BENCHMARK_DIR/${TEST_NAME}
 mkdir -p ${LAUNCH_DIR} >> $LOGFILE 2>&1;
 cd ${LAUNCH_DIR}
 
-# load scaling configuration
-source ${RAMSES_BENCHMARK_DIR}/${SETUPS_DIR}/${TEST_NAME}/scaling_config.sh
-#NODES_LIST=()
-#for NBNODES in "${BENCHMARK_NBNODES_LIST[@]}"; do
-#   # Add strong scaling configs
-#   NODES_LIST+=("$NBNODES")
-#done
 
-#----------------------------------------
-# Create job scripts and run simulations
-#----------------------------------------
+#######################################################################
+# Loop over configuration: create job scripts and run simulations
+#######################################################################
 
 JOB_NAME=$TEST_NAME
 
@@ -459,8 +437,12 @@ done
 done
 done
 
-# TODO
+
+#######################################################################
 # launch dependency job to gather results
+#######################################################################
+
+# TODO
 #cd ${RAMSES_BENCHMARK_DIR}
 #OUTPUT_FILE="io_${TEST_NAME}.sh"
 #NBNODES=1
