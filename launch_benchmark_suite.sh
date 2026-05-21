@@ -190,37 +190,17 @@ fi
 
 
 #######################################################################
-# Check which types of compilation configurations are requested
+# Code compilation
 #######################################################################
 
-# Define base make strings and executable names for different combinations of MPI/OMP compilation
+# Check which types of compilation configurations are requested
 C_SERIAL=false;
-MAKESTRING_SER="make EXEC=${EXECNAME}ser COMPILER=${COMPILER_FLAVOR} MPI=0 OPENMP=0 MPIF90=\"${MPIF90}\" MACHINE=${CLUSTER}";
-TEST_EXECUTABLE_SER=${EXECNAME}ser3d
-
 C_MPI=false;
-MAKESTRING_MPI="make EXEC=${EXECNAME}mpi COMPILER=${COMPILER_FLAVOR} MPI=1 OPENMP=0 MPIF90=\"${MPIF90}\" MACHINE=${CLUSTER}";
-TEST_EXECUTABLE_MPI=${EXECNAME}mpi3d
-
 C_OPENMP=false;
-MAKESTRING_OMP="make EXEC=${EXECNAME}omp COMPILER=${COMPILER_FLAVOR} MPI=0 OPENMP=1 MPIF90=\"${MPIF90}\" MACHINE=${CLUSTER}";
-TEST_EXECUTABLE_OMP=${EXECNAME}omp3d
-
 C_HYBRID=false;
-MAKESTRING_HYB="make EXEC=${EXECNAME}hyb COMPILER=${COMPILER_FLAVOR} MPI=1 OPENMP=1 MPIF90=\"${MPIF90}\" MACHINE=${CLUSTER}";
-TEST_EXECUTABLE_HYB=${EXECNAME}hyb3d
 
-# Check which compilation configs are requested
 for MPI_PROC in "${MPI_PROC_LIST[@]}"; do
    for OMP_THREADS in "${OMP_THREAD_LIST[@]}"; do
-      if [[ "$MPI_PROC" == "max" ]]; then
-         if (( $OMP_THREADS == 0 )); then
-            MPI_PROC=$CLUSTER_CORES_PER_NODE
-         else
-            # remark: integer division
-            MPI_PROC=$(($CLUSTER_CORES_PER_NODE / $OMP_THREADS))
-         fi
-      fi
 
       if (( $OMP_THREADS == 0 )); then
          if (( $MPI_PROC == 0 )); then
@@ -242,22 +222,24 @@ for MPI_PROC in "${MPI_PROC_LIST[@]}"; do
    done
 done
 
-#######################################################################
-# Code compilation
-#######################################################################
+# Read test configuration file
+FLAGS=$(grep FLAGS ${RAMSES_BENCHMARK_DIR}/${SETUPS_DIR}/${TEST_NAME}/config.txt | cut -d ':' -f2);
+
+# Define make strings and executable names for different combinations of MPI/OMP compilation
+MAKESTRING_SER="make EXEC=${EXECNAME}ser COMPILER=${COMPILER_FLAVOR} MPI=0 OPENMP=0 MPIF90=\"${MPIF90}\" MACHINE=${CLUSTER} ${FLAGS}";
+TEST_EXECUTABLE_SER=${EXECNAME}ser3d
+
+MAKESTRING_MPI="make EXEC=${EXECNAME}mpi COMPILER=${COMPILER_FLAVOR} MPI=1 OPENMP=0 MPIF90=\"${MPIF90}\" MACHINE=${CLUSTER} ${FLAGS}";
+TEST_EXECUTABLE_MPI=${EXECNAME}mpi3d
+
+MAKESTRING_OMP="make EXEC=${EXECNAME}omp COMPILER=${COMPILER_FLAVOR} MPI=0 OPENMP=1 MPIF90=\"${MPIF90}\" MACHINE=${CLUSTER} ${FLAGS}";
+TEST_EXECUTABLE_OMP=${EXECNAME}omp3d
+
+MAKESTRING_HYB="make EXEC=${EXECNAME}hyb COMPILER=${COMPILER_FLAVOR} MPI=1 OPENMP=1 MPIF90=\"${MPIF90}\" MACHINE=${CLUSTER} ${FLAGS}";
+TEST_EXECUTABLE_HYB=${EXECNAME}hyb3d
+
 
 if ${COMPILE}; then
-   # Read test configuration file
-   FLAGS=$(grep FLAGS ${RAMSES_BENCHMARK_DIR}/${SETUPS_DIR}/${TEST_NAME}/config.txt | cut -d ':' -f2);
-
-   # Construct the make command for compilation (pass options to it)
-   set -e
-
-   # add test specific compiler flags
-   MAKESTRING_SER="${MAKESTRING_SER} ${FLAGS}";
-   MAKESTRING_MPI="${MAKESTRING_MPI} ${FLAGS}";
-   MAKESTRING_OMP="${MAKESTRING_OMP} ${FLAGS}";
-   MAKESTRING_HYB="${MAKESTRING_HYB} ${FLAGS}";
 
    cd ${RAMSES_BIN_DIR};
 
@@ -300,6 +282,8 @@ if ${COMPILE}; then
       echo "$MAKESTRING_HYB >> $LOGFILE 2>&1;"  >> $OUTPUT_FILE
    fi
 
+   set -e
+
    # submit the job script and wait until compilation is done
    compile_job_id=$(sbatch compile_job.sh | awk '{print $4}')
    echo "Compile job submitted with Job ID: $compile_job_id"
@@ -318,7 +302,9 @@ if ${COMPILE}; then
       sleep 15
    done
    set +e
+
 fi
+
 
 #######################################################################
 # Create benchmark directory on scratch
