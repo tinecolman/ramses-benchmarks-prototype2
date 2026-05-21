@@ -86,6 +86,31 @@ if [[ -z "$NODES_LIST" ]]; then
 fi
 
 #######################################################################
+# Get code repository info
+#######################################################################
+
+cd $RAMSES_BIN_DIR
+
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+
+# if detached HEAD, check if the commit is from on the dev branch
+if [[ "$BRANCH" == "HEAD" ]]; then
+   if git merge-base --is-ancestor "$COMMIT" origin/dev; then
+      BRANCH="dev"
+   else
+      BRANCH="detached"
+   fi
+fi
+
+# list branches which contain this commit: git branch --contains 0f908c1
+# check if dev is in the list, if yes-> set branch to dev.
+COMMIT=$(git rev-parse --short HEAD)
+COMMIT_DATE=$(git show --no-patch --format=%cd --date=format:'%Y-%m-%d')
+GIT_URL=$(git config --get remote.origin.url | sed 's/git@github.com:/https:\/\/github.com\//g')
+GIT_URL=${GIT_URL:0:$((${#GIT_URL}-4))}
+
+
+#######################################################################
 # Define paths and load additional info
 #######################################################################
 
@@ -113,24 +138,28 @@ source ${CLUSTER_INFO}
 source ${RAMSES_BENCHMARK_DIR}/${SETUPS_DIR}/${TEST_NAME}/scaling_config.sh
 
 #######################################################################
-# Get code repository info
+# Create benchmark directory on scratch
 #######################################################################
 
-cd $RAMSES_BIN_DIR
+if $USE_MINIRAMSES ; then
+   BENCHMARK_DIR=$CLUSTER_SCRATCH/mini-benchmark_${BRANCH}_${COMMIT};
+else
+   BENCHMARK_DIR=$CLUSTER_SCRATCH/benchmark_${BRANCH}_${COMMIT_DATE}_${COMMIT};
+fi
 
-# get info of repo
-BRANCH=$(git rev-parse --abbrev-ref HEAD)
-#TODO
-# if detached HEAD:
-# list branches which contain this commit: git branch --contains 0f908c1
-# check if dev is in the list, if yes-> set branch to dev.
-COMMIT=$(git rev-parse --short HEAD)
-COMMIT_DATE=$(git show --no-patch --format=%ci ${COMMIT})
-GIT_URL=$(git config --get remote.origin.url | sed 's/git@github.com:/https:\/\/github.com\//g')
-GIT_URL=${GIT_URL:0:$((${#GIT_URL}-4))}
-#TODO: date of commit
+set -e
+mkdir -p ${BENCHMARK_DIR} >> $LOGFILE 2>&1;
+set +e
 
-cd $RAMSES_BENCHMARK_DIR
+# create subdirectory for setup
+LAUNCH_DIR=$BENCHMARK_DIR/${TEST_NAME}
+mkdir -p ${LAUNCH_DIR} >> $LOGFILE 2>&1;
+cd ${LAUNCH_DIR}
+
+
+#######################################################################
+# Display info
+#######################################################################
 
 # begin logfile
 echo > $LOGFILE;
@@ -304,27 +333,6 @@ if ${COMPILE}; then
    set +e
 
 fi
-
-
-#######################################################################
-# Create benchmark directory on scratch
-#######################################################################
-
-if $USE_MINIRAMSES ; then
-   BENCHMARK_DIR=$CLUSTER_SCRATCH/mini-benchmark_${BRANCH}_${COMMIT};
-else
-   BENCHMARK_DIR=$CLUSTER_SCRATCH/benchmark_${BRANCH}_${COMMIT};
-fi
-
-set -e
-mkdir -p ${BENCHMARK_DIR} >> $LOGFILE 2>&1;
-set +e
-
-# create subdirectory for setup
-LAUNCH_DIR=$BENCHMARK_DIR/${TEST_NAME}
-mkdir -p ${LAUNCH_DIR} >> $LOGFILE 2>&1;
-cd ${LAUNCH_DIR}
-
 
 #######################################################################
 # Loop over configuration: create job scripts and run simulations

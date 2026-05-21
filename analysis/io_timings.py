@@ -14,13 +14,18 @@ import numpy as np
 
 ''' Dissect name of the base benchmark directory:
     benchmark_<branch>_<commit> '''
-def get_info_from_benchmark_dir_name(benchmark_dir):
+def get_info_from_benchmark_dir_name(benchmark_dir, version=2):
     parts = benchmark_dir.split('/')
     # if dir name ends with /, remove last item which is empty
     if parts[-1]=='':
         parts.pop()
     commit = parts[-1][-8:]     # last 8 characters
-    branch = parts[-1][10:-9]
+    if version==2:
+        date = parts[-1][-17:-9]
+        print('debug',date)
+        branch = parts[-1][10:-18]
+    else:
+        branch = parts[-1][10:-9]
     return branch, commit
 
 ''' Dissect name of the benchmark configuration subdirectory:
