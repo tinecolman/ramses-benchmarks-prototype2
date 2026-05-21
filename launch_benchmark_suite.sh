@@ -397,33 +397,64 @@ for MPI_PROC in "${MPI_PROC_LIST[@]}"; do
    TEST_NAMELIST=${TEST_NAME}_${RESO}.nml
    cp ${RAMSES_BENCHMARK_DIR}/${SETUPS_DIR}/${TEST_NAME}/${TEST_NAMELIST} .
 
-   # create job script by combining job params, modules and run command
+   #----------------------------------------------------------------------
+   # Create job script
+   #----------------------------------------------------------------------
+
    OUTPUT_FILE="job.sh"
-   if (( MPI_PROC == 0 )); then
-      COMMANDSTRING="./${THIS_EXEC} ${TEST_NAMELIST} > run_\${DATE}_\${SLURM_JOBID}.log"
-   else
-      COMMANDSTRING="$(eval echo ${RUN_COMMAND}) ./${THIS_EXEC} ${TEST_NAMELIST} > run_\${DATE}_\${SLURM_JOBID}.log"
-   fi
+   LOGFILE_RUN="run_\${DATE}_\${SLURM_JOBID}.log"
+
+   # job parameters from template
    source ${RAMSES_BENCHMARK_DIR}/HPCclusters/${CLUSTER}/job_script_params.sh
-   # add the date, which is used to add the execution timestamp to the name of the log-file of the simulation.
+
+   # export the date, which is used to add the execution timestamp to the name of the log-file of the simulation.
    echo "export DATE=\$(date +%F_%Hh%M)" >> "$OUTPUT_FILE"
+
+   # OMP export statements
+   # TODO: improve
    if (( $OMP_THREADS != 0 )); then
       echo "export OMP_NUM_THREADS=$OMP_THREADS" >> "$OUTPUT_FILE"
       #echo "export OMP_PLACES=cores" >> "$OUTPUT_FILE"
       #echo "export OMP_PROC_BIND=true" >> "$OUTPUT_FILE"
       echo "export OMP_STACKSIZE=2048M" >> "$OUTPUT_FILE"
    fi
+
+   # modules to load
    cat $MODULES >> $OUTPUT_FILE
    echo "" >> "$OUTPUT_FILE"
-   echo "$COMMANDSTRING" >> "$OUTPUT_FILE"
 
+   # add some info to the log
+   echo "######################################### > ${LOGFILE_RUN}" >> "$OUTPUT_FILE"
+   echo "Benchmark: ${TEST_NAME} > ${LOGFILE_RUN}" >> "$OUTPUT_FILE"
+   echo "Resolution: ${RESO} > ${LOGFILE_RUN}" >> "$OUTPUT_FILE"
+   echo "Cluster: ${CLUSTER} > ${LOGFILE_RUN}" >> "$OUTPUT_FILE"
+   echo "partition: ${CLUSTER_PARTITION} > ${LOGFILE_RUN}" >> "$OUTPUT_FILE"
+   echo "Nodes: ${NBNODES} > ${LOGFILE_RUN}" >> "$OUTPUT_FILE"
+   echo "mpi_per_node: ${MPI_PROC} > ${LOGFILE_RUN}" >> "$OUTPUT_FILE"
+   echo "omp_threads: ${OMP_THREADS} > ${LOGFILE_RUN}" >> "$OUTPUT_FILE"
+   echo "Job ID: \${SLURM_JOBID} > ${LOGFILE_RUN}" >> "$OUTPUT_FILE"
+   echo "######################################### > ${LOGFILE_RUN}" >> "$OUTPUT_FILE"
+
+   # run command
+   if (( MPI_PROC == 0 )); then
+      COMMANDSTRING="./${THIS_EXEC} ${TEST_NAMELIST} > ${LOGFILE_RUN}"
+   else
+      COMMANDSTRING="$(eval echo ${RUN_COMMAND}) ./${THIS_EXEC} ${TEST_NAMELIST} > ${LOGFILE_RUN}"
+   fi   
+   echo "$COMMANDSTRING" >> "$OUTPUT_FILE"
+   echo "" >> "$OUTPUT_FILE"
+
+   #----------------------------------------------------------------------
    # launch job multiple times
+   #----------------------------------------------------------------------
+
    for iter in $(seq $ITERS); do
       SUBMIT_MESSAGE=$(sbatch job.sh)
       STRINGARRAY=($SUBMIT_MESSAGE)
       JOB_ID=${STRINGARRAY[-1]}
       echo "Launched ${TEST_NAME} ${RESO} on ${NBNODES} nodes with ${MPI_PROC} procs/node and ${OMP_THREADS} threads/proc [JOB ID ${JOB_ID}]" | tee -a $LOGFILE;
    done
+
    cd ..
 
 done
