@@ -359,93 +359,94 @@ done
 JOB_NAME=$TEST_NAME
 
 # Loop over configurations
+for RESO in "${RESO_LIST[@]}"; do
 for NBNODES in "${NODES_LIST[@]}"; do
-   for RESO in "${RESO_LIST[@]}"; do
-   for OMP_THREADS in "${OMP_THREAD_LIST[@]}"; do
-      for MPI_PROC in "${MPI_PROC_LIST[@]}"; do
-         # Resolve special keyword BEFORE arithmetic
-         if [[ "$MPI_PROC" == "max" ]]; then
-            if (( OMP_THREADS == 0 )); then
-               MPI_PROC=$CLUSTER_CORES_PER_NODE
-            else
-               MPI_PROC=$(( CLUSTER_CORES_PER_NODE / OMP_THREADS ))
-            fi
-         fi
+for OMP_THREADS in "${OMP_THREAD_LIST[@]}"; do
+for MPI_PROC in "${MPI_PROC_LIST[@]}"; do
+   # Resolve special keyword BEFORE arithmetic
+   if [[ "$MPI_PROC" == "max" ]]; then
+      if (( OMP_THREADS == 0 )); then
+         MPI_PROC=$CLUSTER_CORES_PER_NODE
+      else
+         MPI_PROC=$(( CLUSTER_CORES_PER_NODE / OMP_THREADS ))
+      fi
+   fi
 
-         # check which type of config and set the number of MPI processes
-         if (( OMP_THREADS == 0 )); then
-            if (( MPI_PROC == 0 )); then
-               # serial
-               THIS_EXEC=$TEST_EXECUTABLE_SER
-               NTASKS_PER_NODE=1
-            else
-               # MPI-only
-               THIS_EXEC=$TEST_EXECUTABLE_MPI
-               NTASKS_PER_NODE=$MPI_PROC
-            fi
-            CPUS_PER_TASK=1
-         else
-            if (( MPI_PROC == 0 )); then
-               # OpenMP-only
-               THIS_EXEC=$TEST_EXECUTABLE_OMP
-               NTASKS_PER_NODE=1
-            else
-               # hybrid MPI+OpenMP
-               THIS_EXEC=$TEST_EXECUTABLE_HYB
-               NTASKS_PER_NODE=$MPI_PROC
-            fi
-            CPUS_PER_TASK=$OMP_THREADS
-         fi
+   # check which type of config and set the number of MPI processes
+   if (( OMP_THREADS == 0 )); then
+      if (( MPI_PROC == 0 )); then
+         # serial
+         THIS_EXEC=$TEST_EXECUTABLE_SER
+         NTASKS_PER_NODE=1
+      else
+         # MPI-only
+         THIS_EXEC=$TEST_EXECUTABLE_MPI
+         NTASKS_PER_NODE=$MPI_PROC
+      fi
+      CPUS_PER_TASK=1
+   else
+      if (( MPI_PROC == 0 )); then
+         # OpenMP-only
+         THIS_EXEC=$TEST_EXECUTABLE_OMP
+         NTASKS_PER_NODE=1
+      else
+         # hybrid MPI+OpenMP
+         THIS_EXEC=$TEST_EXECUTABLE_HYB
+         NTASKS_PER_NODE=$MPI_PROC
+      fi
+      CPUS_PER_TASK=$OMP_THREADS
+   fi
 
-         CORES_PER_NODE=$(($NTASKS_PER_NODE * $CPUS_PER_TASK))
-         NUMPROCS=$(($NBNODES * $NTASKS_PER_NODE))
+   CORES_PER_NODE=$(($NTASKS_PER_NODE * $CPUS_PER_TASK))
+   NUMPROCS=$(($NBNODES * $NTASKS_PER_NODE))
 
-         # skip invalid configs
-         if [ ${CORES_PER_NODE} -gt ${CLUSTER_CORES_PER_NODE} ]; then
-            continue
-         fi
+   # skip invalid configs
+   if [ ${CORES_PER_NODE} -gt ${CLUSTER_CORES_PER_NODE} ]; then
+      continue
+   fi
 
-         # make subdirectory
-         RUN_DIR=reso${RESO}_nodes${NBNODES}_cores${CORES_PER_NODE}_mpi${MPI_PROC}_omp${OMP_THREADS}
-         mkdir -p ${RUN_DIR} >> $LOGFILE 2>&1;
-         cd ${RUN_DIR}
+   # make subdirectory
+   RUN_DIR=reso${RESO}_nodes${NBNODES}_cores${CORES_PER_NODE}_mpi${MPI_PROC}_omp${OMP_THREADS}
+   mkdir -p ${RUN_DIR} >> $LOGFILE 2>&1;
+   cd ${RUN_DIR}
 
-         # Copy executable and input file
-         cp ${RAMSES_BIN_DIR}/${THIS_EXEC} .
-         TEST_NAMELIST=${TEST_NAME}_${RESO}.nml
-         cp ${RAMSES_BENCHMARK_DIR}/${SETUPS_DIR}/${TEST_NAME}/${TEST_NAMELIST} .
+   # Copy executable and input file
+   cp ${RAMSES_BIN_DIR}/${THIS_EXEC} .
+   TEST_NAMELIST=${TEST_NAME}_${RESO}.nml
+   cp ${RAMSES_BENCHMARK_DIR}/${SETUPS_DIR}/${TEST_NAME}/${TEST_NAMELIST} .
 
-         # create job script by combining job params, modules and run command
-         OUTPUT_FILE="job.sh"
-         if (( MPI_PROC == 0 )); then
-            COMMANDSTRING="./${THIS_EXEC} ${TEST_NAMELIST} > run_\${DATE}_\${SLURM_JOBID}.log"
-         else
-            COMMANDSTRING="$(eval echo ${RUN_COMMAND}) ./${THIS_EXEC} ${TEST_NAMELIST} > run_\${DATE}_\${SLURM_JOBID}.log"
-         fi
-         source ${RAMSES_BENCHMARK_DIR}/HPCclusters/${CLUSTER}/job_script_params.sh
-         # add the date, which is used to add the execution timestamp to the name of the log-file of the simulation.
-         echo "export DATE=\$(date +%F_%Hh%M)" >> "$OUTPUT_FILE"
-         if (( $OMP_THREADS != 0 )); then
-            echo "export OMP_NUM_THREADS=$OMP_THREADS" >> "$OUTPUT_FILE"
-            #echo "export OMP_PLACES=cores" >> "$OUTPUT_FILE"
-            #echo "export OMP_PROC_BIND=true" >> "$OUTPUT_FILE"
-            echo "export OMP_STACKSIZE=2048M" >> "$OUTPUT_FILE"
-         fi
-         cat $MODULES >> $OUTPUT_FILE
-         echo "" >> "$OUTPUT_FILE"
-         echo "$COMMANDSTRING" >> "$OUTPUT_FILE"
+   # create job script by combining job params, modules and run command
+   OUTPUT_FILE="job.sh"
+   if (( MPI_PROC == 0 )); then
+      COMMANDSTRING="./${THIS_EXEC} ${TEST_NAMELIST} > run_\${DATE}_\${SLURM_JOBID}.log"
+   else
+      COMMANDSTRING="$(eval echo ${RUN_COMMAND}) ./${THIS_EXEC} ${TEST_NAMELIST} > run_\${DATE}_\${SLURM_JOBID}.log"
+   fi
+   source ${RAMSES_BENCHMARK_DIR}/HPCclusters/${CLUSTER}/job_script_params.sh
+   # add the date, which is used to add the execution timestamp to the name of the log-file of the simulation.
+   echo "export DATE=\$(date +%F_%Hh%M)" >> "$OUTPUT_FILE"
+   if (( $OMP_THREADS != 0 )); then
+      echo "export OMP_NUM_THREADS=$OMP_THREADS" >> "$OUTPUT_FILE"
+      #echo "export OMP_PLACES=cores" >> "$OUTPUT_FILE"
+      #echo "export OMP_PROC_BIND=true" >> "$OUTPUT_FILE"
+      echo "export OMP_STACKSIZE=2048M" >> "$OUTPUT_FILE"
+   fi
+   cat $MODULES >> $OUTPUT_FILE
+   echo "" >> "$OUTPUT_FILE"
+   echo "$COMMANDSTRING" >> "$OUTPUT_FILE"
 
-         # launch job multiple times
-         for iter in $(seq $ITERS); do
-            SUBMIT_MESSAGE=$(sbatch job.sh)
-            STRINGARRAY=($SUBMIT_MESSAGE)
-            JOB_ID=${STRINGARRAY[-1]}
-            echo "Launched ${TEST_NAME} ${RESO} on ${NBNODES} nodes with ${MPI_PROC} procs/node and ${OMP_THREADS} threads/proc [JOB ID ${JOB_ID}]" | tee -a $LOGFILE;
-         done
-         cd ..
-      done
+   # launch job multiple times
+   for iter in $(seq $ITERS); do
+      SUBMIT_MESSAGE=$(sbatch job.sh)
+      STRINGARRAY=($SUBMIT_MESSAGE)
+      JOB_ID=${STRINGARRAY[-1]}
+      echo "Launched ${TEST_NAME} ${RESO} on ${NBNODES} nodes with ${MPI_PROC} procs/node and ${OMP_THREADS} threads/proc [JOB ID ${JOB_ID}]" | tee -a $LOGFILE;
    done
-   done
+   cd ..
+
+done
+done
+done
 done
 
 # TODO
