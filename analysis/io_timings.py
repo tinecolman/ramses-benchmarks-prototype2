@@ -8,6 +8,33 @@ import os
 import subprocess
 import json
 import numpy as np
+import re
+
+''' Parse meta data written at the top of the log file '''
+def parse_metadata(logfile):
+    meta = {}
+
+    with open(logfile, "r") as f:
+        start_meta = False
+        end_meta = False
+        for line in f:
+            if (not start_meta) and line.startswith("##################"):
+                # we have reached the start of the meta data
+                start_meta = True
+            elif start_meta and (not end_meta):
+                if line.startswith("##################"):
+                    # we have reached the end of the meta data
+                    end_meta = True
+                    break
+                else:
+                    # we are currently reading the meta data
+                    line = line.strip()
+                    try:
+                        [key, value] = line.split(': ')
+                        meta[key] = value
+                    except:
+                        continue
+    return meta
 
 
 # -------- Helper functions for folder names -----------
@@ -22,7 +49,6 @@ def get_info_from_benchmark_dir_name(benchmark_dir, version=2):
     commit = parts[-1][-8:]     # last 8 characters
     if version==2:
         date = parts[-1][-19:-9]
-        print('debug',date)
         branch = parts[-1][10:-20]
     else:
         branch = parts[-1][10:-9]
@@ -52,6 +78,7 @@ def get_info_from_subdir_name(subdir, version=2):
 
 ''' Use grep to get the timings for a specified timer from all logfiles in a directory '''
 def get_timings_from_log(run_dir, which='total', version="ramses"):
+    meta = {}
     if which=='total':
         # take the total time at the bottom
         #subprocess.call("grep --no-filename 'Total elapsed time' {}/*.log".format(run_dir) +" | awk '{print $4}' > total_time.txt", shell=True)
@@ -59,15 +86,24 @@ def get_timings_from_log(run_dir, which='total', version="ramses"):
         with open('total_time.txt', 'r') as file:
             times = [float(line.strip()) for line in file]
         os.remove('total_time.txt')
+        # get meta data
+        for item in os.listdir(run_dir):
+            if item.endswith('.log'):
+                logfile = os.path.join(run_dir, item)
+                if version=="ramses":
+                    meta = parse_metadata(logfile)
+
     else:
         # go through all files, to read the entire timing block
         times = []
         for item in os.listdir(run_dir):
             if item.endswith('.log'):
+                logfile = os.path.join(run_dir, item)
                 if version=="ramses":
-                    timers = read_timers(os.path.join(run_dir, item))
+                    timers = read_timers(logfile)
+                    meta = parse_metadata(logfile)
                 elif version=="mini-ramses":
-                    timers = read_timers_miniramses(os.path.join(run_dir, item))
+                    timers = read_timers_miniramses(logfile)
                 # store the data for the requested timer
                 try:
                     times.append(timers[which])
@@ -80,7 +116,7 @@ def get_timings_from_log(run_dir, which='total', version="ramses"):
         if max_time > min_time*2:
             times.remove(max_time)
             print('WARNING: removed outlyer', max_time, 'from', times)
-    return times
+    return times,meta
 
 ''' retrieve timers for individual parts of the code from the end of the logfile '''
 def read_timers(logfile):
@@ -142,18 +178,20 @@ def add_data(data, benchmark_dir, test_name, which='total', omp_nthr=None, versi
             reso, nodes, mpi, omp = get_info_from_subdir_name(item,bench_version)
             if mpi=="max":
                 mpi = cpu_per_node
-            total_times = get_timings_from_log(name, which, version)
-            new_entry = {
-                "branch": branch,
-                "commit": commit,
-                "nodes": int(nodes),
-                "resolution": reso,
-                "mpi_procs_per_node": int(mpi),
-                "omp_threads": int(omp),
-                "timings": total_times
-            }
-            if (omp_nthr==None) or (int(omp) in omp_nthr):
-                data.append(new_entry)
+            total_times,metadata = get_timings_from_log(name, which, version)
+            if len(total_times)>0:
+                metadata["branch"] = branch
+                metadata["commit"] = commit
+                new_entry = {
+                    "nodes": int(nodes),
+                    "resolution": reso,
+                    "mpi_procs_per_node": int(mpi),
+                    "omp_threads": int(omp),
+                    "timings": total_times,
+                    "metadata": metadata
+                }
+                if (omp_nthr==None) or (int(omp) in omp_nthr):
+                    data.append(new_entry)
 
     print('Added data from', benchmark_dir)
 
