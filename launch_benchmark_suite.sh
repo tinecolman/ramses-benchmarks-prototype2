@@ -118,8 +118,14 @@ source ${RAMSES_BENCHMARK_DIR}/${SETUPS_DIR}/${TEST_NAME}/scaling_config.sh
 
 cd $RAMSES_BIN_DIR
 
-BRANCH=$(git rev-parse --abbrev-ref HEAD)
+# list branches which contain this commit: git branch --contains 0f908c1
+# check if dev is in the list, if yes-> set branch to dev.
+COMMIT=$(git rev-parse --short HEAD)
+COMMIT_DATE=$(git show --no-patch --format=%cd --date=format:'%Y-%m-%d')
+GIT_URL=$(git config --get remote.origin.url | sed 's/git@github.com:/https:\/\/github.com\//g')
+GIT_URL=${GIT_URL:0:$((${#GIT_URL}-4))}
 
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
 # if detached HEAD, check if the commit is from on the dev branch
 if [[ "$BRANCH" == "HEAD" ]]; then
    if git merge-base --is-ancestor "$COMMIT" origin/dev; then
@@ -128,14 +134,6 @@ if [[ "$BRANCH" == "HEAD" ]]; then
       BRANCH="detached"
    fi
 fi
-
-# list branches which contain this commit: git branch --contains 0f908c1
-# check if dev is in the list, if yes-> set branch to dev.
-COMMIT=$(git rev-parse --short HEAD)
-COMMIT_DATE=$(git show --no-patch --format=%cd --date=format:'%Y-%m-%d')
-GIT_URL=$(git config --get remote.origin.url | sed 's/git@github.com:/https:\/\/github.com\//g')
-GIT_URL=${GIT_URL:0:$((${#GIT_URL}-4))}
-
 
 #######################################################################
 # Display info
