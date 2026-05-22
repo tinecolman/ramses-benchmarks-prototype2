@@ -28,7 +28,7 @@ p_region=1d6
 /
 
 &AMR_PARAMS
-levelmin=7
+levelmin=8
 levelmax=13
 ngridmax=2000000
 npartmax=4000000
