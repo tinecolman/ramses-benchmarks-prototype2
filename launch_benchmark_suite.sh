@@ -197,6 +197,26 @@ fi
 
 
 #######################################################################
+# Layout resolver (MPI/OMP separation)
+#######################################################################
+
+resolve_layout () {
+   local mpi=$1
+   local omp=$2
+
+   if [[ "$mpi" == "max" ]]; then
+      if (( omp == 0 )); then
+         mpi=$CLUSTER_CORES_PER_NODE
+      else
+         mpi=$(( CLUSTER_CORES_PER_NODE / omp ))
+      fi
+   fi
+
+   echo "$mpi $omp"
+}
+
+
+#######################################################################
 # Code compilation
 #######################################################################
 
@@ -209,8 +229,11 @@ C_HYBRID=false;
 for MPI_PROC in "${MPI_PROC_LIST[@]}"; do
    for OMP_THREADS in "${OMP_THREAD_LIST[@]}"; do
 
-      if (( $OMP_THREADS == 0 )); then
-         if (( $MPI_PROC == 0 )); then
+      # Resolve actual layout
+      read ACT_MPI ACT_OMP <<< $(resolve_layout "$MPI_PROC" "$OMP_THREADS")
+
+      if (( $ACT_OMP == 0 )); then
+         if (( $ACT_MPI == 0 )); then
             # compile serial
             C_SERIAL=true;
          else
@@ -218,7 +241,7 @@ for MPI_PROC in "${MPI_PROC_LIST[@]}"; do
             C_MPI=true;
          fi
       else
-         if (( $MPI_PROC == 0 )); then
+         if (( $ACT_MPI == 0 )); then
             # compile OpenMP-only
             C_OPENMP=true;
          else
@@ -343,38 +366,32 @@ for RESO in "${RESO_LIST[@]}"; do
 for NBNODES in "${NODES_LIST[@]}"; do
 for OMP_THREADS in "${OMP_THREAD_LIST[@]}"; do
 for MPI_PROC in "${MPI_PROC_LIST[@]}"; do
-   # Resolve special keyword BEFORE arithmetic
-   if [[ "$MPI_PROC" == "max" ]]; then
-      if (( OMP_THREADS == 0 )); then
-         MPI_PROC=$CLUSTER_CORES_PER_NODE
-      else
-         MPI_PROC=$(( CLUSTER_CORES_PER_NODE / OMP_THREADS ))
-      fi
-   fi
+
+   read ACT_MPI ACT_OMP <<< $(resolve_layout "$MPI_PROC" "$OMP_THREADS")
 
    # check which type of config and set the number of MPI processes
-   if (( OMP_THREADS == 0 )); then
-      if (( MPI_PROC == 0 )); then
+   if (( ACT_OMP == 0 )); then
+      if (( ACT_MPI == 0 )); then
          # serial
          THIS_EXEC=$TEST_EXECUTABLE_SER
          NTASKS_PER_NODE=1
       else
          # MPI-only
          THIS_EXEC=$TEST_EXECUTABLE_MPI
-         NTASKS_PER_NODE=$MPI_PROC
+         NTASKS_PER_NODE=$ACT_MPI
       fi
       CPUS_PER_TASK=1
    else
-      if (( MPI_PROC == 0 )); then
+      if (( ACT_MPI == 0 )); then
          # OpenMP-only
          THIS_EXEC=$TEST_EXECUTABLE_OMP
          NTASKS_PER_NODE=1
       else
          # hybrid MPI+OpenMP
          THIS_EXEC=$TEST_EXECUTABLE_HYB
-         NTASKS_PER_NODE=$MPI_PROC
+         NTASKS_PER_NODE=$ACT_MPI
       fi
-      CPUS_PER_TASK=$OMP_THREADS
+      CPUS_PER_TASK=$ACT_OMP
    fi
 
    CORES_PER_NODE=$(($NTASKS_PER_NODE * $CPUS_PER_TASK))
@@ -386,7 +403,7 @@ for MPI_PROC in "${MPI_PROC_LIST[@]}"; do
    fi
 
    # make subdirectory
-   RUN_DIR=reso${RESO}_nodes${NBNODES}_cores${CORES_PER_NODE}_mpi${MPI_PROC}_omp${OMP_THREADS}
+   RUN_DIR=reso${RESO}_nodes${NBNODES}_cores${CORES_PER_NODE}_mpi${ACT_MPI}_omp${ACT_OMP}
    mkdir -p ${RUN_DIR} >> $LOGFILE 2>&1;
    cd ${RUN_DIR}
 
@@ -410,8 +427,8 @@ for MPI_PROC in "${MPI_PROC_LIST[@]}"; do
 
    # OMP export statements
    # TODO: improve
-   if (( $OMP_THREADS != 0 )); then
-      echo "export OMP_NUM_THREADS=$OMP_THREADS" >> "$OUTPUT_FILE"
+   if (( $ACT_OMP != 0 )); then
+      echo "export OMP_NUM_THREADS=$ACT_OMP" >> "$OUTPUT_FILE"
       #echo "export OMP_PLACES=cores" >> "$OUTPUT_FILE"
       #echo "export OMP_PROC_BIND=true" >> "$OUTPUT_FILE"
       echo "export OMP_STACKSIZE=2048M" >> "$OUTPUT_FILE"
@@ -428,14 +445,14 @@ for MPI_PROC in "${MPI_PROC_LIST[@]}"; do
    echo "echo \"Cluster: ${CLUSTER}\" >> ${LOGFILE_RUN}" >> "$OUTPUT_FILE"
    echo "echo \"Partition: ${CLUSTER_PARTITION}\" >> ${LOGFILE_RUN}" >> "$OUTPUT_FILE"
    echo "echo \"Nodes: ${NBNODES}\" >> ${LOGFILE_RUN}" >> "$OUTPUT_FILE"
-   echo "echo \"MPI per node: ${MPI_PROC}\" >> ${LOGFILE_RUN}" >> "$OUTPUT_FILE"
-   echo "echo \"OMP threads: ${OMP_THREADS}\" >> ${LOGFILE_RUN}" >> "$OUTPUT_FILE"
+   echo "echo \"MPI per node: ${ACT_MPI}\" >> ${LOGFILE_RUN}" >> "$OUTPUT_FILE"
+   echo "echo \"OMP threads: ${ACT_OMP}\" >> ${LOGFILE_RUN}" >> "$OUTPUT_FILE"
    echo "echo \"Job ID: \${SLURM_JOBID}\" >> ${LOGFILE_RUN}" >> "$OUTPUT_FILE"
    echo "echo \"#########################################\" >> ${LOGFILE_RUN}" >> "$OUTPUT_FILE"
    echo "" >> "$OUTPUT_FILE"
 
    # run command
-   if (( MPI_PROC == 0 )); then
+   if (( ACT_MPI == 0 )); then
       COMMANDSTRING="./${THIS_EXEC} ${TEST_NAMELIST} >> ${LOGFILE_RUN}"
    else
       COMMANDSTRING="$(eval echo ${RUN_COMMAND}) ./${THIS_EXEC} ${TEST_NAMELIST} >> ${LOGFILE_RUN}"
@@ -451,7 +468,7 @@ for MPI_PROC in "${MPI_PROC_LIST[@]}"; do
       SUBMIT_MESSAGE=$(sbatch job.sh)
       STRINGARRAY=($SUBMIT_MESSAGE)
       JOB_ID=${STRINGARRAY[-1]}
-      echo "Launched ${TEST_NAME} ${RESO} on ${NBNODES} nodes with ${MPI_PROC} procs/node and ${OMP_THREADS} threads/proc [JOB ID ${JOB_ID}]" | tee -a $LOGFILE;
+      echo "Launched ${TEST_NAME} ${RESO} on ${NBNODES} nodes with ${ACT_MPI} procs/node and ${ACT_OMP} threads/proc [JOB ID ${JOB_ID}]" | tee -a $LOGFILE;
    done
 
    cd ..
