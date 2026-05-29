@@ -46,9 +46,22 @@ def load_release_data(cluster, test, timer='total'):
 
 def load_latest_openmp_data(cluster, test, timer='total'):
 
-    bench_home = '/home/tcolman/Dropbox/SPACE/DATA_ARCHIVE_WIP_OPENMP'
+    bench_home = '/home/tcolman/Dropbox/SPACE/DATA_ARCHIVE_OPENMP_DEV'
 
     data = add_data([], bench_home+'/'+cluster+'/'+'benchmark_openmp_2026-05-20_e9846974/',
                    test, which=timer)
     
     return data
+
+
+def load_before_space(cluster, test, timer='total'):
+
+    bench_home = '/home/tcolman/Dropbox/SPACE/DATA_ARCHIVE_SPACE'
+
+    # DEV Reference of public ramses version, before space (Nov 8, 2024)
+    data = add_data([], bench_home+'/'+cluster+'/'+'benchmark_dev_456b33e2/',
+                   test, which=timer)
+    
+    return data
+
+    
