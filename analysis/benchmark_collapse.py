@@ -5,7 +5,7 @@ from visu_openmp import *
 
 def load_data(cluster, test, timer):
 
-    bench_home = '/home/tcolman/Dropbox/SPACE/DATA_ARCHIVE'
+    bench_home = '/home/tcolman/Dropbox/SPACE/DATA_ARCHIVE_V1'
 
     data = add_data([], bench_home+'/'+cluster+'/'+'benchmark_openmp_2nd_collapse_b0f9456b', test, which=timer)
 

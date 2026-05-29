@@ -2,8 +2,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 import matplotlib.colors as colorsx
 from visualisation import process_times
-import argparse
-from tagged_data import *
+
 
 ''' Plot evolution of execution time (different commits) for various number of nodes '''
 def plot_execution_time_multinode(benchmarks, release_labels, reso,
@@ -86,41 +85,20 @@ def plot_execution_time_multinode(benchmarks, release_labels, reso,
 
 if __name__ == '__main__':
 
+    import argparse
     parser = argparse.ArgumentParser(
         description='Plot benchmark execution time evolution'
     )
 
-    parser.add_argument(
-        '-c', '--cluster',
-        required=True,
-        help='Cluster name'
-    )
-
-    parser.add_argument(
-        '-b', '--benchmark',
-        required=True,
-        help='Benchmark setup name'
-    )
-
-    parser.add_argument(
-        '-r', '--reso',
-        required=True,
-        help='Resolution'
-    )
-
-    parser.add_argument(
-        '-t', '--timer',
-        default='total',
-        help='Subtimer to analyse'
-    )
+    parser.add_argument('-c', '--cluster', required=True, help='Cluster name')
+    parser.add_argument('-b', '--benchmark', required=True, help='Benchmark setup name')
+    parser.add_argument('-r', '--reso', required=True, help='Resolution')
+    parser.add_argument('-t', '--timer', default='total', help='Subtimer to analyse')
 
     args = parser.parse_args()
 
-    benchmarks, release_labels = load_release_data(
-        args.cluster,
-        args.benchmark,
-        args.timer
-    )
+    from tagged_data import load_release_data
+    benchmarks, release_labels = load_release_data(args.cluster, args.benchmark, args.timer)
 
     plot_execution_time_multinode(
         benchmarks,
