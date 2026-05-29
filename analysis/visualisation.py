@@ -89,6 +89,7 @@ def plot_execution_time_cpu_speedup_multicluster(clusters, data_arr, mapping_com
 
 ''' Plot evolution of execution time for different number of nodes '''
 ''' Make a figure of the execution time comparing different commits '''
+# DEPRECATED
 def plot_execution_time_multinode(data, mapping_commits, reso, arr_nodes, input_axes=None, outname='check_refactor.png'):
 
     # create colors

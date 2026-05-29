@@ -16,3 +16,8 @@
 | 32 | 0.902 (MPI=128 OMP=0) | 0.886 (MPI=128 OMP=0) | 0.882 (MPI=128 OMP=0) | 0.875 (MPI=128 OMP=0) | 0.888 (MPI=128 OMP=0) |
 | 64 | 0.822 (MPI=128 OMP=0) | 0.805 (MPI=128 OMP=0) | 0.776 (MPI=128 OMP=0) | 0.737 (MPI=128 OMP=0) | 0.739 (MPI=64 OMP=2) |
 
+
+## OpenMP - MPI configuration
+
+![Strong scaling](../results/images/mpi_omp_grid_sedov_1024_total_meluxina.png)
+

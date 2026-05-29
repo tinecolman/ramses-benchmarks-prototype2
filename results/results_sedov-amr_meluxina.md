@@ -15,3 +15,8 @@
 | 16 |  |  |  |  | 0.087 (MPI=16 OMP=8) |
 | 32 |  |  |  |  | 0.027 (MPI=16 OMP=8) |
 
+
+## MPI - OpenMP configuration on 1 node
+
+![Strong scaling](../results/images/mpi_omp_grid_sedov-amr_lvl5-10_total_meluxina.png)
+
