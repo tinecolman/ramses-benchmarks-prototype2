@@ -1,9 +1,9 @@
 __pycache__
 output_*
-*.png
 *.log
 *.txt
 ramses3d
+analysis/images/
 setups/galaxy-agora/ICs_lowres
 setups/galaxy-agora/ICs_mediumres
 setups/galaxy-agora/ICs_highres
