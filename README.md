@@ -29,10 +29,15 @@ EuroHPC
 * [Deucalion](HPCclusters/deucalion/cluster_description.md)
 
 
-## Browsing benchmark results per setup
+## Browsing benchmark results
 
-* [sedov benchmark results]()
+* Meluxina:
+[sedov](results/results_sedov_meluxina.md), 
+[sedov-amr](results/results_sedov-amr_meluxina.md)
 
+* Discoverer: 
+[sedov](results/results_sedov_discoverer.md), 
+[sedov-amr](results/results_sedov-amr_discoverer.md)
 
 ## How to do your own benchmarking
 
