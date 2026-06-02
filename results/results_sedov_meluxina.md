@@ -1,5 +1,9 @@
 # Benchmark: sedov 1024 on meluxina
 
+[Benchmark description: sedov](../setups/sedov/description.md)
+
+[Cluster info: meluxina](../HPCclusters/meluxina/cluster_description.md)
+
 ## Evolution of execution time with code version
 
 ![Evolution execution time](../results/images/evo_exectime_sedov_1024_total_meluxina.png)

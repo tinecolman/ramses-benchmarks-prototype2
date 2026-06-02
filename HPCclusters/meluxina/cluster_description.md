@@ -12,6 +12,10 @@ Hosted by LuxProvide in Luxemburg.
 
 Support email: servicedesk@lxp.lu (create ticket on user portal)
 
+## Characteristics
+
+TODO which cpu etc
+
 ## Access
 
 ### Applying for time

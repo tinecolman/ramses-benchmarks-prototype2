@@ -59,6 +59,10 @@ for reso in resos:
     # Assemble markdown page string
     md = f"""# Benchmark: {args.benchmark} {reso} on {args.cluster}
 
+[Benchmark description: {args.benchmark}](../setups/{args.benchmark}/description.md)
+
+[Cluster info: {args.cluster}](../HPCclusters/{args.cluster}/cluster_description.md)
+
 ## Evolution of execution time with code version
 
 ![Evolution execution time]({figfile1})
