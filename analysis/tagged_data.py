@@ -44,6 +44,16 @@ def load_release_data(cluster, test, timer='total'):
 
     return benchmarks, release_labels
 
+def load_latest_release_data(cluster, test, timer='total'):
+
+    bench_home = '/home/tcolman/Dropbox/SPACE/DATA_ARCHIVE_RELEASE'
+
+    data = add_data([], bench_home+'/'+cluster+'/'+'benchmark_dev_2026-05-20_7050a55b/',
+                   test, which=timer)
+    label = "2026-05"
+
+    return data, label
+
 def load_latest_openmp_data(cluster, test, timer='total'):
 
     bench_home = '/home/tcolman/Dropbox/SPACE/DATA_ARCHIVE_OPENMP_DEV'

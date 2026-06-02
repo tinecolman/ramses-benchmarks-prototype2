@@ -1,8 +1,9 @@
-# Benchmark: sedov 1024 on meluxina
+# Benchmark: sedov on meluxina
 
 [Benchmark description: sedov](../setups/sedov/description.md)
 
 [Cluster info: meluxina](../HPCclusters/meluxina/cluster_description.md)
+
 
 ## Evolution of execution time with code version
 
@@ -48,14 +49,4 @@ using the full compute node.
 | 32 | 0.902 | 0.886 | 0.882 | 0.875 | 0.888 |
 | 64 | 0.822 | 0.805 | 0.776 | 0.737 | 0.739 (MPI=64 OMP=2) |
 
-
-## MPI - OpenMP configuration on 1 node
-
-![Strong scaling](../results/images/mpi_omp_grid_sedov_1024_total_meluxina.png)
-
-This figure gives inside in the behaviour of OpenMP for this setup.
-It shows which MPI - OpenMP configuration is most optimal
-in terms of execution time, for this setup at this resolution.
-The data is for the latest OpenMP version, corresponding to the one
-used for the previous figures.
 

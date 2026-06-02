@@ -19,50 +19,48 @@ args = parser.parse_args()
 # We always want to display the total time for this page
 timer='total'
 
-resos = get_resolutions(args.benchmark)
-
 # Load release data
 benchmarks, release_labels = load_release_data(args.cluster, args.benchmark, timer)
 
-for reso in resos:
-
-    # Evolution of execution time figure
-    figfile1 = f'../results/images/evo_exectime_{args.benchmark}_{reso}_{timer}_{args.cluster}.png'
-    plot_execution_time_multinode(
-        benchmarks,
-        release_labels,
-        reso,
-        outname=figfile1
-    )
-
-    table_md1 = table_execution_time( benchmarks, release_labels, reso, fmt='markdown')
-
-    # Make strong scaling figure
-    figfile2 = f'../results/images/strong_scaling_{args.benchmark}_{reso}_{timer}_{args.cluster}.png'
-    plot_strong_scaling(
-        benchmarks,
-        release_labels,
-        reso,
-        outname=figfile2
-    )
-
-    # Get strong scaling efficiency table
-    table_md2 = table_strong_scaling(benchmarks, release_labels, reso, fmt='markdown')
-
-    # Get OMP-MPI grid
-    data = load_latest_openmp_data(args.cluster, args.benchmark, timer)
-    figfile_grid_omp = f'../results/images/mpi_omp_grid_{args.benchmark}_{reso}_{timer}_{args.cluster}.png'
-    plot_mpi_omp_grid(data, reso, 
-                        fig_name=figfile_grid_omp,
-                        show_overhead=False)
-
-    # Assemble markdown page string
-    md = f"""# Benchmark: {args.benchmark} {reso} on {args.cluster}
+md = f"""# Benchmark: {args.benchmark} on {args.cluster}
 
 [Benchmark description: {args.benchmark}](../setups/{args.benchmark}/description.md)
 
 [Cluster info: {args.cluster}](../HPCclusters/{args.cluster}/cluster_description.md)
 
+"""
+
+#resos = get_resolutions(args.benchmark)
+reso = get_resolutions(args.benchmark)[-1]
+
+#for reso in reversed(resos):
+
+# Evolution of execution time figure
+figfile1 = f'../results/images/evo_exectime_{args.benchmark}_{reso}_{timer}_{args.cluster}.png'
+plot_execution_time_multinode(
+    benchmarks,
+    release_labels,
+    reso,
+    outname=figfile1
+)
+
+table_md1 = table_execution_time( benchmarks, release_labels, reso, fmt='markdown')
+
+# Make strong scaling figure
+figfile2 = f'../results/images/strong_scaling_{args.benchmark}_{reso}_{timer}_{args.cluster}.png'
+plot_strong_scaling(
+    benchmarks,
+    release_labels,
+    reso,
+    outname=figfile2
+)
+
+# Get strong scaling efficiency table
+table_md2 = table_strong_scaling(benchmarks, release_labels, reso, fmt='markdown')
+
+
+# Assemble markdown page string
+md += f"""
 ## Evolution of execution time with code version
 
 ![Evolution execution time]({figfile1})
@@ -90,9 +88,26 @@ using the full compute node.
 
 {table_md2}
 
+"""
+
+
+# Weak scaling
+
+
+
+# OpenMP insights
+
+# Get OMP-MPI grid
+#data = load_latest_openmp_data(args.cluster, args.benchmark, timer)
+#figfile_grid_omp = f'../results/images/mpi_omp_grid_{args.benchmark}_{reso}_{timer}_{args.cluster}.png'
+#plot_mpi_omp_grid(data, reso, 
+#                    fig_name=figfile_grid_omp,
+#                    show_overhead=False)
+
+"""
 ## MPI - OpenMP configuration on 1 node
 
-![Strong scaling]({figfile_grid_omp})
+![MPI-OMP]({figfile_grid_omp})
 
 This figure gives inside in the behaviour of OpenMP for this setup.
 It shows which MPI - OpenMP configuration is most optimal

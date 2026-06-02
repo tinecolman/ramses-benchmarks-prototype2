@@ -6,7 +6,7 @@ import io
 
 ''' Plot evolution of execution time (different commits) for various number of nodes '''
 def plot_strong_scaling(benchmarks, release_labels, reso, input_axes=None, 
-                        outname='evo_exectime.png'):
+                        outname='evo_strong_scaling.png'):
 
     # create colors for different commits (lighter grey = older)
     cmap = plt.get_cmap('gray_r')
