@@ -75,11 +75,11 @@ def plot_mpi_omp_grid(data, reso, fig_name='mpi_omp_grid', show_overhead=False):
                         color="black", fontsize=8)
 
     # Step 7: colorbar
-    divider = make_axes_locatable(ax)
-    cax = divider.append_axes("right", size="5%", pad=0.05)
-    cbar = plt.colorbar(im, cax=cax)
-    cbar.set_label("execution time")
-    cbar.set_ticks([])
+    #divider = make_axes_locatable(ax)
+    #cax = divider.append_axes("right", size="5%", pad=0.05)
+    #cbar = plt.colorbar(im, cax=cax)
+    #cbar.set_label("execution time")
+    #cbar.set_ticks([])
 
     plt.tight_layout()
     plt.savefig(fig_name, dpi=150)
