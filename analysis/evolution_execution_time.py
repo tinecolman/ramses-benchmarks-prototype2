@@ -1,4 +1,5 @@
 import numpy as np
+import io
 from matplotlib import pyplot as plt
 import matplotlib.colors as colorsx
 from visualisation import process_times
@@ -26,7 +27,7 @@ def plot_execution_time_multinode(benchmarks, release_labels, reso,
     header = "Nodes"
     for label in release_labels:
         header = header + " & " + label
-    print(header)
+    #print(header)
 
     for nodes in arr_nodes:
         times = []
@@ -65,7 +66,7 @@ def plot_execution_time_multinode(benchmarks, release_labels, reso,
         diff = (-1)*(times[-1] - times[0])/times[0] * 100
         table_string = table_string + ' & {:.1f} \\\\ \\hline'.format(diff)
 
-        print(table_string)
+        #print(table_string)
         # plot evolution of time as a function of release, for this number of nodes
         axes.errorbar(labels, times, fmt='o',markersize=6, color=colorVals[nodes], label=str(nodes)+'nodes')
 
@@ -82,6 +83,144 @@ def plot_execution_time_multinode(benchmarks, release_labels, reso,
         plt.savefig(outname, bbox_inches='tight', dpi=200)
         plt.close()
 
+
+def table_execution_time(
+        benchmarks,
+        release_labels,
+        reso,
+        arr_nodes=[1,2,4,8,16,32,64],
+        fmt='markdown'):
+    """
+    Generate execution-time evolution table.
+
+    Entries:
+        time (MPI=x OMP=y)
+
+    Last column:
+        relative improvement [%]
+        between first and last release.
+    """
+
+    out = io.StringIO()
+
+    # ---------- MARKDOWN ----------
+    if fmt == 'markdown':
+
+        header = (
+            "| Nodes | "
+            + " | ".join(release_labels)
+            + " | Δ [%] |"
+        )
+
+        sep = "|" + "---|"*(len(release_labels)+2)
+
+        print(header, file=out)
+        print(sep, file=out)
+
+    # ---------- LATEX ----------
+    elif fmt == 'latex':
+
+        ncols = len(release_labels) + 2
+
+        print(r"\begin{tabular}{" + "l"*ncols + "}", file=out)
+        print(r"\hline", file=out)
+
+        header = (
+            "Nodes & "
+            + " & ".join(release_labels)
+            + r" & $\Delta$ [\%] \\"
+        )
+
+        print(header, file=out)
+        print(r"\hline", file=out)
+
+    else:
+        raise ValueError("fmt must be 'markdown' or 'latex'")
+
+    # ---------- DATA ROWS ----------
+
+    for nodes in arr_nodes:
+
+        times = []
+
+        row = [str(nodes)]
+
+        for data, label in zip(benchmarks, release_labels):
+
+            best_entry = None
+            best_time = np.inf
+
+            for entry in data:
+
+                if entry['resolution'] != reso:
+                    continue
+
+                if entry['nodes'] != nodes:
+                    continue
+
+                time, error_min, error_max = process_times(
+                    entry['timings'])
+
+                if time < best_time:
+                    best_time = time
+                    best_entry = entry
+
+            if best_entry is not None:
+
+                times.append(float(best_time))
+
+                config = (
+                    f"MPI={best_entry['mpi_procs_per_node']} "
+                    f"OMP={best_entry['omp_threads']}"
+                )
+
+                if best_entry['omp_threads']==0 and best_entry['mpi_procs_per_node'] in [112,128]:
+                    row.append(
+                        f"{best_time:.2f}"
+                    )
+                else:
+                    # non-default MPI config
+                    row.append(
+                        f"{best_time:.2f} ({config})"
+                    )
+
+            else:
+
+                times.append(np.nan)
+                row.append("-")
+
+        # compute evolution (% improvement)
+        if np.isfinite(times[0]) and np.isfinite(times[-1]):
+
+            diff = (
+                -(times[-1] - times[0])
+                / times[0] * 100
+            )
+
+            row.append(f"{diff:.1f}")
+
+        else:
+            row.append("-")
+
+        # ---------- emit row ----------
+
+        if fmt == 'markdown':
+            print("| " + " | ".join(row) + " |",
+                  file=out)
+
+        elif fmt == 'latex':
+            print(
+                " & ".join(row)
+                + r" \\ \hline",
+                file=out
+            )
+
+    # ---------- footer ----------
+
+    if fmt == 'latex':
+        print(r"\end{tabular}", file=out)
+
+    return out.getvalue()
 
 if __name__ == '__main__':
 
@@ -106,6 +245,16 @@ if __name__ == '__main__':
         args.reso,
         outname=f'images/evo_exectime_{args.benchmark}_{args.reso}_{args.timer}_{args.cluster}.png'
     )
+
+    table_md = table_execution_time(
+        benchmarks,
+        release_labels,
+        args.reso,
+        fmt='markdown'
+    )
+
+    print(table_md)
+
 
 #python evolution_execution_time.py -c meluxina -b sedov -r 1024
 #python evolution_execution_time.py -c meluxina -b sedov-amr -r lvl5-10

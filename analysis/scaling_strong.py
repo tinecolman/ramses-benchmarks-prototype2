@@ -115,9 +115,8 @@ def table_strong_scaling(
 
                 best_per_node[nodes] = {
                     'time': float(best_time),
-                    'config':
-                        f"MPI={best_entry['mpi_procs_per_node']} "
-                        f"OMP={best_entry['omp_threads']}"
+                    'mpi': best_entry['mpi_procs_per_node'],
+                    'omp': best_entry['omp_threads']
                 }
 
         if len(best_per_node) == 0:
@@ -135,9 +134,15 @@ def table_strong_scaling(
             speedup = baseline_time / runtime
             efficiency = speedup / (nodes / baseline_nodes)
 
-            config = best_per_node[nodes]['config']
+            config = (
+                f"MPI={best_per_node[nodes]['mpi']} "
+                f"OMP={best_per_node[nodes]['omp']}"
+            )
 
-            col[nodes] = f"{efficiency:.3f} ({config})"
+            if best_per_node[nodes]['omp']==0 and best_per_node[nodes]['mpi'] in [112,128]:
+                col[nodes] = f"{efficiency:.3f}"
+            else:
+                col[nodes] = f"{efficiency:.3f} ({config})"
 
             all_nodes.add(nodes)
 

@@ -3,6 +3,7 @@
 
 from tagged_data import *
 from resolutions import get_resolutions
+from evolution_execution_time import plot_execution_time_multinode, table_execution_time
 from scaling_strong import plot_strong_scaling, table_strong_scaling
 from openmp_config_grid import plot_mpi_omp_grid
 import argparse
@@ -25,18 +26,28 @@ benchmarks, release_labels = load_release_data(args.cluster, args.benchmark, tim
 
 for reso in resos:
 
+    # Evolution of execution time figure
+    figfile1 = f'../results/images/evo_exectime_{args.benchmark}_{reso}_{timer}_{args.cluster}.png'
+    plot_execution_time_multinode(
+        benchmarks,
+        release_labels,
+        reso,
+        outname=figfile1
+    )
+
+    table_md1 = table_execution_time( benchmarks, release_labels, reso, fmt='markdown')
+
     # Make strong scaling figure
-    figfile=f'../results/images/strong_scaling_{args.benchmark}_{reso}_{timer}_{args.cluster}.png'
+    figfile2 = f'../results/images/strong_scaling_{args.benchmark}_{reso}_{timer}_{args.cluster}.png'
     plot_strong_scaling(
         benchmarks,
         release_labels,
         reso,
-        outname=figfile
+        outname=figfile2
     )
 
     # Get strong scaling efficiency table
-    table_md = table_strong_scaling(benchmarks, release_labels, reso, fmt='markdown')
-
+    table_md2 = table_strong_scaling(benchmarks, release_labels, reso, fmt='markdown')
 
     # Get OMP-MPI grid
     data = load_latest_openmp_data(args.cluster, args.benchmark, timer)
@@ -48,17 +59,42 @@ for reso in resos:
     # Assemble markdown page string
     md = f"""# Benchmark: {args.benchmark} {reso} on {args.cluster}
 
-## Strong scaling figure
+## Evolution of execution time with code version
 
-![Strong scaling]({figfile})
+![Evolution execution time]({figfile1})
 
-## Strong scaling efficiency table
+This figure shows the execution time for different versions of the code.
+To guide the eye, the dotted line shows the time for the oldest version.
+The table lists the time values, which are an average of multiple runs.
+The last column informs of the speedup of the last version with 
+respect to the first listed version. Unless otherwise stated,
+the time listed is for runs with MPI-only using the full compute node.
 
-{table_md}
+{table_md1}
+
+## Strong scaling
+
+![Strong scaling]({figfile2})
+
+This figure shows the strong scaling for different versions of the code.
+The underlying timings are those from the previous section.
+Ideal scaling is shown as a dotted line.
+The table lists the corresponding strong scaling efficiency,
+with respect to the minimal number of nodes.
+Unless otherwise stated, data is for runs with MPI-only 
+using the full compute node.
+
+{table_md2}
 
 ## MPI - OpenMP configuration on 1 node
 
 ![Strong scaling]({figfile_grid_omp})
+
+This figure gives inside in the behaviour of OpenMP for this setup.
+It shows which MPI - OpenMP configuration is most optimal
+in terms of execution time, for this setup at this resolution.
+The data is for the latest OpenMP version, corresponding to the one
+used for the previous figures.
 
 """
 
