@@ -1,4 +1,4 @@
-# Benchmark results: sedov on meluxina
+# Benchmark: sedov 1024 on meluxina
 
 ## Strong scaling figure
 
@@ -17,7 +17,7 @@
 | 64 | 0.822 (MPI=128 OMP=0) | 0.805 (MPI=128 OMP=0) | 0.776 (MPI=128 OMP=0) | 0.737 (MPI=128 OMP=0) | 0.739 (MPI=64 OMP=2) |
 
 
-## OpenMP - MPI configuration
+## MPI - OpenMP configuration on 1 node
 
 ![Strong scaling](../results/images/mpi_omp_grid_sedov_1024_total_meluxina.png)
 
