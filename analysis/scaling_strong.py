@@ -69,6 +69,7 @@ def table_strong_scaling(benchmarks, release_labels, reso, fmt='markdown'):
         print(r"\hline", file=out)
         print(header, file=out)
         print(r"\hline", file=out)
+
     else:
         raise ValueError("[table_strong_scaling] fmt must be 'markdown' or 'latex'")
 
@@ -80,7 +81,7 @@ def table_strong_scaling(benchmarks, release_labels, reso, fmt='markdown'):
 
     release_results = {}
     all_nodes = set()
-    for data,label in zip(benchmarks,release_labels):
+    for data, label in zip(benchmarks,release_labels):
 
         # Extract results from the benchmark data 
         times, avail_nodes, avail_resos, configs = scan_data(data, arr_nodes_in, arr_resos_in)
@@ -111,7 +112,7 @@ def table_strong_scaling(benchmarks, release_labels, reso, fmt='markdown'):
         row = [str(nodes)]
 
         for label in release_labels:
-            value = release_results.get(label,{}).get(nodes, "")
+            value = release_results.get(label,{}).get(nodes, "-")
             row.append(value)
 
         if fmt == 'markdown':

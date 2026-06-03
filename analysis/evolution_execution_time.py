@@ -11,6 +11,7 @@ def plot_execution_time_multinode(benchmarks, release_labels, reso,
                                   outname='evo_exectime.png'):
 
     # create colors for different number of nodes
+    # TODO use get_color utility
     cmap = plt.get_cmap('managua')
     cNorm  = colorsx.LogNorm(vmin=1, vmax=max(arr_nodes))
     colorVals = {}
@@ -19,64 +20,41 @@ def plot_execution_time_multinode(benchmarks, release_labels, reso,
 
     # create figure if none provided
     if input_axes==None:
-        fig, axes = plt.subplots(nrows=1, ncols=1, figsize=(5,4))
+        fig, axes = plt.subplots(nrows=1, ncols=1, figsize=(4.5,4))
     else:
         axes = input_axes
-
-    # print table header
-    header = "Nodes"
-    for label in release_labels:
-        header = header + " & " + label
-    #print(header)
 
     for nodes in arr_nodes:
         times = []
         labels = []
-        table_string = '{}'.format(str(nodes).rjust(2))
 
         for data,label in zip(benchmarks,release_labels):
-            best_entry = None
-            best_time = np.inf
-            for entry in data:
-                if entry['resolution']!=reso:
-                    continue
-                if entry['nodes']!=nodes:
-                    continue
-                # reduce time data
-                time, error_min, error_max = process_times(entry['timings'])
-
-                # keep fastest config
-                if time < best_time:
-                    best_time = time
-                    best_entry = entry
+            best_entry, best_time = search_best_config(data,reso,nodes)
 
             if best_entry is not None:
                 times.append(float(best_time))
                 labels.append(label)
-                best_config = f'MPI={best_entry['mpi_procs_per_node']} OMP={best_entry['omp_threads']}'
                 # plot individual timing points to verify there are no outlyers
-                axes.scatter(np.full(len(best_entry['timings']),label),best_entry['timings'],marker='o',s=3,color=colorVals[nodes])
-
-                table_string+= ' & {:.3f} ({})'.format(best_time, best_config)
+                axes.scatter(np.full(len(best_entry['timings']),label), best_entry['timings'],
+                             marker='o', s=3, color=colorVals[nodes])
             else:
                 times.append(np.nan)
                 labels.append(label)
-                table_string+= ' & - '
 
-        diff = (-1)*(times[-1] - times[0])/times[0] * 100
-        table_string = table_string + ' & {:.1f} \\\\ \\hline'.format(diff)
+        # plot evolution of time as a function of release
+        axes.errorbar(labels, times, fmt='o',markersize=6,
+                        color=colorVals[nodes], label=str(nodes))
 
-        #print(table_string)
-        # plot evolution of time as a function of release, for this number of nodes
-        axes.errorbar(labels, times, fmt='o',markersize=6, color=colorVals[nodes], label=str(nodes)+'nodes')
-
-        # plot a line from the last point to make comparison easier
-        if len(times)>0:
-            axes.plot([release_labels[0],release_labels[-1]], [times[0],times[0]], ls=':', lw=1.3, color=colorVals[nodes])
+        # plot a line from the first point to make comparison easier
+        axes.plot([release_labels[0],release_labels[-1]], [times[0],times[0]],
+                   ls=':', lw=1.3, color=colorVals[nodes])
 
     # layout of the figure
     if input_axes==None:
-        axes.set_title(f'{entry['metadata']['Benchmark']} {reso} on {entry['metadata']['Cluster']}')
+        # add legend next to figure
+        axes.legend(title='nodes', loc='center left', bbox_to_anchor=(1., 0.5))
+
+        axes.set_title(f'{data[0]['metadata']['Benchmark']} {reso} on {data[0]['metadata']['Cluster']}')
         axes.tick_params(axis='x', labelrotation=90)
         axes.set_ylabel('execution time [s]')
         axes.set_yscale('log')
