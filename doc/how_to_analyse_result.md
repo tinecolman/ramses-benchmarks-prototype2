@@ -2,7 +2,30 @@
 
 To avoid dependence on the python distribution on the cluster, it is recommended to simply download the full benchmark directory to your local computer and run the analysis scripts locally.
 
-In the directory `analysis/` you can find a collection of scripts to extract, analyse and visulaize the results:
+In the directory `analysis/` you can find a collection of scripts to extract, analyse and visualize the results.
+
+Users looking to obtain scaling information in the form of figures and tables of a certain version of the code can use the scripts: 
+* `scaling_strong.py`
+* `scaling_weak.py`
+* `scaling_combo.py`
+* `analyse_benchmark.py`, which executes the above three
+
+Example usage:
+```
+python scaling_strong.py -b sedov -r 1024 -p meluxina/benchmark_dev_2026-05-20_7050a55b/
+
+python scaling_weak.py -b sedov -p meluxina/benchmark_dev_2026-05-20_7050a55b/
+```
+
+Developers looking to check the performance improvements between two versions of the code can use the script
+* `evolution_execution_time.py`
+
+Example usage:
+```
+python evolution_execution_time.py -f benchmark_dev_2024-10-17_7308417b/ -l benchmark_openmp_2026-05-20_e9846974/ -b sedov -r 1024
+```
+
+
 *  io_timings.py: routines to extract timings from log files and add them to a database
 * visualisation.py: 
 
