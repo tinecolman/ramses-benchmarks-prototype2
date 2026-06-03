@@ -1,13 +1,13 @@
 import numpy as np
+import io
 from matplotlib import pyplot as plt
 import matplotlib.colors as colorsx
-from visualisation import process_times
-import io
+from visualisation import search_best_config
 
 
 ''' Make a figure of the weak scaling comparing different commits '''
 def plot_weak_scaling(benchmarks, release_labels, arr_nodes_in, resos,
-                              input_axes=None, outname='evo_weak_scaling.png'):
+                      input_axes=None, outname='evo_weak_scaling.png'):
 
     # create colors for different commits (lighter grey = older)
     cmap = plt.get_cmap('gray_r')
@@ -28,22 +28,9 @@ def plot_weak_scaling(benchmarks, release_labels, arr_nodes_in, resos,
         arr_nodes = []
         configs = []
         for nodes,reso in zip(arr_nodes_in, resos):
-            best_entry = None
-            best_time = np.inf
 
-            # search best time among mpi-omp configs
-            for entry in data:
-                if entry['resolution']!=reso:
-                    continue
-                if entry['nodes']!=nodes:
-                    continue
-                # reduce time data
-                time, error_min, error_max = process_times(entry['timings'])
-
-                # keep fastest config
-                if time < best_time:
-                    best_time = time
-                    best_entry = entry
+            # search best average time amongst mpi-omp configs
+            best_entry, best_time = search_best_config(data,reso,nodes)
 
             if best_entry is not None:
                 times.append(float(best_time))
@@ -127,30 +114,13 @@ def table_weak_scaling(benchmarks, release_labels, arr_nodes_in, resos,
     # ---------- PROCESS RELEASES ----------
 
     release_results = {}
-
     for data, label in zip(benchmarks, release_labels):
-
         best_per_case = {}
 
         for nodes, reso in zip(arr_nodes_in, resos):
 
-            best_entry = None
-            best_time = np.inf
-
-            for entry in data:
-
-                if entry['resolution'] != reso:
-                    continue
-
-                if entry['nodes'] != nodes:
-                    continue
-
-                time, error_min, error_max = process_times(
-                    entry['timings'])
-
-                if time < best_time:
-                    best_time = time
-                    best_entry = entry
+            # search best average time amongst mpi-omp configs
+            best_entry, best_time = search_best_config(data,reso,nodes)
 
             if best_entry is not None:
 
@@ -273,9 +243,8 @@ if __name__ == '__main__':
         benchmarks,
         release_labels,
         nodes, resos,
-        outname=f'images/weak_scaling_{args.benchmark}_{args.timer}_{args.cluster}.png'
+        outname=f'weak_scaling_{args.benchmark}_{args.timer}_{args.cluster}.png'
     )
 
-
-    table_md = table_weak_scaling(benchmarks, release_labels, nodes, resos, fmt='markdown')
+    table_md = table_weak_scaling(benchmarks, release_labels, nodes, resos, fmt='latex')
     print(table_md)

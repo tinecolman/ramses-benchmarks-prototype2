@@ -1,8 +1,8 @@
 import numpy as np
+import io
 from matplotlib import pyplot as plt
 import matplotlib.colors as colorsx
-from visualisation import process_times
-import io
+from visualisation import search_best_config
 
 ''' Plot evolution of execution time (different commits) for various number of nodes '''
 def plot_strong_scaling(benchmarks, release_labels, reso, input_axes=None, 
@@ -27,22 +27,9 @@ def plot_strong_scaling(benchmarks, release_labels, reso, input_axes=None,
         arr_nodes = []
         configs = []
         for nodes in range(512):
-            best_entry = None
-            best_time = np.inf
 
-            # search best time among mpi-omp configs
-            for entry in data:
-                if entry['resolution']!=reso:
-                    continue
-                if entry['nodes']!=nodes:
-                    continue
-                # reduce time data
-                time, error_min, error_max = process_times(entry['timings'])
-
-                # keep fastest config
-                if time < best_time:
-                    best_time = time
-                    best_entry = entry
+            # search best average time amongst mpi-omp configs
+            best_entry, best_time = search_best_config(data,reso,nodes)
 
             if best_entry is not None:
                 times.append(float(best_time))
@@ -60,7 +47,7 @@ def plot_strong_scaling(benchmarks, release_labels, reso, input_axes=None,
 
     # layout of the figure
     if input_axes==None:
-        axes.set_title(f'{entry['metadata']['Benchmark']} {reso} on {entry['metadata']['Cluster']}')
+        axes.set_title(f'{data[0]['metadata']['Benchmark']} {reso} on {data[0]['metadata']['Cluster']}')
         axes.set_xlabel('number of nodes')
         axes.set_ylabel('speedup')
         axes.set_xscale('log')
@@ -94,22 +81,8 @@ def table_strong_scaling(
         # find fastest config per node
         for nodes in range(512):
 
-            best_entry = None
-            best_time = np.inf
-
-            for entry in data:
-
-                if entry['resolution'] != reso:
-                    continue
-
-                if entry['nodes'] != nodes:
-                    continue
-
-                time, error_min, error_max = process_times(entry['timings'])
-
-                if time < best_time:
-                    best_time = time
-                    best_entry = entry
+            # search best average time amongst mpi-omp configs
+            best_entry, best_time = search_best_config(data,reso,nodes)
 
             if best_entry is not None:
 

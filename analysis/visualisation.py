@@ -17,6 +17,30 @@ def process_times(times):
         error_max=0
     return time, error_min, error_max
 
+# ---- helpers
+
+''' Search for the best average time amongst different MPI-OMP configurations'''
+def search_best_config(data,reso,nodes):
+    best_entry = None
+    best_time = np.inf
+
+    # search best time among mpi-omp configs
+    for entry in data:
+        if entry['resolution']!=reso:
+            continue
+        if entry['nodes']!=nodes:
+            continue
+        # reduce time data
+        time, error_min, error_max = process_times(entry['timings'])
+
+        # keep fastest config
+        if time < best_time:
+            best_time = time
+            best_entry = entry
+
+    return best_entry, best_time
+    
+
 # ---- CPU optimisation ----
 
 ''' Make a figure of the execution time comparing different commits '''
