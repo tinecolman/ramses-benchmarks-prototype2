@@ -2,7 +2,7 @@ import numpy as np
 import io
 from matplotlib import pyplot as plt
 import matplotlib.colors as colorsx
-from visualisation import process_times
+from visualisation import process_times,search_best_config,scan_data
 
 
 ''' Plot evolution of execution time (different commits) for various number of nodes '''
@@ -84,150 +84,101 @@ def plot_execution_time_multinode(benchmarks, release_labels, reso,
         plt.close()
 
 
-def table_execution_time(
-        benchmarks,
-        release_labels,
-        reso,
-        arr_nodes=[1,2,4,8,16,32,64],
-        fmt='markdown'):
-    """
-    Generate execution-time evolution table.
-
-    Entries:
-        time (MPI=x OMP=y)
-
-    Last column:
-        relative improvement [%]
-        between first and last release.
-    """
+''' Generate a table listing the execution time and speedup, in markdown or latex format '''
+def table_execution_time(benchmarks, release_labels, reso, arr_nodes_in=[1,2,4,8,16,32,64], fmt='markdown'):
 
     out = io.StringIO()
 
-    # ---------- MARKDOWN ----------
+    # ---------- Header ----------
+
+    ncols = len(release_labels) + 2
+
     if fmt == 'markdown':
-
-        header = (
-            "| Nodes | "
-            + " | ".join(release_labels)
-            + " | Δ [%] |"
-        )
-
-        sep = "|" + "---|"*(len(release_labels)+2)
-
+        header = ( "| Nodes | "  + " | ".join(release_labels) + " | Δ [%] |")
+        sep = "|" + "---|"*ncols
         print(header, file=out)
         print(sep, file=out)
 
-    # ---------- LATEX ----------
     elif fmt == 'latex':
-
-        ncols = len(release_labels) + 2
-
+        header = ("Nodes & " + " & ".join(release_labels) + r" & $\Delta$ [\%] \\")
         print(r"\begin{tabular}{" + "l"*ncols + "}", file=out)
         print(r"\hline", file=out)
-
-        header = (
-            "Nodes & "
-            + " & ".join(release_labels)
-            + r" & $\Delta$ [\%] \\"
-        )
-
         print(header, file=out)
         print(r"\hline", file=out)
 
     else:
         raise ValueError("fmt must be 'markdown' or 'latex'")
 
-    # ---------- DATA ROWS ----------
+    # ---------- Gather table entries from all releases ----------
 
-    for nodes in arr_nodes:
+    release_results = {}
+    release_results_time = {}
+    for data, label in zip(benchmarks, release_labels):
 
-        times = []
+        # Extract results from the benchmark data 
+        times, avail_nodes, _, configs = scan_data(data, arr_nodes_in, [reso]*len(arr_nodes_in))
 
+        # If no data available, go to next release
+        if len(avail_nodes)==0:
+            continue
+
+        col = {}
+        col_time = {}
+        for nodes, time, config in zip(avail_nodes, times, configs):
+            col_time[nodes] = time
+            # add optimal mpi-omp config unless it's mpi-only on full node
+            if config=='MPI=128 OMP=0' or config=='MPI=112 OMP=0':
+                col[nodes] = (f"{time:.2f}")
+            else:
+                col[nodes] = (f"{time:.2f} ({config})")
+
+        release_results[label] = col
+        release_results_time[label] = col_time
+
+
+    # ---------- Print table row by row ----------
+
+    for nodes in arr_nodes_in:
         row = [str(nodes)]
 
-        for data, label in zip(benchmarks, release_labels):
+        for label in release_labels:
+            # get the entry or put a dash when no entry is available
+            value = release_results.get(label,{}).get(nodes,"-")
+            row.append(value)
 
-            best_entry = None
-            best_time = np.inf
+        # compute % improvement of first versus last version of the code
+        value_first = release_results_time.get(release_labels[0], {}).get(nodes, np.nan)
+        value_last  = release_results_time.get(release_labels[-1],{}).get(nodes, np.nan)
 
-            for entry in data:
-
-                if entry['resolution'] != reso:
-                    continue
-
-                if entry['nodes'] != nodes:
-                    continue
-
-                time, error_min, error_max = process_times(
-                    entry['timings'])
-
-                if time < best_time:
-                    best_time = time
-                    best_entry = entry
-
-            if best_entry is not None:
-
-                times.append(float(best_time))
-
-                config = (
-                    f"MPI={best_entry['mpi_procs_per_node']} "
-                    f"OMP={best_entry['omp_threads']}"
-                )
-
-                if best_entry['omp_threads']==0 and best_entry['mpi_procs_per_node'] in [112,128]:
-                    row.append(
-                        f"{best_time:.2f}"
-                    )
-                else:
-                    # non-default MPI config
-                    row.append(
-                        f"{best_time:.2f} ({config})"
-                    )
-
-            else:
-
-                times.append(np.nan)
-                row.append("-")
-
-        # compute evolution (% improvement)
-        if np.isfinite(times[0]) and np.isfinite(times[-1]):
-
-            diff = (
-                -(times[-1] - times[0])
-                / times[0] * 100
-            )
-
+        # add to the last column of the table
+        if np.isfinite(value_first) and np.isfinite(value_last):
+            diff = (-(value_last - value_first) / value_first * 100)
             row.append(f"{diff:.1f}")
-
         else:
             row.append("-")
 
-        # ---------- emit row ----------
-
         if fmt == 'markdown':
-            print("| " + " | ".join(row) + " |",
-                  file=out)
-
+            print("| " + " | ".join(row) + " |", file=out)
         elif fmt == 'latex':
-            print(
-                " & ".join(row)
-                + r" \\ \hline",
-                file=out
-            )
+            print(" & ".join(row) + r" \\", file=out)
 
-    # ---------- footer ----------
+    # ---------- Footer for latex table ----------
 
     if fmt == 'latex':
         print(r"\end{tabular}", file=out)
 
     return out.getvalue()
 
+
 if __name__ == '__main__':
 
+    COLOR='\033[0;36m' #cyan
+    NC='\033[0m' # No Color
+
+    #--------- Get command line input ------------
     import argparse
     parser = argparse.ArgumentParser(
-        description='Plot benchmark execution time evolution'
-    )
+        description='Plot benchmark execution time evolution')
 
     parser.add_argument('-c', '--cluster', required=True, help='Cluster name')
     parser.add_argument('-b', '--benchmark', required=True, help='Benchmark setup name')
@@ -236,28 +187,18 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
+    #--------- Load benchmark data for releases ------------
     from tagged_data import load_release_data
     benchmarks, release_labels = load_release_data(args.cluster, args.benchmark, args.timer)
+    #TODO default should take two benchmarks to compare?
 
-    plot_execution_time_multinode(
-        benchmarks,
-        release_labels,
-        args.reso,
-        outname=f'images/evo_exectime_{args.benchmark}_{args.reso}_{args.timer}_{args.cluster}.png'
-    )
+    #--------- Make figure ------------
+    filename = f'evo_exectime_{args.benchmark}_{args.reso}_{args.timer}_{args.cluster}.png'
+    plot_execution_time_multinode(benchmarks, release_labels, args.reso, outname=filename)
+    print(f'Figure outputted to {filename}')
 
-    table_md = table_execution_time(
-        benchmarks,
-        release_labels,
-        args.reso,
-        fmt='markdown'
-    )
+    #--------- Make table ------------
+    print(f'{COLOR} Average execution time for {args.benchmark} {args.reso} ({args.timer}){NC}')
+    table = table_execution_time(benchmarks, release_labels, args.reso, fmt='latex')
+    print(table)
 
-    print(table_md)
-
-
-#python evolution_execution_time.py -c meluxina -b sedov -r 1024
-#python evolution_execution_time.py -c meluxina -b sedov-amr -r lvl5-10
-
-#python evolution_execution_time.py -c discoverer -b sedov -r 1024
-#python evolution_execution_time.py -c discoverer -b sedov-amr -r lvl5-10
