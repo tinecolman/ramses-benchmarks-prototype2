@@ -29,7 +29,7 @@ The last column informs of the speedup of the last version with
 respect to the first listed version. Unless otherwise stated,
 the time listed is for runs with MPI-only using the full compute node.
 
-| Nodes | 2024-10 | 2025-05 | 2025-10 | 2026-05 | openmp (beta) | Δ [%] |
+| nodes | 2024-10 | 2025-05 | 2025-10 | 2026-05 | openmp (beta) | Δ [%] |
 |---|---|---|---|---|---|---|
 | 1 | 168.04 | 165.99 | 147.27 | 134.08 | 133.42 | 20.6 |
 | 2 | 85.22 | 85.23 | 75.73 | 68.80 | 68.09 | 20.1 |
