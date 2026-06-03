@@ -6,7 +6,7 @@ from visualisation import scan_data, get_colors
 
 ''' Make a figure of the weak scaling comparing different commits '''
 def plot_weak_scaling(benchmarks, release_labels, arr_nodes_in, resos,
-                      input_axes=None, outname='evo_weak_scaling.png'):
+                      input_axes=None, outname='weak_scaling.png'):
 
     # create colors for different commits (lighter grey = older)
     colorVals = get_colors(release_labels,'gray_r')
@@ -27,7 +27,7 @@ def plot_weak_scaling(benchmarks, release_labels, arr_nodes_in, resos,
             max_nodes = max(max_nodes,max(avail_nodes))
 
     # add ideal scaling line
-    axes.plot([1,max_nodes],[1,1], c=(0.25,0.85,0.25), ls=':', lw=2)
+    axes.plot([1,max_nodes],[1,1], c=(0.25,0.85,0.25), ls=':', lw=2, lable='ideal')
 
     if input_axes==None:
         axes.set_title(f'{data[0]['metadata']['Benchmark']} on {data[0]['metadata']['Cluster']}')

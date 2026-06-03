@@ -8,7 +8,7 @@ MAX_NNODES = 512
 
 ''' Plot evolution of execution time (different commits) for various number of nodes '''
 def plot_strong_scaling(benchmarks, release_labels, reso, input_axes=None, 
-                        outname='evo_strong_scaling.png'):
+                        outname='strong_scaling.png'):
 
     # create colors for different commits (lighter grey = older)
     colorVals = get_colors(release_labels,'gray_r')
@@ -34,7 +34,7 @@ def plot_strong_scaling(benchmarks, release_labels, reso, input_axes=None,
             max_nodes = max(max_nodes,max(arr_nodes))
 
     # add ideal scaling line
-    axes.plot([1,max_nodes],[1,max_nodes], c=(0.25,0.85,0.25),ls=':', lw=2)
+    axes.plot([1,max_nodes],[1,max_nodes], c=(0.25,0.85,0.25),ls=':', lw=2, label='ideal')
 
     # layout of the figure
     if input_axes==None:

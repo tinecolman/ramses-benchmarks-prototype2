@@ -462,7 +462,7 @@ def plot_scaling_combo_inverse(
         resos,
         weak_scaling_map,
         input_axes=None,
-        outname='scaling_inverse.png'):
+        outname='scaling_combo.png'):
 
     # ---------- FIGURE ----------
     if input_axes is None:
