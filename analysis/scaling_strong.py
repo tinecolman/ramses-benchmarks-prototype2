@@ -1,8 +1,7 @@
 import numpy as np
 import io
 from matplotlib import pyplot as plt
-import matplotlib.colors as colorsx
-from visualisation import scan_data
+from visualisation import scan_data, get_colors
 
 MAX_NNODES = 512
 
@@ -12,11 +11,7 @@ def plot_strong_scaling(benchmarks, release_labels, reso, input_axes=None,
                         outname='evo_strong_scaling.png'):
 
     # create colors for different commits (lighter grey = older)
-    cmap = plt.get_cmap('gray_r')
-    cNorm  = colorsx.Normalize(vmin=0, vmax=len(release_labels))
-    colorVals =  {}
-    for val,commit in zip(range(1,len(release_labels)+1),release_labels):
-        colorVals[commit] = cmap(cNorm(val))
+    colorVals = get_colors(release_labels,'gray_r')
 
     # create figure if none provided
     if input_axes==None:
@@ -60,14 +55,15 @@ def table_strong_scaling(benchmarks, release_labels, reso, fmt='markdown'):
 
     # ---------- Header ----------
 
+    ncols = len(release_labels) + 1
+
     if fmt == 'markdown':
         header = "| nodes | " + " | ".join(release_labels) + " |"
-        sep    = "|" + "---|"*(len(release_labels)+1)
+        sep    = "|" + "---|"*ncols
         print(header, file=out)
         print(sep, file=out)
 
     elif fmt == 'latex':
-        ncols = len(release_labels) + 1
         header = "nodes & " + " & ".join(release_labels) + r" \\"
         print(r"\begin{tabular}{" + "l"*ncols + "}", file=out)
         print(r"\hline", file=out)
@@ -130,6 +126,7 @@ def table_strong_scaling(benchmarks, release_labels, reso, fmt='markdown'):
         print(r"\end{tabular}", file=out)
     
     return out.getvalue()
+
 
 if __name__ == '__main__':
 

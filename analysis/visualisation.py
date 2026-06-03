@@ -61,6 +61,14 @@ def search_best_config(data,reso,nodes):
 
     return best_entry, best_time
     
+# create colors from a given colormap
+def get_colors(labels,cmap_name):
+    cmap = plt.get_cmap(cmap_name)
+    cNorm  = colorsx.Normalize(vmin=0, vmax=len(labels))
+    colorVals =  {}
+    for val,commit in zip(range(1,len(labels)+1),labels):
+        colorVals[commit] = cmap(cNorm(val))
+    return colorVals
 
 # ---- CPU optimisation ----
 

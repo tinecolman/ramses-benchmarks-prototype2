@@ -74,7 +74,7 @@ with respect to the minimal number of nodes.
 Unless otherwise stated, data is for runs with MPI-only 
 using the full compute node.
 
-| Nodes | Resolution | 2024-10 | 2025-05 | 2025-10 | 2026-05 | openmp (beta) |
+| nodes | resolution | 2024-10 | 2025-05 | 2025-10 | 2026-05 | openmp (beta) |
 |---|---|---|---|---|---|---|
 | 1 | 256 | 1.000  | 1.000  | 1.000  | 1.000  | 1.000 (MPI=32 OMP=4) |
 | 8 | 512 | 0.903  | 0.962  | 0.998  | 0.950  | 0.994 (MPI=32 OMP=4) |

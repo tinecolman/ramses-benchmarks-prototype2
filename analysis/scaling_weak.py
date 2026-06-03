@@ -1,8 +1,7 @@
 import numpy as np
 import io
 from matplotlib import pyplot as plt
-import matplotlib.colors as colorsx
-from visualisation import scan_data
+from visualisation import scan_data, get_colors
 
 
 ''' Make a figure of the weak scaling comparing different commits '''
@@ -10,11 +9,7 @@ def plot_weak_scaling(benchmarks, release_labels, arr_nodes_in, resos,
                       input_axes=None, outname='evo_weak_scaling.png'):
 
     # create colors for different commits (lighter grey = older)
-    cmap = plt.get_cmap('gray_r')
-    cNorm  = colorsx.Normalize(vmin=0, vmax=len(release_labels))
-    colorVals =  {}
-    for val,commit in zip(range(1,len(release_labels)+1),release_labels):
-        colorVals[commit] = cmap(cNorm(val))
+    colorVals = get_colors(release_labels,'gray_r')
 
     # create figure if none is given
     if input_axes==None:
@@ -52,15 +47,16 @@ def table_weak_scaling(benchmarks, release_labels, arr_nodes_in, resos, fmt='mar
 
     # ---------- Header ----------
 
+    ncols = len(release_labels) + 2
+
     if fmt == 'markdown':
-        header = ("| Nodes | Resolution | " + " | ".join(release_labels) + " |")
-        sep = "|" + "---|"*(len(release_labels)+2)
+        header = ("| nodes | resolution | " + " | ".join(release_labels) + " |")
+        sep = "|" + "---|"*ncols
         print(header, file=out)
         print(sep, file=out)
 
     elif fmt == 'latex':
-        ncols = len(release_labels) + 2
-        header = ("Nodes & Resolution & " + " & ".join(release_labels) + r" \\")
+        header = ("nodes & resolution & " + " & ".join(release_labels) + r" \\")
         print(r"\begin{tabular}{" + "l"*ncols + "}", file=out)
         print(r"\hline", file=out)
         print(header, file=out)
@@ -142,5 +138,5 @@ if __name__ == '__main__':
         outname=f'weak_scaling_{args.benchmark}_{args.timer}_{args.cluster}.png'
     )
 
-    table_md = table_weak_scaling(benchmarks, release_labels, nodes, resos, fmt='latex')
-    print(table_md)
+    table = table_weak_scaling(benchmarks, release_labels, nodes, resos, fmt='latex')
+    print(table)
