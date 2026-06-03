@@ -162,27 +162,38 @@ if __name__ == '__main__':
     #--------- Get command line input ------------
     import argparse
     parser = argparse.ArgumentParser(
-        description='Plot benchmark execution time evolution')
+        description='Check the evolution of the benchmark execution time between different code versions')
 
-    parser.add_argument('-c', '--cluster', required=True, help='Cluster name')
+    parser.add_argument('-f', '--first', required=True, help='Path to the reference benchmark directory')
+    parser.add_argument('-l', '--last', required=True, help='Path to the new benchmark directory')
     parser.add_argument('-b', '--benchmark', required=True, help='Benchmark setup name')
     parser.add_argument('-r', '--reso', required=True, help='Resolution')
     parser.add_argument('-t', '--timer', default='total', help='Subtimer to analyse')
 
     args = parser.parse_args()
 
-    #--------- Load benchmark data for releases ------------
-    from tagged_data import load_release_data
-    benchmarks, release_labels = load_release_data(args.cluster, args.benchmark, args.timer)
-    #TODO default should take two benchmarks to compare?
+    #--------- Load benchmark data ------------
+    from io_timings import add_data
+
+    data1 = add_data([], args.first, args.benchmark, which=args.timer)
+    label1 = "old" #args.first.split('/')[-2][10:]
+    cluster1 = data1[0]['metadata']['Cluster']
+
+    data2 = add_data([], args.last, args.benchmark, which=args.timer)
+    label2 = "new" #args.last.split('/')[-2][10:]
+    cluster2 = data2[0]['metadata']['Cluster']
+
+    if cluster1!=cluster2:
+        print("ERROR: Cannot compare benchmarks run on different clusters!")
+        exit(1)
 
     #--------- Make figure ------------
-    filename = f'evo_exectime_{args.benchmark}_{args.reso}_{args.timer}_{args.cluster}.png'
-    plot_execution_time_multinode(benchmarks, release_labels, args.reso, outname=filename)
+    filename = f'evo_exectime_{args.benchmark}_{args.reso}_{args.timer}_{cluster1}.png'
+    plot_execution_time_multinode([data1,data2], [label1,label2], args.reso, outname=filename)
     print(f'Figure outputted to {filename}')
 
     #--------- Make table ------------
     print(f'{COLOR} Average execution time for {args.benchmark} {args.reso} ({args.timer}){NC}')
-    table = table_execution_time(benchmarks, release_labels, args.reso, fmt='latex')
+    table = table_execution_time([data1,data2], [label1,label2], args.reso, fmt='latex')
     print(table)
 
