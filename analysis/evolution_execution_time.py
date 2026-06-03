@@ -94,25 +94,24 @@ def table_execution_time(benchmarks, release_labels, reso, arr_nodes_in=[1,2,4,8
     ncols = len(release_labels) + 2
 
     if fmt == 'markdown':
-        header = ( "| Nodes | "  + " | ".join(release_labels) + " | Δ [%] |")
+        header = ( "| nodes | "  + " | ".join(release_labels) + " | Δ [%] |")
         sep = "|" + "---|"*ncols
         print(header, file=out)
         print(sep, file=out)
 
     elif fmt == 'latex':
-        header = ("Nodes & " + " & ".join(release_labels) + r" & $\Delta$ [\%] \\")
+        header = ("nodes & " + " & ".join(release_labels) + r" & $\Delta$ [\%] \\")
         print(r"\begin{tabular}{" + "l"*ncols + "}", file=out)
         print(r"\hline", file=out)
         print(header, file=out)
         print(r"\hline", file=out)
 
     else:
-        raise ValueError("fmt must be 'markdown' or 'latex'")
+        raise ValueError("[table_execution_time] fmt must be 'markdown' or 'latex'")
 
-    # ---------- Gather table entries from all releases ----------
+    # ---------- Gather table entries from all releases into a dictionary ----------
 
     release_results = {}
-    release_results_time = {}
     for data, label in zip(benchmarks, release_labels):
 
         # Extract results from the benchmark data 
@@ -123,17 +122,10 @@ def table_execution_time(benchmarks, release_labels, reso, arr_nodes_in=[1,2,4,8
             continue
 
         col = {}
-        col_time = {}
         for nodes, time, config in zip(avail_nodes, times, configs):
-            col_time[nodes] = time
-            # add optimal mpi-omp config unless it's mpi-only on full node
-            if config=='MPI=128 OMP=0' or config=='MPI=112 OMP=0':
-                col[nodes] = (f"{time:.2f}")
-            else:
-                col[nodes] = (f"{time:.2f} ({config})")
+            col[nodes] = {'time':time, 'config':config}
 
         release_results[label] = col
-        release_results_time[label] = col_time
 
 
     # ---------- Print table row by row ----------
@@ -142,13 +134,27 @@ def table_execution_time(benchmarks, release_labels, reso, arr_nodes_in=[1,2,4,8
         row = [str(nodes)]
 
         for label in release_labels:
-            # get the entry or put a dash when no entry is available
-            value = release_results.get(label,{}).get(nodes,"-")
-            row.append(value)
+
+            # retrieve time and config for this entry, or put nan if the entry doesn't exists
+            time = release_results.get(label,{}).get(nodes,{}).get('time',np.nan)
+            config = release_results.get(label,{}).get(nodes,{}).get('config',"")
+
+            # construct the table entry: time (config)
+            if np.isfinite(time):
+                # add optimal mpi-omp config unless it's mpi-only on full node
+                if config=='MPI=128 OMP=0' or config=='MPI=112 OMP=0':
+                    entry = (f"{time:.2f}")
+                else:
+                    entry = (f"{time:.2f} ({config})")
+            else:
+                # or put a dash when no entry is available
+                entry = "-"
+
+            row.append(entry)
 
         # compute % improvement of first versus last version of the code
-        value_first = release_results_time.get(release_labels[0], {}).get(nodes, np.nan)
-        value_last  = release_results_time.get(release_labels[-1],{}).get(nodes, np.nan)
+        value_first = release_results.get(release_labels[0], {}).get(nodes,{}).get('time',np.nan)
+        value_last  = release_results.get(release_labels[-1],{}).get(nodes,{}).get('time',np.nan)
 
         # add to the last column of the table
         if np.isfinite(value_first) and np.isfinite(value_last):
