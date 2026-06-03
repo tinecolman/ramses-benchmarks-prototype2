@@ -25,9 +25,15 @@ timer='total'
 
 md = f"""# Benchmark: {args.benchmark} on {args.cluster}
 
-[Benchmark description: {args.benchmark}](../setups/{args.benchmark}/description.md)
+Benchmark description: [{args.benchmark}](../setups/{args.benchmark}/description.md)
 
-[Cluster info: {args.cluster}](../HPCclusters/{args.cluster}/cluster_description.md)
+Cluster info: [{args.cluster}](../HPCclusters/{args.cluster}/cluster_description.md)
+
+On this page:
+* Strong and weak scaling of the latest code release (figure)
+* Evolution of execution time with code version (figure & table with speedup)
+* Strong scaling evolution (figure & table with efficiency)
+* Weak scaling evolution (figure & table with efficiency)
 
 """
 
@@ -135,28 +141,33 @@ using the full compute node.
 """
 
 
+######### In this part, we deal with the latest OpenMP version #########
+data = load_latest_openmp_data(args.cluster, args.benchmark, timer)
 
-# OpenMP insights
+md += f"""## Optimal OpenMP configuration
 
-# Get OMP-MPI grid
-#data = load_latest_openmp_data(args.cluster, args.benchmark, timer)
-#figfile_grid_omp = f'../results/images/mpi_omp_grid_{args.benchmark}_{reso}_{timer}_{args.cluster}.png'
-#plot_mpi_omp_grid(data, reso, 
-#                    fig_name=figfile_grid_omp,
-#                    show_overhead=False)
+""" 
+
+for reso in resos:
+
+    figfile_grid_omp = f'../results/images/mpi_omp_grid_{args.benchmark}_{reso}_{timer}_{args.cluster}.png'
+    plot_mpi_omp_grid(data, reso, 
+                        fig_name=figfile_grid_omp,
+                        show_overhead=False)
+    
+    md += f"""![MPI-OMP]({figfile_grid_omp})
 
 """
-## MPI - OpenMP configuration on 1 node
-
-![MPI-OMP]({figfile_grid_omp})
-
+    
+md += f"""
 This figure gives inside in the behaviour of OpenMP for this setup.
 It shows which MPI - OpenMP configuration is most optimal
 in terms of execution time, for this setup at this resolution.
 The data is for the latest OpenMP version, corresponding to the one
 used for the previous figures.
 
-"""
+""" 
+
 
 # Write markdown page
 outfile = f"../results/results_{args.benchmark}_{args.cluster}.md"

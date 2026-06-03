@@ -1,8 +1,14 @@
 # Benchmark: sedov on meluxina
 
-[Benchmark description: sedov](../setups/sedov/description.md)
+Benchmark description: [sedov](../setups/sedov/description.md)
 
-[Cluster info: meluxina](../HPCclusters/meluxina/cluster_description.md)
+Cluster info: [meluxina](../HPCclusters/meluxina/cluster_description.md)
+
+On this page:
+* Strong and weak scaling of the latest code release (figure)
+* Evolution of execution time with code version (figure & table with speedup)
+* Strong scaling evolution (figure & table with efficiency)
+* Weak scaling evolution (figure & table with efficiency)
 
 ## Strong and weak scaling of the latest code release
 
@@ -70,8 +76,23 @@ using the full compute node.
 
 | Nodes | Resolution | 2024-10 | 2025-05 | 2025-10 | 2026-05 | openmp |
 |---|---|---|---|---|---|---|
-| 1 | 256 | 1.000 (MPI=128 OMP=0) | - | - | 1.000 (MPI=128 OMP=0) | - |
-| 8 | 512 | 0.903 (MPI=128 OMP=0) | - | - | 0.950 (MPI=128 OMP=0) | - |
-| 64 | 1024 | 0.941 (MPI=128 OMP=0) | 1.000 (MPI=128 OMP=0) | 1.000 (MPI=128 OMP=0) | 0.849 (MPI=128 OMP=0) | 1.000 (MPI=64 OMP=2) |
+| 1 | 256 | 1.000  | 1.000  | 1.000  | 1.000  | 1.000 (MPI=32 OMP=4) |
+| 8 | 512 | 0.903  | 0.962  | 0.998  | 0.950  | 0.994 (MPI=32 OMP=4) |
+| 64 | 1024 | 0.941  | 0.917  | 0.915  | 0.849  | 0.847 (MPI=64 OMP=2) |
 
+
+## Optimal OpenMP configuration
+
+![MPI-OMP](../results/images/mpi_omp_grid_sedov_256_total_meluxina.png)
+
+![MPI-OMP](../results/images/mpi_omp_grid_sedov_512_total_meluxina.png)
+
+![MPI-OMP](../results/images/mpi_omp_grid_sedov_1024_total_meluxina.png)
+
+
+This figure gives inside in the behaviour of OpenMP for this setup.
+It shows which MPI - OpenMP configuration is most optimal
+in terms of execution time, for this setup at this resolution.
+The data is for the latest OpenMP version, corresponding to the one
+used for the previous figures.
 

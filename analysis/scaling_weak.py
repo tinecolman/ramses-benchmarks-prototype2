@@ -198,10 +198,15 @@ def table_weak_scaling(benchmarks, release_labels, arr_nodes_in, resos,
 
             config = best_per_case[key]['config']
 
-            col[key] = (
-                f"{efficiency:.3f} "
-                f"({config})"
-            )
+            if config=='MPI=128 OMP=0' or config=='MPI=112 OMP=0':
+                col[key] = (
+                    f"{efficiency:.3f} "
+                )
+            else:
+                col[key] = (
+                    f"{efficiency:.3f} "
+                    f"({config})"
+                )
 
         release_results[label] = col
 
