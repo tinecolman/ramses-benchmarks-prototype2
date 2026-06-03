@@ -27,7 +27,7 @@ def plot_weak_scaling(benchmarks, release_labels, arr_nodes_in, resos,
             max_nodes = max(max_nodes,max(avail_nodes))
 
     # add ideal scaling line
-    axes.plot([1,max_nodes],[1,1], c=(0.25,0.85,0.25), ls=':', lw=2, lable='ideal')
+    axes.plot([1,max_nodes],[1,1], c=(0.25,0.85,0.25), ls=':', lw=2, label='ideal')
 
     if input_axes==None:
         axes.set_title(f'{data[0]['metadata']['Benchmark']} on {data[0]['metadata']['Cluster']}')
@@ -114,29 +114,35 @@ def table_weak_scaling(benchmarks, release_labels, arr_nodes_in, resos, fmt='mar
 
 if __name__ == '__main__':
 
+    COLOR='\033[0;36m' #cyan
+    NC='\033[0m' # No Color
+
+    #--------- Get command line input ------------
     import argparse
     parser = argparse.ArgumentParser(
-        description='Plot benchmark weak scaling'
-    )
+        description='Produce strong scaling plot and table')
 
-    parser.add_argument('-c', '--cluster', required=True, help='Cluster name')
+    parser.add_argument('-p', '--path', required=True, help='Path to the benchmark directory')
     parser.add_argument('-b', '--benchmark', required=True, help='Benchmark setup name')
     parser.add_argument('-t', '--timer', default='total', help='Subtimer to analyse')
 
     args = parser.parse_args()
 
+    #--------- Load benchmark data ------------
+    from io_timings import add_data
+    data = add_data([], args.path, args.benchmark, which=args.timer)
+    release_label = args.path.split('/')[-2][10:]
+    cluster = data[0]['metadata']['Cluster']
+
     from resolutions import get_weak_scaling_config
     nodes, resos = get_weak_scaling_config(args.benchmark)
 
-    from tagged_data import load_release_data
-    benchmarks, release_labels = load_release_data(args.cluster, args.benchmark, args.timer)
+    #--------- Make figure ------------
+    filename = f'weak_scaling_{args.benchmark}_{args.timer}_{cluster}.png'
+    plot_weak_scaling([data], [release_label], nodes, resos)
+    print(f'Figure outputted to {filename}')
 
-    plot_weak_scaling(
-        benchmarks,
-        release_labels,
-        nodes, resos,
-        outname=f'weak_scaling_{args.benchmark}_{args.timer}_{args.cluster}.png'
-    )
-
-    table = table_weak_scaling(benchmarks, release_labels, nodes, resos, fmt='latex')
+    #--------- Make table ------------
+    print(f'{COLOR} Weak scaling efficiency for {args.benchmark} ({args.timer}){NC}')
+    table = table_weak_scaling([data], [release_label], nodes, resos, fmt='latex')
     print(table)

@@ -15,11 +15,11 @@ parser = argparse.ArgumentParser(
 )
 parser.add_argument('-p', '--path', required=True, help='Path to the benchmark directory')
 parser.add_argument('-b', '--benchmark', required=True, help='Benchmark setup name')
+parser.add_argument('-t', '--timer', default='total', help='Subtimer to analyse')
 args = parser.parse_args()
 
 #--------- Load benchmark data ------------
-timer='total'
-data = add_data([], args.path, args.benchmark, which=timer)
+data = add_data([], args.path, args.benchmark, which=args.timer)
 release_label = args.path.split('/')[-2][10:]
 print()
 
@@ -31,13 +31,13 @@ plot_scaling_combo_inverse(data,resos,weak_scaling_map)
 #--------- Strong scaling ------------
 reso = resos[-1] # we show only the highest resolution
 plot_strong_scaling([data], [release_label], reso)
-print(f'{COLOR} Strong scaling efficiency for {args.benchmark} {reso} {NC}')
+print(f'{COLOR} Strong scaling efficiency for {args.benchmark} {reso} ({args.timer}){NC}')
 table = table_strong_scaling([data], [release_label], reso, fmt='latex')
 print(table)
 
 #--------- Weak scaling ------------
 nodes, resos = get_weak_scaling_config(args.benchmark)
 plot_weak_scaling([data], [release_label], nodes, resos)
-print(f'{COLOR} Weak scaling efficiency for {args.benchmark} {reso} {NC}')
+print(f'{COLOR} Weak scaling efficiency for {args.benchmark} ({args.timer}){NC}')
 table = table_weak_scaling([data], [release_label], nodes, resos, fmt='latex')
 print(table)

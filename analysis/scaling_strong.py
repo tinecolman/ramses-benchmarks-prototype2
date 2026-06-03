@@ -130,27 +130,33 @@ def table_strong_scaling(benchmarks, release_labels, reso, fmt='markdown'):
 
 if __name__ == '__main__':
 
+    COLOR='\033[0;36m' #cyan
+    NC='\033[0m' # No Color
+
+    #--------- Get command line input ------------
     import argparse
     parser = argparse.ArgumentParser(
-        description='Plot benchmark strong scaling'
-    )
+        description='Produce strong scaling plot and table')
 
-    parser.add_argument('-c', '--cluster', required=True, help='Cluster name')
+    parser.add_argument('-p', '--path', required=True, help='Path to the benchmark directory')
     parser.add_argument('-b', '--benchmark', required=True, help='Benchmark setup name')
     parser.add_argument('-r', '--reso', required=True, help='Resolution')
     parser.add_argument('-t', '--timer', default='total', help='Subtimer to analyse')
 
     args = parser.parse_args()
 
-    from tagged_data import load_release_data
-    benchmarks, release_labels = load_release_data(args.cluster, args.benchmark, args.timer)
+    #--------- Load benchmark data ------------
+    from io_timings import add_data
+    data = add_data([], args.path, args.benchmark, which=args.timer)
+    release_label = args.path.split('/')[-2][10:]
+    cluster = data[0]['metadata']['Cluster']
 
-    plot_strong_scaling(
-        benchmarks,
-        release_labels,
-        args.reso,
-        outname=f'strong_scaling_{args.benchmark}_{args.reso}_{args.timer}_{args.cluster}.png'
-    )
+    #--------- Make figure ------------
+    filename = f'strong_scaling_{args.benchmark}_{args.reso}_{args.timer}_{cluster}.png'
+    plot_strong_scaling([data], [release_label], args.reso, outname=filename)
+    print(f'Figure outputted to {filename}')
 
-    table = table_strong_scaling(benchmarks, release_labels, args.reso, fmt='latex')
+    #--------- Make table ------------
+    print(f'{COLOR} Strong scaling efficiency for {args.benchmark} {args.reso} ({args.timer}){NC}')
+    table = table_strong_scaling([data], [release_label], args.reso, fmt='latex')
     print(table)
