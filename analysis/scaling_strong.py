@@ -2,7 +2,10 @@ import numpy as np
 import io
 from matplotlib import pyplot as plt
 import matplotlib.colors as colorsx
-from visualisation import search_best_config
+from visualisation import scan_data
+
+MAX_NNODES = 512
+
 
 ''' Plot evolution of execution time (different commits) for various number of nodes '''
 def plot_strong_scaling(benchmarks, release_labels, reso, input_axes=None, 
@@ -21,21 +24,14 @@ def plot_strong_scaling(benchmarks, release_labels, reso, input_axes=None,
     else:
         axes = input_axes
 
+    # we will scan all possible number of nodes
+    arr_nodes_in = range(MAX_NNODES+1)
+    arr_resos_in = [reso]*len(arr_nodes_in) # resolution is the same for each number of nodes
+
     max_nodes = 1
     for data,label in zip(benchmarks,release_labels):
-        times = []
-        arr_nodes = []
-        configs = []
-        for nodes in range(512):
 
-            # search best average time amongst mpi-omp configs
-            best_entry, best_time = search_best_config(data,reso,nodes)
-
-            if best_entry is not None:
-                times.append(float(best_time))
-                arr_nodes.append(nodes)
-                best_config = f'MPI={best_entry['mpi_procs_per_node']} OMP={best_entry['omp_threads']}'
-                configs.append(best_config)
+        times, arr_nodes, _, configs = scan_data(data, arr_nodes_in, arr_resos_in)
 
         if len(times)>0:
             axes.plot(arr_nodes,np.array(times[0])/np.array(times),
@@ -57,121 +53,81 @@ def plot_strong_scaling(benchmarks, release_labels, reso, input_axes=None,
         plt.close()
 
 
-def table_strong_scaling(
-        benchmarks,
-        release_labels,
-        reso,
-        fmt='markdown'):
-    """
-    Print strong scaling efficiency table.
+''' Generate strong scaling efficiency table, in markdown or latex format '''
+def table_strong_scaling(benchmarks, release_labels, reso, fmt='markdown'):
 
-    Parameters
-    ----------
-    fmt : str
-        'markdown' or 'latex'
-    """
+    out = io.StringIO()
+
+    # ---------- Header ----------
+
+    if fmt == 'markdown':
+        header = "| nodes | " + " | ".join(release_labels) + " |"
+        sep    = "|" + "---|"*(len(release_labels)+1)
+        print(header, file=out)
+        print(sep, file=out)
+
+    elif fmt == 'latex':
+        ncols = len(release_labels) + 1
+        header = "nodes & " + " & ".join(release_labels) + r" \\"
+        print(r"\begin{tabular}{" + "l"*ncols + "}", file=out)
+        print(r"\hline", file=out)
+        print(header, file=out)
+        print(r"\hline", file=out)
+    else:
+        raise ValueError("[table_strong_scaling] fmt must be 'markdown' or 'latex'")
+
+    # ---------- Gather table entries from all releases ----------
+
+    # we will scan all possible number of nodes
+    arr_nodes_in = range(MAX_NNODES+1)
+    arr_resos_in = [reso]*len(arr_nodes_in) # resolution is the same for each number of nodes
 
     release_results = {}
     all_nodes = set()
+    for data,label in zip(benchmarks,release_labels):
 
-    for data, label in zip(benchmarks, release_labels):
+        # Extract results from the benchmark data 
+        times, avail_nodes, avail_resos, configs = scan_data(data, arr_nodes_in, arr_resos_in)
 
-        best_per_node = {}
-
-        # find fastest config per node
-        for nodes in range(512):
-
-            # search best average time amongst mpi-omp configs
-            best_entry, best_time = search_best_config(data,reso,nodes)
-
-            if best_entry is not None:
-
-                best_per_node[nodes] = {
-                    'time': float(best_time),
-                    'mpi': best_entry['mpi_procs_per_node'],
-                    'omp': best_entry['omp_threads']
-                }
-
-        if len(best_per_node) == 0:
+        # If no data available, go to next release
+        if len(avail_nodes)==0:
             continue
 
-        baseline_nodes = min(best_per_node.keys())
-        baseline_time = best_per_node[baseline_nodes]['time']
-
         col = {}
-
-        for nodes in sorted(best_per_node.keys()):
-
-            runtime = best_per_node[nodes]['time']
-
-            speedup = baseline_time / runtime
-            efficiency = speedup / (nodes / baseline_nodes)
-
-            config = (
-                f"MPI={best_per_node[nodes]['mpi']} "
-                f"OMP={best_per_node[nodes]['omp']}"
-            )
-
-            if best_per_node[nodes]['omp']==0 and best_per_node[nodes]['mpi'] in [112,128]:
-                col[nodes] = f"{efficiency:.3f}"
+        for nodes, time, config in zip(avail_nodes, times, configs):
+            # choose the lowest number of nodes available as reference
+            efficiency = (times[0]/time) / (nodes/avail_nodes[0])
+            # add optimal mpi-omp config unless it's mpi-only on full node
+            if config=='MPI=128 OMP=0' or config=='MPI=112 OMP=0':
+                col[nodes] = (f"{efficiency:.3f}")
             else:
-                col[nodes] = f"{efficiency:.3f} ({config})"
-
+                col[nodes] = (f"{efficiency:.3f} ({config})")
+            # gather for which numbers of nodes we need to write an entry
             all_nodes.add(nodes)
 
         release_results[label] = col
 
     all_nodes = sorted(all_nodes)
 
-    out = io.StringIO()
+    # ---------- Print table row by row ----------
 
-    # ---------- Markdown ----------
-    if fmt == 'markdown':
+    for nodes in all_nodes:
+        row = [str(nodes)]
 
-        header = "| nodes | " + " | ".join(release_labels) + " |"
-        sep    = "|" + "---|"*(len(release_labels)+1)
+        for label in release_labels:
+            value = release_results.get(label,{}).get(nodes, "")
+            row.append(value)
 
-        print(header, file=out)
-        print(sep, file=out)
-
-        for nodes in all_nodes:
-
-            row = [str(nodes)]
-
-            for label in release_labels:
-                value = release_results.get(label, {}).get(nodes, "")
-                row.append(value)
-
+        if fmt == 'markdown':
             print("| " + " | ".join(row) + " |", file=out)
 
-    # ---------- LaTeX ----------
-    elif fmt == 'latex':
-
-        ncols = len(release_labels) + 1
-
-        print(r"\begin{tabular}{" + "l"*ncols + "}", file=out)
-        print(r"\hline", file=out)
-
-        header = "nodes & " + " & ".join(release_labels) + r" \\"
-        print(header, file=out)
-
-        print(r"\hline", file=out)
-
-        for nodes in all_nodes:
-
-            row = [str(nodes)]
-
-            for label in release_labels:
-                value = release_results.get(label, {}).get(nodes, "")
-                row.append(value)
-
+        elif fmt == 'latex':
             print(" & ".join(row) + r" \\", file=out)
 
-        print(r"\hline", file=out)
-        print(r"\end{tabular}", file=out)
+    # ---------- Footer for latex table ----------
 
-    else:
-        raise ValueError("fmt must be 'markdown' or 'latex'")
+    if fmt == 'latex':
+        print(r"\end{tabular}", file=out)
     
     return out.getvalue()
 
@@ -196,16 +152,8 @@ if __name__ == '__main__':
         benchmarks,
         release_labels,
         args.reso,
-        outname=f'images/strong_scaling_{args.benchmark}_{args.reso}_{args.timer}_{args.cluster}.png'
+        outname=f'strong_scaling_{args.benchmark}_{args.reso}_{args.timer}_{args.cluster}.png'
     )
 
-    #table = table_strong_scaling(benchmarks, release_labels, args.reso, fmt='markdown')
     table = table_strong_scaling(benchmarks, release_labels, args.reso, fmt='latex')
     print(table)
-
-
-#python scaling_strong.py -c meluxina -b sedov -r 1024
-#python scaling_strong.py -c meluxina -b sedov-amr -r lvl5-10
-
-#python scaling_strong.py -c discoverer -b sedov -r 1024
-#python scaling_strong.py -c discoverer -b sedov-amr -r lvl5-10

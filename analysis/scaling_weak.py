@@ -46,8 +46,7 @@ def plot_weak_scaling(benchmarks, release_labels, arr_nodes_in, resos,
 
 
 ''' Generate weak scaling efficiency table, in markdown or latex format '''
-def table_weak_scaling(benchmarks, release_labels, arr_nodes_in, resos,
-                       fmt='markdown'):
+def table_weak_scaling(benchmarks, release_labels, arr_nodes_in, resos, fmt='markdown'):
 
     out = io.StringIO()
 
@@ -83,7 +82,7 @@ def table_weak_scaling(benchmarks, release_labels, arr_nodes_in, resos,
 
         col = {}
         for nodes, reso, time, config in zip(avail_nodes, avail_resos, times, configs):
-            # choose first available weak-scaling point as reference (lowest number of nodes)
+            # choose the lowest number of nodes available as reference
             efficiency = times[0] / time
             # add optimal mpi-omp config unless it's mpi-only on full node
             if config=='MPI=128 OMP=0' or config=='MPI=112 OMP=0':
@@ -106,7 +105,7 @@ def table_weak_scaling(benchmarks, release_labels, arr_nodes_in, resos,
         if fmt == 'markdown':
             print("| " + " | ".join(row) + " |", file=out)
         elif fmt == 'latex':
-            print(" & ".join(row) + r" \\ \hline", file=out)
+            print(" & ".join(row) + r" \\", file=out)
 
     # ---------- Footer for latex table ----------
 
@@ -114,6 +113,8 @@ def table_weak_scaling(benchmarks, release_labels, arr_nodes_in, resos,
         print(r"\end{tabular}", file=out)
 
     return out.getvalue()
+
+
 
 if __name__ == '__main__':
 
