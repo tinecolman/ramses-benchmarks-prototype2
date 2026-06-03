@@ -2,7 +2,7 @@ import numpy as np
 import io
 from matplotlib import pyplot as plt
 import matplotlib.colors as colorsx
-from visualisation import search_best_config
+from visualisation import scan_data
 
 
 ''' Make a figure of the weak scaling comparing different commits '''
@@ -24,30 +24,18 @@ def plot_weak_scaling(benchmarks, release_labels, arr_nodes_in, resos,
 
     max_nodes = 1
     for data,label in zip(benchmarks,release_labels):
-        times = []
-        arr_nodes = []
-        configs = []
-        for nodes,reso in zip(arr_nodes_in, resos):
-
-            # search best average time amongst mpi-omp configs
-            best_entry, best_time = search_best_config(data,reso,nodes)
-
-            if best_entry is not None:
-                times.append(float(best_time))
-                arr_nodes.append(nodes)
-                best_config = f'MPI={best_entry['mpi_procs_per_node']} OMP={best_entry['omp_threads']}'
-                configs.append(best_config)
+        times, avail_nodes, avail_resos, configs = scan_data(data, arr_nodes_in, resos)
 
         if len(times)>0:
-            axes.plot(arr_nodes, np.array(times[0])/np.array(times),
+            axes.plot(avail_nodes, np.array(times[0])/np.array(times),
                   color=colorVals[label], marker='o', markersize=4, label=label)
-            max_nodes = max(max_nodes,max(arr_nodes))
+            max_nodes = max(max_nodes,max(avail_nodes))
 
     # add ideal scaling line
     axes.plot([1,max_nodes],[1,1], c=(0.25,0.85,0.25), ls=':', lw=2)
 
     if input_axes==None:
-        axes.set_title(f'{entry['metadata']['Benchmark']} {reso} on {entry['metadata']['Cluster']}')
+        axes.set_title(f'{data[0]['metadata']['Benchmark']} on {data[0]['metadata']['Cluster']}')
         axes.set_xlabel('number of nodes')
         axes.set_ylabel('efficiency')
         axes.set_xscale('log')
@@ -57,163 +45,70 @@ def plot_weak_scaling(benchmarks, release_labels, arr_nodes_in, resos,
         plt.close()
 
 
+''' Generate weak scaling efficiency table, in markdown or latex format '''
 def table_weak_scaling(benchmarks, release_labels, arr_nodes_in, resos,
-        fmt='markdown'):
-    """
-    Generate weak scaling efficiency table.
-
-    Rows:
-        (nodes, resolution)
-
-    Columns:
-        releases
-
-    Entries:
-        efficiency (MPI=x OMP=y)
-    """
+                       fmt='markdown'):
 
     out = io.StringIO()
 
-    # ---------- HEADER ----------
+    # ---------- Header ----------
 
     if fmt == 'markdown':
-
-        header = (
-            "| Nodes | Resolution | "
-            + " | ".join(release_labels)
-            + " |"
-        )
-
+        header = ("| Nodes | Resolution | " + " | ".join(release_labels) + " |")
         sep = "|" + "---|"*(len(release_labels)+2)
-
         print(header, file=out)
         print(sep, file=out)
 
     elif fmt == 'latex':
-
         ncols = len(release_labels) + 2
-
-        print(r"\begin{tabular}{" + "l"*ncols + "}",
-              file=out)
+        header = ("Nodes & Resolution & " + " & ".join(release_labels) + r" \\")
+        print(r"\begin{tabular}{" + "l"*ncols + "}", file=out)
         print(r"\hline", file=out)
-
-        header = (
-            "Nodes & Resolution & "
-            + " & ".join(release_labels)
-            + r" \\"
-        )
-
         print(header, file=out)
         print(r"\hline", file=out)
-
     else:
-        raise ValueError(
-            "fmt must be 'markdown' or 'latex'"
-        )
+        raise ValueError("[table_weak_scaling] fmt must be 'markdown' or 'latex'")
 
-    # ---------- PROCESS RELEASES ----------
+    # ---------- Gather table entries from all releases ----------
 
     release_results = {}
     for data, label in zip(benchmarks, release_labels):
-        best_per_case = {}
+    
+        # Extract results from the benchmark data 
+        times, avail_nodes, avail_resos, configs = scan_data(data, arr_nodes_in, resos)
 
-        for nodes, reso in zip(arr_nodes_in, resos):
-
-            # search best average time amongst mpi-omp configs
-            best_entry, best_time = search_best_config(data,reso,nodes)
-
-            if best_entry is not None:
-
-                config = (
-                    f"MPI={best_entry['mpi_procs_per_node']} "
-                    f"OMP={best_entry['omp_threads']}"
-                )
-
-                best_per_case[(nodes,reso)] = {
-                    'time': float(best_time),
-                    'config': config
-                }
-
-        # choose first AVAILABLE weak-scaling point as reference
-
-        baseline_key = None
-
-        for nodes, reso in zip(arr_nodes_in, resos):
-
-            key = (nodes, reso)
-
-            if key in best_per_case:
-                baseline_key = key
-                break
-
-        if baseline_key is None:
+        # If no data available, go to next release
+        if len(avail_nodes)==0:
             continue
 
-        baseline_time = best_per_case[
-            baseline_key
-        ]['time']
-
         col = {}
-
-        for nodes, reso in zip(arr_nodes_in, resos):
-
-            key = (nodes, reso)
-
-            if key not in best_per_case:
-                continue
-
-            runtime = best_per_case[key]['time']
-
-            efficiency = baseline_time / runtime
-
-            config = best_per_case[key]['config']
-
+        for nodes, reso, time, config in zip(avail_nodes, avail_resos, times, configs):
+            # choose first available weak-scaling point as reference (lowest number of nodes)
+            efficiency = times[0] / time
+            # add optimal mpi-omp config unless it's mpi-only on full node
             if config=='MPI=128 OMP=0' or config=='MPI=112 OMP=0':
-                col[key] = (
-                    f"{efficiency:.3f} "
-                )
+                col[nodes] = (f"{efficiency:.3f} ")
             else:
-                col[key] = (
-                    f"{efficiency:.3f} "
-                    f"({config})"
-                )
+                col[nodes] = (f"{efficiency:.3f} ({config})")
 
         release_results[label] = col
 
-    # ---------- EMIT TABLE ----------
+    # ---------- Print table row by row ----------
 
     for nodes, reso in zip(arr_nodes_in,resos):
-
         row = [str(nodes), str(reso)]
 
-        key = (nodes,reso)
-
         for label in release_labels:
-
-            value = (
-                release_results
-                .get(label,{})
-                .get(key,"-")
-            )
-
+            # get the entry or put a dash when no entry is available
+            value = release_results.get(label,{}).get(nodes,"-")
             row.append(value)
 
         if fmt == 'markdown':
-
-            print(
-                "| " + " | ".join(row) + " |",
-                file=out
-            )
-
+            print("| " + " | ".join(row) + " |", file=out)
         elif fmt == 'latex':
+            print(" & ".join(row) + r" \\ \hline", file=out)
 
-            print(
-                " & ".join(row)
-                + r" \\ \hline",
-                file=out
-            )
-
-    # ---------- FOOTER ----------
+    # ---------- Footer for latex table ----------
 
     if fmt == 'latex':
         print(r"\end{tabular}", file=out)

@@ -19,6 +19,27 @@ def process_times(times):
 
 # ---- helpers
 
+''' Extract the results from the raw benchmark data '''
+def scan_data(data, arr_nodes, arr_resos):
+    times = []
+    used_nodes = []
+    used_resos = []
+    configs = []
+    for nodes,reso in zip(arr_nodes, arr_resos):
+
+        # search best average time amongst mpi-omp configs
+        best_entry, best_time = search_best_config(data,reso,nodes)
+
+        if best_entry is not None:
+            times.append(float(best_time))
+            used_nodes.append(nodes)
+            used_resos.append(reso)
+            best_config = f'MPI={best_entry['mpi_procs_per_node']} OMP={best_entry['omp_threads']}'
+            configs.append(best_config)
+
+    return times, used_nodes, used_resos, configs
+
+
 ''' Search for the best average time amongst different MPI-OMP configurations'''
 def search_best_config(data,reso,nodes):
     best_entry = None
