@@ -55,7 +55,7 @@ plot_scaling_combo_inverse(
 )
 
 # Assemble markdown page string
-md += f"""## Strong and weak scaling of the latest code release
+md += f"""## Strong and weak scaling of the latest code release ({release_label})
 
 ![Scaling]({figfile})
 
@@ -151,11 +151,11 @@ md += f"""## Optimal OpenMP configuration
 for reso in resos:
 
     figfile_grid_omp = f'../results/images/mpi_omp_grid_{args.benchmark}_{reso}_{timer}_{args.cluster}.png'
-    plot_mpi_omp_grid(data, reso, 
+    error = plot_mpi_omp_grid(data, reso, 
                         fig_name=figfile_grid_omp,
                         show_overhead=False)
-    
-    md += f"""![MPI-OMP]({figfile_grid_omp})
+    if not error:
+        md += f"""![MPI-OMP]({figfile_grid_omp})
 
 """
     

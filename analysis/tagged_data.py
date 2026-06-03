@@ -39,7 +39,7 @@ def load_release_data(cluster, test, timer='total'):
 
     # current development
     data = load_latest_openmp_data(cluster, test, timer)
-    release_labels.append("openmp")
+    release_labels.append("openmp (beta)")
     benchmarks.append(data)
 
     return benchmarks, release_labels

@@ -52,7 +52,6 @@ def plot_weak_scaling(benchmarks, release_labels, arr_nodes_in, resos,
                 configs.append(best_config)
 
         if len(times)>0:
-            print(np.array(times[0])/np.array(times))
             axes.plot(arr_nodes, np.array(times[0])/np.array(times),
                   color=colorVals[label], marker='o', markersize=4, label=label)
             max_nodes = max(max_nodes,max(arr_nodes))
@@ -61,6 +60,7 @@ def plot_weak_scaling(benchmarks, release_labels, arr_nodes_in, resos,
     axes.plot([1,max_nodes],[1,1], c=(0.25,0.85,0.25), ls=':', lw=2)
 
     if input_axes==None:
+        axes.set_title(f'{entry['metadata']['Benchmark']} {reso} on {entry['metadata']['Cluster']}')
         axes.set_xlabel('number of nodes')
         axes.set_ylabel('efficiency')
         axes.set_xscale('log')

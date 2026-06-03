@@ -33,6 +33,10 @@ def plot_mpi_omp_grid(data, reso, fig_name='mpi_omp_grid', show_overhead=False):
     mpi_vals = sorted(set(k[0] for k in grid.keys()))
     omp_vals = sorted(set(k[1] for k in grid.keys()))
 
+    if len(mpi_vals)==0 and len(omp_vals)==0:
+        print('[MPI-OMP grid] No data available for this resolution:', reso)
+        return 1
+
     # remove entries that have either 1 MPI process or 1 OMP thread
     # these are for checking overhead
     if not show_overhead:
@@ -81,8 +85,11 @@ def plot_mpi_omp_grid(data, reso, fig_name='mpi_omp_grid', show_overhead=False):
     #cbar.set_label("execution time")
     #cbar.set_ticks([])
 
+    plt.title(f'{entry['metadata']['Benchmark']} {reso} on {entry['metadata']['Cluster']}')
     plt.tight_layout()
     plt.savefig(fig_name, dpi=150)
+
+    return 0
 
 
 if __name__ == '__main__':
@@ -102,7 +109,7 @@ if __name__ == '__main__':
     from tagged_data import load_latest_openmp_data
     data = load_latest_openmp_data(args.cluster, args.benchmark, args.timer)
 
-    plot_mpi_omp_grid(data, args.reso, 
+    errorcode = plot_mpi_omp_grid(data, args.reso, 
                       fig_name=f'images/mpi_omp_grid_{args.benchmark}_{args.reso}_{args.timer}_{args.cluster}.png',
                       show_overhead=False)
 

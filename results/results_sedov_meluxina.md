@@ -10,7 +10,7 @@ On this page:
 * Strong scaling evolution (figure & table with efficiency)
 * Weak scaling evolution (figure & table with efficiency)
 
-## Strong and weak scaling of the latest code release
+## Strong and weak scaling of the latest code release (2026-05)
 
 ![Scaling](../results/images/scaling_combo_sedov_total_meluxina.png)
 
@@ -29,7 +29,7 @@ The last column informs of the speedup of the last version with
 respect to the first listed version. Unless otherwise stated,
 the time listed is for runs with MPI-only using the full compute node.
 
-| Nodes | 2024-10 | 2025-05 | 2025-10 | 2026-05 | openmp | Δ [%] |
+| Nodes | 2024-10 | 2025-05 | 2025-10 | 2026-05 | openmp (beta) | Δ [%] |
 |---|---|---|---|---|---|---|
 | 1 | 168.04 | 165.99 | 147.27 | 134.08 | 133.42 | 20.6 |
 | 2 | 85.22 | 85.23 | 75.73 | 68.80 | 68.09 | 20.1 |
@@ -52,7 +52,7 @@ with respect to the minimal number of nodes.
 Unless otherwise stated, data is for runs with MPI-only 
 using the full compute node.
 
-| nodes | 2024-10 | 2025-05 | 2025-10 | 2026-05 | openmp |
+| nodes | 2024-10 | 2025-05 | 2025-10 | 2026-05 | openmp (beta) |
 |---|---|---|---|---|---|
 | 1 | 1.000 | 1.000 | 1.000 | 1.000 | 1.000 |
 | 2 | 0.986 | 0.974 | 0.972 | 0.974 | 0.980 |
@@ -74,7 +74,7 @@ with respect to the minimal number of nodes.
 Unless otherwise stated, data is for runs with MPI-only 
 using the full compute node.
 
-| Nodes | Resolution | 2024-10 | 2025-05 | 2025-10 | 2026-05 | openmp |
+| Nodes | Resolution | 2024-10 | 2025-05 | 2025-10 | 2026-05 | openmp (beta) |
 |---|---|---|---|---|---|---|
 | 1 | 256 | 1.000  | 1.000  | 1.000  | 1.000  | 1.000 (MPI=32 OMP=4) |
 | 8 | 512 | 0.903  | 0.962  | 0.998  | 0.950  | 0.994 (MPI=32 OMP=4) |
@@ -84,8 +84,6 @@ using the full compute node.
 ## Optimal OpenMP configuration
 
 ![MPI-OMP](../results/images/mpi_omp_grid_sedov_256_total_meluxina.png)
-
-![MPI-OMP](../results/images/mpi_omp_grid_sedov_512_total_meluxina.png)
 
 ![MPI-OMP](../results/images/mpi_omp_grid_sedov_1024_total_meluxina.png)
 
