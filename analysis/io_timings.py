@@ -8,7 +8,6 @@ import os
 import subprocess
 import json
 import numpy as np
-import re
 
 ''' Parse meta data written at the top of the log file '''
 def parse_metadata(logfile):
@@ -116,7 +115,30 @@ def get_timings_from_log(run_dir, which='total', version="ramses"):
         if max_time > min_time*2:
             times.remove(max_time)
             print('WARNING: removed outlyer', max_time, 'from', times)
-    return times,meta
+
+    # get memory consumption
+    subprocess.call("grep --no-filename 'Used memory' {}/*.log".format(run_dir) +" | awk '{print $3, $4}' > memory.txt", shell=True)
+    max_mem = 0
+    with open('memory.txt', 'r') as file:
+        for line in file:
+            value, unit = line.strip().split(' ')
+            value = float(value) # this is the max consumption amongst MPI procs for 1 proc
+            # renormalize to MB
+            if unit=='kB':
+                value = value/1e3
+            elif unit=='GB':
+                value = value*1e3
+            elif unit=='TB':
+                value = value*1e6
+            max_mem = max(max_mem, value)
+    os.remove('memory.txt')
+    # Get the total memory for the node
+    max_mem = max_mem * int(meta['MPI per node'])
+    # convert to GB
+    max_mem = max_mem / 1e3
+    meta['max memory per node'] = str(max_mem) + ' GB'
+
+    return times, meta
 
 ''' retrieve timers for individual parts of the code from the end of the logfile '''
 def read_timers(logfile):
