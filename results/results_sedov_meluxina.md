@@ -81,16 +81,49 @@ using the full compute node.
 | 64 | 1024 | 0.941  | 0.917  | 0.915  | 0.849  | 0.847 (MPI=64 OMP=2) |
 
 
-## Optimal OpenMP configuration
+## OpenMP configuration guidelines
 
 ![MPI-OMP](../results/images/mpi_omp_grid_sedov_256_total_meluxina.png)
+
+![MPI-OMP](../results/images/mpi_omp_grid_sedov_512_total_meluxina.png)
 
 ![MPI-OMP](../results/images/mpi_omp_grid_sedov_1024_total_meluxina.png)
 
 
-This figure gives inside in the behaviour of OpenMP for this setup.
-It shows which MPI - OpenMP configuration is most optimal
-in terms of execution time, for this setup at this resolution.
-The data is for the latest OpenMP version, corresponding to the one
-used for the previous figures.
+These figures give inside in the behaviour of OpenMP for different resolutions of this setup.
+Shows is which MPI - OpenMP configuration is most optimal in terms of execution time.
+The data is for the latest OpenMP version 
+(commit e9846974 on branch openmp)
+, corresponding to the version used for the previous figures.
+
+## Memory usage
+
+![Memory usage](../results/images/memory_sedov_1024_meluxina.png)
+
+This figure shows the approximate memory per node needed to perform the simulation,
+as derived from the log-file outputted by the code. Remark that the actual memory
+allocated for the run on the node will be higher, depending on the percentage of 
+the allocated ngridmax grids is actually used.
+We show the consumption for a different number of OpenMP threads. 
+Memory consumption is lower with OMP, due to
+the reduced number of ghostzone cells needed to describe the boundaries of the 
+MPI-domains.
+
+The table lists the corresponding memory values in GB.
+The last column lists the improvement of the OpenMP version with respect to the 
+MPI-only version, that is the most optimistic fraction of the MPI-only memory that is needed 
+when running with hybrid parallelisation.
+
+Unless otherwise stated, data is for runs using full compute nodes.
+
+| nodes | MPI-only | OMP=2 | OMP=4 | OMP=8 | OMP=16 | OMP=32 | OMP=64 | best |
+|---|---|---|---|---|---|---|---|---|
+| 1 | 207.74 GB | 198.98 GB | 195.07 GB | 192.91 GB | 191.70 GB | 191.00 GB | 190.53 GB | 91.7 % |
+| 2 | 116.62 GB | 104.51 GB | 99.71 GB | 97.66 GB | 96.85 GB | - | - | 83.0 % |
+| 4 | 67.35 GB | 58.27 GB | 52.29 GB | 50.02 GB | 49.22 GB | - | - | 73.1 % |
+| 8 | 43.55 GB | 33.82 GB | 29.07 GB | 26.29 GB | 25.02 GB | - | - | 57.4 % |
+| 16 | 32.88 GB | 21.89 GB | 16.86 GB | 14.63 GB | 13.13 GB | - | - | 39.9 % |
+| 32 | 29.59 GB | 16.56 GB | 10.94 GB | 8.51 GB | 7.34 GB | - | - | 24.8 % |
+| 64 | 33.18 GB | 14.89 GB | 8.25 GB | 5.50 GB | 4.29 GB | - | - | 12.9 % |
+
 

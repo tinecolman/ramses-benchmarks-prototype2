@@ -8,6 +8,7 @@ from scaling_strong import plot_strong_scaling, table_strong_scaling
 from scaling_weak import plot_weak_scaling, table_weak_scaling
 from scaling_combo import plot_scaling_combo_inverse
 from openmp_config_grid import plot_mpi_omp_grid
+from memory import plot_memory, table_memory
 import argparse
 
 #---------- INPUT ------------
@@ -144,9 +145,11 @@ using the full compute node.
 ######### In this part, we deal with the latest OpenMP version #########
 data = load_latest_openmp_data(args.cluster, args.benchmark, timer)
 
-md += f"""## Optimal OpenMP configuration
+md += f"""## OpenMP configuration guidelines
 
 """ 
+
+#--------- MPI-OpenMP config grid for execution time on 1 node ------------
 
 for reso in resos:
 
@@ -160,16 +163,50 @@ for reso in resos:
 """
     
 md += f"""
-This figure gives inside in the behaviour of OpenMP for this setup.
-It shows which MPI - OpenMP configuration is most optimal
-in terms of execution time, for this setup at this resolution.
-The data is for the latest OpenMP version, corresponding to the one
-used for the previous figures.
+These figures give inside in the behaviour of OpenMP for different resolutions of this setup.
+Shows is which MPI - OpenMP configuration is most optimal in terms of execution time.
+The data is for the latest OpenMP version 
+(commit {data[0]['metadata']['commit']} on branch {data[0]['metadata']['branch']})
+, corresponding to the version used for the previous figures.
 
 """ 
 
+#--------- Memory ------------
 
-# Write markdown page
+reso = resos[-1]
+
+filename = f'../results/images/memory_{args.benchmark}_{reso}_{args.cluster}.png'
+plot_memory(data, reso, outname=filename)
+
+table_md = table_memory(data, reso, fmt='markdown')
+
+md += f"""## Memory usage
+
+![Memory usage]({filename})
+
+This figure shows the approximate memory per node needed to perform the simulation,
+as derived from the log-file outputted by the code. Remark that the actual memory
+allocated for the run on the node will be higher, depending on the percentage of 
+the allocated ngridmax grids is actually used.
+We show the consumption for a different number of OpenMP threads. 
+Memory consumption is lower with OMP, due to
+the reduced number of ghostzone cells needed to describe the boundaries of the 
+MPI-domains.
+
+The table lists the corresponding memory values in GB.
+The last column lists the improvement of the OpenMP version with respect to the 
+MPI-only version, that is the most optimistic fraction of the MPI-only memory that is needed 
+when running with hybrid parallelisation.
+
+Unless otherwise stated, data is for runs using full compute nodes.
+
+{table_md}
+
+"""
+
+
+#--------- Write markdown page ------------
+
 outfile = f"../results/results_{args.benchmark}_{args.cluster}.md"
 with open(outfile, 'w') as f:
     f.write(md)

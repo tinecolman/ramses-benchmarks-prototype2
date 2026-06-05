@@ -100,11 +100,17 @@ def table_memory(data, reso, fmt='markdown'):
 
     out = io.StringIO()
 
-    # TODO header
+    # ---------- Gather table entries for all number of OMP threads ----------
 
     # extract results from data
     results = gather_memory_results(data,reso)
+    # remove OMP-only entries, since the memory isn't outputted when running without MPI
+    if 112 in results.keys():
+        results.pop(112)
+    if 128 in results.keys():
+        results.pop(128)
     used_omp = sorted(results.keys())
+
 
     # gather number of nodes
     arr_nodes = []
@@ -113,20 +119,60 @@ def table_memory(data, reso, fmt='markdown'):
     arr_nodes = set(arr_nodes)
     arr_nodes = sorted(list(arr_nodes))
 
+    # ---------- Header ----------
+
+    omp_labels = [f'OMP={omp}' for omp in used_omp]
+    if omp_labels[0]=='OMP=0':
+        omp_labels[0] = 'MPI-only'
+
+    ncols = len(used_omp) + 2
+
+    if fmt == 'markdown':
+        header = ( "| nodes | "  + " | ".join(omp_labels) + " | best |")
+        sep = "|" + "---|"*ncols
+        print(header, file=out)
+        print(sep, file=out)
+
+    elif fmt == 'latex':
+        header = ("nodes & " + " & ".join(omp_labels) + r" & best \\")
+        print(r"\begin{tabular}{" + "l"*ncols + "}", file=out)
+        print(r"\hline", file=out)
+        print(header, file=out)
+        print(r"\hline", file=out)
+
+    else:
+        raise ValueError("[table_execution_time] fmt must be 'markdown' or 'latex'")
+
+
     # ---------- Print table row by row ----------
 
     for nodes in arr_nodes:
         row = [str(nodes)]
 
+        min_memory = np.inf
         for omp in used_omp:
             # get the entry or put a dash when no entry is available
             try:
                 index = results[omp][0].index(nodes)
                 mem = results[omp][1][index]
-                value = f'{mem:.2f}'
+                # assemble entry
+                if mem==0: # can happen in case of OMP-only or serial
+                    value = '-'
+                else:
+                    value = f'{mem:.2f} GB'
+                    min_memory = min(min_memory, mem)
             except:
                 value = '-'
             row.append(value)
+
+        # compute % improvement of OMP w.r.t. MPI-only
+        try:
+            index = results[0][0].index(nodes)
+            improvement = min_memory/results[0][1][index] * 100
+            row.append(f'{improvement:.1f} %')
+        except:
+            row.append('-')
+
 
         if fmt == 'markdown':
             print("| " + " | ".join(row) + " |", file=out)
