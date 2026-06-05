@@ -412,6 +412,19 @@ for MPI_PROC in "${MPI_PROC_LIST[@]}"; do
    TEST_NAMELIST=${TEST_NAME}_${RESO}.nml
    cp ${RAMSES_BENCHMARK_DIR}/${SETUPS_DIR}/${TEST_NAME}/${TEST_NAMELIST} .
 
+   # TO TEST
+   ## adjust the test time if needed
+   #TIME_SCALE=$(awk "BEGIN {print ${CLUSTER_CORES_PER_NODE}/${CORES_PER_NODE}}")
+   ## convert reference time to seconds
+   #IFS=: read HH MM SS <<< "$FULL_NODE_TIME"
+   #BASE_SECONDS=$((10#$HH * 3600 + 10#$MM * 60 + 10#$SS))
+   #SCALED_SECONDS=$(awk "BEGIN {print int(${BASE_SECONDS} * ${TIME_SCALE})}")
+   ## convert back to HH:MM:SS
+   #TEST_TIME=$(printf '%02d:%02d:%02d' \
+   #   $((SCALED_SECONDS/3600)) \
+   #   $(((SCALED_SECONDS%3600)/60)) \
+   #   $((SCALED_SECONDS%60)))
+
    #----------------------------------------------------------------------
    # Create job script
    #----------------------------------------------------------------------
@@ -428,10 +441,12 @@ for MPI_PROC in "${MPI_PROC_LIST[@]}"; do
    # OMP export statements
    # TODO: improve
    if (( $ACT_OMP != 0 )); then
-      echo "export OMP_NUM_THREADS=$ACT_OMP" >> "$OUTPUT_FILE"
+      #echo "export OMP_NUM_THREADS=$ACT_OMP" >> "$OUTPUT_FILE"
       #echo "export OMP_PLACES=cores" >> "$OUTPUT_FILE"
       #echo "export OMP_PROC_BIND=true" >> "$OUTPUT_FILE"
-      echo "export OMP_STACKSIZE=2048M" >> "$OUTPUT_FILE"
+      #echo "export OMP_STACKSIZE=2048M" >> "$OUTPUT_FILE"
+      # add openmp-specific directives
+      source ${RAMSES_BENCHMARK_DIR}/HPCclusters/${CLUSTER}/openmp.sh
    fi
 
    # modules to load
