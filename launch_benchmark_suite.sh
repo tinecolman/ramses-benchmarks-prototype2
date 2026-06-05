@@ -106,9 +106,6 @@ EXECNAME="benchmark_exe_"
 DATE=`date +%F`
 LOGFILE="${RAMSES_BENCHMARK_DIR}/benchmark_suite.log";
 
-# load cluster info
-source ${CLUSTER_INFO}
-
 # load benchmark configuration
 source ${RAMSES_BENCHMARK_DIR}/${SETUPS_DIR}/${TEST_NAME}/scaling_config.sh
 
@@ -195,6 +192,8 @@ if [[ "$CLUSTER_ALLOCATION_ID" == "none" ]]; then
 
 fi
 
+# load cluster info (to be done after allocation is set)
+source ${CLUSTER_INFO}
 
 #######################################################################
 # Layout resolver (MPI/OMP separation)
