@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cat <<JOBSCRIPT > "$OUTPUT_FILE"
+cat <<JOBSCRIPT >> "$OUTPUT_FILE"
 
 export OMP_NUM_THREADS=\${SLURM_CPUS_PER_TASK}
 export OMP_STACKSIZE=2048M
