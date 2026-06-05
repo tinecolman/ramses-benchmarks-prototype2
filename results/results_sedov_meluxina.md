@@ -76,26 +76,22 @@ using the full compute node.
 
 | nodes | resolution | 2024-10 | 2025-05 | 2025-10 | 2026-05 | openmp (beta) |
 |---|---|---|---|---|---|---|
-| 1 | 256 | 1.000  | 1.000  | 1.000  | 1.000  | 1.000 (MPI=32 OMP=4) |
-| 8 | 512 | 0.903  | 0.962  | 0.998  | 0.950  | 0.994 (MPI=32 OMP=4) |
-| 64 | 1024 | 0.941  | 0.917  | 0.915  | 0.849  | 0.847 (MPI=64 OMP=2) |
+| 1 | 256 | 1.000  | 1.000  | 1.000  | 1.000  | 1.000 (MPI=8 OMP=16) |
+| 8 | 512 | 0.903  | 0.962  | 0.998  | 0.950  | 0.963 (MPI=32 OMP=4) |
+| 64 | 1024 | 0.941  | 0.917  | 0.915  | 0.849  | 0.821 (MPI=64 OMP=2) |
 
 
 ## OpenMP configuration guidelines
-
-![MPI-OMP](../results/images/mpi_omp_grid_sedov_256_total_meluxina.png)
-
-![MPI-OMP](../results/images/mpi_omp_grid_sedov_512_total_meluxina.png)
-
-![MPI-OMP](../results/images/mpi_omp_grid_sedov_1024_total_meluxina.png)
-
-
-These figures give inside in the behaviour of OpenMP for different resolutions of this setup.
+    
+The figures below give inside in the behaviour of OpenMP for different resolutions of this setup.
 Shows is which MPI - OpenMP configuration is most optimal in terms of execution time.
 The data is for the latest OpenMP version 
 (commit e9846974 on branch openmp)
 , corresponding to the version used for the previous figures.
 
+![MPI-OMP](../results/images/mpi_omp_grid_sedov_256_total_meluxina.png)
+![MPI-OMP](../results/images/mpi_omp_grid_sedov_512_total_meluxina.png)
+![MPI-OMP](../results/images/mpi_omp_grid_sedov_1024_total_meluxina.png)
 ## Memory usage
 
 ![Memory usage](../results/images/memory_sedov_1024_meluxina.png)

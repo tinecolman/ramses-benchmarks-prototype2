@@ -1,4 +1,5 @@
-''' TODO write description
+''' Construct a markdown page gathering the benchmark results
+    from a given benchmark setup on a given cluster 
 '''
 
 from tagged_data import *
@@ -11,20 +12,12 @@ from openmp_config_grid import plot_mpi_omp_grid
 from memory import plot_memory, table_memory
 import argparse
 
-#---------- INPUT ------------
 
-# Get command line arguments
-parser = argparse.ArgumentParser(
-    description='Update benchmark page'
-)
-parser.add_argument('-c', '--cluster', required=True, help='Cluster name')
-parser.add_argument('-b', '--benchmark', required=True, help='Benchmark setup name')
-args = parser.parse_args()
+#---------- Text of the markdown page ------------
 
-# We always want to display the total time for this page
-timer='total'
 
-md = f"""# Benchmark: {args.benchmark} on {args.cluster}
+def text_section_intro(args):
+    return f"""# Benchmark: {args.benchmark} on {args.cluster}
 
 Benchmark description: [{args.benchmark}](../setups/{args.benchmark}/description.md)
 
@@ -38,25 +31,9 @@ On this page:
 
 """
 
-resos = get_resolutions(args.benchmark)
 
-weak_scaling_map = get_weak_scaling_config2(args.benchmark)
-
-######### In this part, we deal with the latest official release #########
-benchmark, release_label = load_latest_release_data(args.cluster, args.benchmark, timer)
-
-#--------- Strong and weak scaling combo figure ------------
-
-figfile = f'../results/images/scaling_combo_{args.benchmark}_{timer}_{args.cluster}.png'
-plot_scaling_combo_inverse(
-        benchmark,
-        resos,
-        weak_scaling_map,
-        outname=figfile
-)
-
-# Assemble markdown page string
-md += f"""## Strong and weak scaling of the latest code release ({release_label})
+def text_section_scaling_combo(release_label,figfile):
+    return f"""## Strong and weak scaling of the latest code release ({release_label})
 
 ![Scaling]({figfile})
 
@@ -66,18 +43,9 @@ Dotted lines show ideal scaling.
 
 """
 
-######### In this part, we deal with the time evolution between versions #########
-benchmarks, release_labels = load_release_data(args.cluster, args.benchmark, timer)
-reso = resos[-1] # we show only the highest resolution
 
-#--------- Execution time evolution ------------
-
-figfile = f'../results/images/evo_exectime_{args.benchmark}_{reso}_{timer}_{args.cluster}.png'
-plot_execution_time_multinode(benchmarks, release_labels, reso, outname=figfile)
-
-table_md = table_execution_time(benchmarks, release_labels, reso, fmt='markdown')
-
-md += f"""## Evolution of execution time with code version
+def text_section_execution_time(figfile, table_md):
+    return f"""## Evolution of execution time with code version
 
 ![Evolution execution time]({figfile})
 
@@ -93,14 +61,8 @@ the time listed is for runs with MPI-only using the full compute node.
 """
 
 
-#--------- Strong scaling evolution ------------
-
-figfile = f'../results/images/strong_scaling_{args.benchmark}_{reso}_{timer}_{args.cluster}.png'
-plot_strong_scaling(benchmarks, release_labels, reso, outname=figfile)
-
-table_md = table_strong_scaling(benchmarks, release_labels, reso, fmt='markdown')
-
-md += f"""## Strong scaling evolution
+def text_section_strong_scaling(figfile, table_md):
+    return f"""## Strong scaling evolution
 
 ![Strong scaling]({figfile})
 
@@ -116,17 +78,9 @@ using the full compute node.
 
 """
 
-#--------- Weak scaling evolution ------------
 
-nodes, resos = get_weak_scaling_config(args.benchmark)
-
-figfile = f'../results/images/weak_scaling_{args.benchmark}_{timer}_{args.cluster}.png'
-plot_weak_scaling(benchmarks, release_labels, nodes, resos, outname=figfile)
-
-table_md = table_weak_scaling(benchmarks, release_labels, nodes, resos, fmt='markdown')
-
-
-md += f"""## Weak scaling evolution
+def text_section_weak_scaling(figfile, table_md):
+    return f"""## Weak scaling evolution
 
 ![Weak scaling]({figfile})
 
@@ -142,28 +96,10 @@ using the full compute node.
 """
 
 
-######### In this part, we deal with the latest OpenMP version #########
-data = load_latest_openmp_data(args.cluster, args.benchmark, timer)
-
-md += f"""## OpenMP configuration guidelines
-
-""" 
-
-#--------- MPI-OpenMP config grid for execution time on 1 node ------------
-
-for reso in resos:
-
-    figfile_grid_omp = f'../results/images/mpi_omp_grid_{args.benchmark}_{reso}_{timer}_{args.cluster}.png'
-    error = plot_mpi_omp_grid(data, reso, 
-                        fig_name=figfile_grid_omp,
-                        show_overhead=False)
-    if not error:
-        md += f"""![MPI-OMP]({figfile_grid_omp})
-
-"""
+def text_section_ompmpi_grid(data):
+    return f"""## OpenMP configuration guidelines
     
-md += f"""
-These figures give inside in the behaviour of OpenMP for different resolutions of this setup.
+The figures below give inside in the behaviour of OpenMP for different resolutions of this setup.
 Shows is which MPI - OpenMP configuration is most optimal in terms of execution time.
 The data is for the latest OpenMP version 
 (commit {data[0]['metadata']['commit']} on branch {data[0]['metadata']['branch']})
@@ -171,16 +107,9 @@ The data is for the latest OpenMP version
 
 """ 
 
-#--------- Memory ------------
 
-reso = resos[-1]
-
-filename = f'../results/images/memory_{args.benchmark}_{reso}_{args.cluster}.png'
-plot_memory(data, reso, outname=filename)
-
-table_md = table_memory(data, reso, fmt='markdown')
-
-md += f"""## Memory usage
+def text_section_memory(filename,table_md):
+    return f"""## Memory usage
 
 ![Memory usage]({filename})
 
@@ -205,7 +134,90 @@ Unless otherwise stated, data is for runs using full compute nodes.
 """
 
 
-#--------- Write markdown page ------------
+#---------- INPUT ------------
+
+# Get command line arguments
+parser = argparse.ArgumentParser(
+    description='Update benchmark page'
+)
+parser.add_argument('-c', '--cluster', required=True, help='Cluster name')
+parser.add_argument('-b', '--benchmark', required=True, help='Benchmark setup name')
+args = parser.parse_args()
+
+# We always want to display the total time for this page
+timer='total'
+# get list of what resolutions are available for this benchmark
+resos = get_resolutions(args.benchmark)
+# get list of which node-resolution combinations to use for weak scaling
+weak_scaling_map = get_weak_scaling_config2(args.benchmark)
+
+# Write text with table of content
+md = text_section_intro(args)
+
+
+#--------- In this part, we deal with the latest official release ------------
+
+benchmark, release_label = load_latest_release_data(args.cluster, args.benchmark, timer)
+
+if len(benchmark)>0:
+
+    # Strong and weak scaling combo figure
+    figfile = f'../results/images/scaling_combo_{args.benchmark}_{timer}_{args.cluster}.png'
+    plot_scaling_combo_inverse(benchmark,resos,weak_scaling_map, outname=figfile)
+    md += text_section_scaling_combo(release_label,figfile)
+
+
+#--------- In this part, we deal with the time evolution between versions ------------
+
+benchmarks, release_labels = load_release_data(args.cluster, args.benchmark, timer)
+reso = resos[-1] # we show only the highest resolution
+
+if len(benchmarks)>0:
+
+    # Execution time evolution
+    figfile = f'../results/images/evo_exectime_{args.benchmark}_{reso}_{timer}_{args.cluster}.png'
+    plot_execution_time_multinode(benchmarks, release_labels, reso, outname=figfile)
+    table_md = table_execution_time(benchmarks, release_labels, reso, fmt='markdown')
+    md += text_section_execution_time(figfile, table_md)
+
+    # Strong scaling evolution
+    figfile = f'../results/images/strong_scaling_{args.benchmark}_{reso}_{timer}_{args.cluster}.png'
+    plot_strong_scaling(benchmarks, release_labels, reso, outname=figfile)
+    table_md = table_strong_scaling(benchmarks, release_labels, reso, fmt='markdown')
+    md += text_section_strong_scaling(figfile, table_md)
+
+    # Weak scaling evolution
+    nodes, resos = get_weak_scaling_config(args.benchmark)
+    figfile = f'../results/images/weak_scaling_{args.benchmark}_{timer}_{args.cluster}.png'
+    plot_weak_scaling(benchmarks, release_labels, nodes, resos, outname=figfile)
+    table_md = table_weak_scaling(benchmarks, release_labels, nodes, resos, fmt='markdown')
+    md += text_section_weak_scaling(figfile, table_md)
+
+
+#--------- In this part, we deal with the latest OpenMP version ------------
+
+data = load_latest_openmp_data(args.cluster, args.benchmark, timer)
+
+if len(data)>0:
+
+    # MPI-OpenMP config grid for execution time on 1 node
+    md += text_section_ompmpi_grid(data)
+    for reso in resos:
+        figfile_grid_omp = f'../results/images/mpi_omp_grid_{args.benchmark}_{reso}_{timer}_{args.cluster}.png'
+        error = plot_mpi_omp_grid(data, reso, fig_name=figfile_grid_omp, show_overhead=False)
+        if not error:
+            md += f"""![MPI-OMP]({figfile_grid_omp})
+"""
+
+    # Memory
+    reso = resos[-1]
+    filename = f'../results/images/memory_{args.benchmark}_{reso}_{args.cluster}.png'
+    plot_memory(data, reso, outname=filename)
+    table_md = table_memory(data, reso, fmt='markdown')
+    md += text_section_memory(filename,table_md)
+
+
+#--------- Output markdown page ------------
 
 outfile = f"../results/results_{args.benchmark}_{args.cluster}.md"
 with open(outfile, 'w') as f:

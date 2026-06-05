@@ -110,7 +110,7 @@ if __name__ == '__main__':
     data = load_latest_openmp_data(args.cluster, args.benchmark, args.timer)
 
     errorcode = plot_mpi_omp_grid(data, args.reso, 
-                      fig_name=f'images/mpi_omp_grid_{args.benchmark}_{args.reso}_{args.timer}_{args.cluster}.png',
+                      fig_name=f'mpi_omp_grid_{args.benchmark}_{args.reso}_{args.timer}_{args.cluster}.png',
                       show_overhead=False)
 
 #python openmp_config_grid.py -c meluxina -b sedov -r 1024
