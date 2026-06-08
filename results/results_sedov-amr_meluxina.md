@@ -23,15 +23,15 @@ The last column informs of the speedup of the last version with
 respect to the first listed version. Unless otherwise stated,
 the time listed is for runs with MPI-only using the full compute node.
 
-| nodes | 2024-10 | openmp (beta) | Δ [%] |
-|---|---|---|---|
-| 1 | 149.19 | 102.96 (MPI=32 OMP=4) | 31.0 |
-| 2 | 124.12 | 72.13 (MPI=16 OMP=8) | 41.9 |
-| 4 | 130.04 | 56.51 (MPI=16 OMP=8) | 56.5 |
-| 8 | - | 57.44 (MPI=16 OMP=8) | - |
-| 16 | - | 73.87 (MPI=16 OMP=8) | - |
-| 32 | - | 119.95 (MPI=16 OMP=8) | - |
-| 64 | - | - | - |
+| nodes | 2024-10 | 2026-05 | openmp (beta) | Δ [%] |
+|---|---|---|---|---|
+| 1 | 149.19 | 136.34 | 102.96 (MPI=32 OMP=4) | 31.0 |
+| 2 | 124.12 | 114.52 | 72.13 (MPI=16 OMP=8) | 41.9 |
+| 4 | 130.04 | 125.38 | 56.51 (MPI=16 OMP=8) | 56.5 |
+| 8 | - | - | 57.44 (MPI=16 OMP=8) | - |
+| 16 | - | - | 73.87 (MPI=16 OMP=8) | - |
+| 32 | - | - | 119.95 (MPI=16 OMP=8) | - |
+| 64 | - | - | - | - |
 
 
 ## Strong scaling evolution
@@ -46,14 +46,14 @@ with respect to the minimal number of nodes.
 Unless otherwise stated, data is for runs with MPI-only 
 using the full compute node.
 
-| nodes | 2024-10 | openmp (beta) |
-|---|---|---|
-| 1 | 1.000 | 1.000 (MPI=32 OMP=4) |
-| 2 | 0.601 | 0.714 (MPI=16 OMP=8) |
-| 4 | 0.287 | 0.455 (MPI=16 OMP=8) |
-| 8 | - | 0.224 (MPI=16 OMP=8) |
-| 16 | - | 0.087 (MPI=16 OMP=8) |
-| 32 | - | 0.027 (MPI=16 OMP=8) |
+| nodes | 2024-10 | 2026-05 | openmp (beta) |
+|---|---|---|---|
+| 1 | 1.000 | 1.000 | 1.000 (MPI=32 OMP=4) |
+| 2 | 0.601 | 0.595 | 0.714 (MPI=16 OMP=8) |
+| 4 | 0.287 | 0.272 | 0.455 (MPI=16 OMP=8) |
+| 8 | - | - | 0.224 (MPI=16 OMP=8) |
+| 16 | - | - | 0.087 (MPI=16 OMP=8) |
+| 32 | - | - | 0.027 (MPI=16 OMP=8) |
 
 
 ## OpenMP configuration guidelines
