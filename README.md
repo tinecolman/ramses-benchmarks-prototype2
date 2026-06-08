@@ -37,6 +37,7 @@ EuroHPC
 
 * MareNostrum:
 [sedov](results/results_sedov_marenostrum.md)
+[sedov-amr](results/results_sedov-amr_marenostrum.md)
 
 * Discoverer: 
 [sedov](results/results_sedov_discoverer.md), 
