@@ -108,13 +108,13 @@ def get_timings_from_log(run_dir, which='total', version="ramses"):
                     times.append(timers[which])
                 except:
                     continue
-    if len(times)>0:
-        # check for outlyers
-        max_time = max(times)
-        min_time = min(times)
-        if max_time > min_time*2:
-            times.remove(max_time)
-            print('WARNING: removed outlyer', max_time, 'from', times)
+    #if len(times)>0:
+    #    # check for outlyers
+    #    max_time = max(times)
+    #    min_time = min(times)
+    #    if max_time > min_time*2:
+    #        times.remove(max_time)
+    #        print('WARNING: removed outlyer', max_time, 'from', times)
 
     # get memory consumption
     subprocess.call("grep --no-filename 'Used memory' {}/*.log".format(run_dir) +" | awk '{print $3, $4}' > memory.txt", shell=True)
