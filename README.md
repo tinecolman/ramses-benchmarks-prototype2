@@ -40,15 +40,13 @@ EuroHPC
 
 * Meluxina:
 [sedov](results/results_sedov_meluxina.md), 
-[sedov-amr](results/results_sedov-amr_meluxina.md)
+[sedov-amr](results/results_sedov-amr_meluxina.md),
+[cosmo](results/results_cosmo_meluxina.md), 
+[cosmo-amr](results/results_cosmo-amr_meluxina.md)
 
 * MareNostrum:
 [sedov](results/results_sedov_marenostrum.md)
 [sedov-amr](results/results_sedov-amr_marenostrum.md)
-
-* Discoverer: 
-[sedov](results/results_sedov_discoverer.md), 
-[sedov-amr](results/results_sedov-amr_discoverer.md)
 
 
 ## How to do your own benchmarking
