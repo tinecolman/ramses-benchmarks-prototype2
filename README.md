@@ -15,6 +15,13 @@ Classical benchmarks
    * [sedov](setups/sedov/description.md): on a uniform grid (SPACE use-case 1)
    * [sedov-amr](setups/sedov-amr/description.md): using AMR
 
+Cosmological simulations
+* COSMO: a dark matter-only simulation
+   * [cosmo](setups/cosmo/description.md): using a uniform grid (SPACE use-case 2)
+   * [cosmo-amr](setups/cosmo-amr/description.md): using an AMR grid
+
+Isolated galaxy simulations
+* GALAXY:
 
 ## Computing clusters
 
@@ -42,6 +49,7 @@ EuroHPC
 * Discoverer: 
 [sedov](results/results_sedov_discoverer.md), 
 [sedov-amr](results/results_sedov-amr_discoverer.md)
+
 
 ## How to do your own benchmarking
 
