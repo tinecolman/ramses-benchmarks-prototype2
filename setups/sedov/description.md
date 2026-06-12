@@ -19,13 +19,13 @@ Furthermore, only a unique load-balancing of the MPI domains is performed at the
 We integrate the code for a fixed number of 20 time steps.
 In this use case, all time steps are equivalent in terms of computational cost.
 
-This benchmark corresponds to use-case 1 in the SPACE project.
-
 In order of importance, the time is distributed between following modules:
 * `hydro - godunov`: the Godunov hydrodynamics solver (65 - 80%)
 * `hydro - ghostzones`and `hydro - rev ghostzones`: the communication of the virtual boundaries between MPI domains (2 - 30%)
 * `hydro - set unew` and `hydro - set uold`: updating the hydrodynamic state variables uold and unew (8 - 26%)
 * `courant`: computing the time step (3 - 6%)
+
+This benchmark corresponds to use-case 1 in the SPACE project.
 
 
 ### Other versions
