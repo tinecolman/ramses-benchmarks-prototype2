@@ -59,6 +59,9 @@ def plot_memory(data, reso, input_axes=None, outname='memory.png'):
             results.pop(omp)
     used_omp = sorted(results.keys())
 
+    if len(used_omp)==0:
+        return
+
     # create colors
     cmap = plt.get_cmap('inferno')
     cNorm  = colorsx.LogNorm(vmin=1, vmax=max(used_omp)*1.5)
