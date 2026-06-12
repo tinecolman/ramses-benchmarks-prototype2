@@ -21,6 +21,13 @@ In this use case, all time steps are equivalent in terms of computational cost.
 
 This benchmark corresponds to use-case 1 in the SPACE project.
 
+In order of importance, the time is distributed between following modules:
+* `hydro - godunov`: the Godunov hydrodynamics solver (65 - 80%)
+* `hydro - ghostzones`and `hydro - rev ghostzones`: the communication of the virtual boundaries between MPI domains (2 - 30%)
+* `hydro - set unew` and `hydro - set uold`: updating the hydrodynamic state variables uold and unew (8 - 26%)
+* `courant`: computing the time step (3 - 6%)
+
+
 ### Other versions
 
 * [sedov-amr](../sedov-amr/description.md)
@@ -28,4 +35,13 @@ This benchmark corresponds to use-case 1 in the SPACE project.
 ### Benchmark results
 
 This setup has been benchmarked on the following clusters:
-* [MeluXina](results/results_sedov_meluxina.md)
+* [MeluXina](../../results/results_sedov_meluxina.md)
+* [Discoverer](../../results/results_sedov_discoverer.md)
+* [MareNostrum](../../results/results_sedov_marenostrum.md)
+
+
+### OpenMP configuration guidelines
+
+Whether or not OpenMP can lead to an improvement for the time-to-solution depends on the computing cluster.
+However, an advantage of using OpenMP is the reduction in the memory per node needed.
+To find the optimimal MPI-OpenMP configuration, the reader is advised to consult the benchmark results on individual clusters.
