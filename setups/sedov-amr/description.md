@@ -1,4 +1,4 @@
-## Sedov blast wave on a uniform grid benchmark
+## Sedov blast wave with refinement
 
 Benchmark type: Classical, Sedov
 
