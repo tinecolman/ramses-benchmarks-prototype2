@@ -5,18 +5,12 @@ Benchmark description: [sedov](../setups/sedov/description.md)
 Cluster info: [meluxina](../HPCclusters/meluxina/cluster_description.md)
 
 On this page:
-* Strong and weak scaling of the latest code release (figure)
 * Evolution of execution time with code version (figure & table with speedup)
 * Strong scaling evolution (figure & table with efficiency)
-* Weak scaling evolution (figure & table with efficiency)
-
-## Strong and weak scaling of the latest code release (2026-05)
-
-![Scaling](../results/images/scaling_combo_sedov_total_meluxina.png)
-
-This figure shows the strong and weak scaling of the latest official release (2026-05).
-Strong scaling can be inferred diagonally, while weak scaling is determined by reading horizontally.
-Dotted lines show ideal scaling.
+* [if unigrid] Weak scaling evolution (figure & table with efficiency)
+* [if unigrid] Combination of strong and weak scaling of the latest code release (figure)
+* Optimal MPI-OpenMP configuration (figures)
+* Memory usage (figure & table)
 
 ## Evolution of execution time with code version
 
@@ -80,6 +74,15 @@ using the full compute node.
 | 8 | 512 | 0.903  | 0.962  | 0.998  | 0.950  | 0.963 (MPI=32 OMP=4) |
 | 64 | 1024 | 0.941  | 0.917  | 0.915  | 0.849  | 0.821 (MPI=64 OMP=2) |
 
+
+## Strong and weak scaling of the latest code release (2026-05)
+
+![Scaling](../results/images/scaling_combo_sedov_total_meluxina.png)
+
+This figure shows the strong and weak scaling of the latest official release (2026-05).
+Strong scaling can be inferred diagonally, while weak scaling is determined by reading horizontally.
+Dotted lines show ideal scaling.
+For the values of strong and weak scaling efficiency, see the tables in the previous sections.
 
 ## OpenMP configuration guidelines
     

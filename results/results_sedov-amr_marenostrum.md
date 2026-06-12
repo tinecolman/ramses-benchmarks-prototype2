@@ -5,10 +5,10 @@ Benchmark description: [sedov-amr](../setups/sedov-amr/description.md)
 Cluster info: [marenostrum](../HPCclusters/marenostrum/cluster_description.md)
 
 On this page:
-* [if unigrid] Strong and weak scaling of the latest code release (figure)
 * Evolution of execution time with code version (figure & table with speedup)
 * Strong scaling evolution (figure & table with efficiency)
 * [if unigrid] Weak scaling evolution (figure & table with efficiency)
+* [if unigrid] Combination of strong and weak scaling of the latest code release (figure)
 * Optimal MPI-OpenMP configuration (figures)
 * Memory usage (figure & table)
 

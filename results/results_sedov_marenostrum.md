@@ -5,18 +5,12 @@ Benchmark description: [sedov](../setups/sedov/description.md)
 Cluster info: [marenostrum](../HPCclusters/marenostrum/cluster_description.md)
 
 On this page:
-* Strong and weak scaling of the latest code release (figure)
 * Evolution of execution time with code version (figure & table with speedup)
 * Strong scaling evolution (figure & table with efficiency)
-* Weak scaling evolution (figure & table with efficiency)
-
-## Strong and weak scaling of the latest code release (2026-05)
-
-![Scaling](../results/images/scaling_combo_sedov_total_marenostrum.png)
-
-This figure shows the strong and weak scaling of the latest official release (2026-05).
-Strong scaling can be inferred diagonally, while weak scaling is determined by reading horizontally.
-Dotted lines show ideal scaling.
+* [if unigrid] Weak scaling evolution (figure & table with efficiency)
+* [if unigrid] Combination of strong and weak scaling of the latest code release (figure)
+* Optimal MPI-OpenMP configuration (figures)
+* Memory usage (figure & table)
 
 ## Evolution of execution time with code version
 
@@ -80,6 +74,15 @@ using the full compute node.
 | 8 | 512 | 0.989  | 1.054  | 0.935 (MPI=16 OMP=7) |
 | 64 | 1024 | 0.872  | 0.879  | 0.885 (MPI=16 OMP=7) |
 
+
+## Strong and weak scaling of the latest code release (2026-05)
+
+![Scaling](../results/images/scaling_combo_sedov_total_marenostrum.png)
+
+This figure shows the strong and weak scaling of the latest official release (2026-05).
+Strong scaling can be inferred diagonally, while weak scaling is determined by reading horizontally.
+Dotted lines show ideal scaling.
+For the values of strong and weak scaling efficiency, see the tables in the previous sections.
 
 ## OpenMP configuration guidelines
     

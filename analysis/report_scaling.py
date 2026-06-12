@@ -24,10 +24,10 @@ Benchmark description: [{args.benchmark}](../setups/{args.benchmark}/description
 Cluster info: [{args.cluster}](../HPCclusters/{args.cluster}/cluster_description.md)
 
 On this page:
-* [if unigrid] Strong and weak scaling of the latest code release (figure)
 * Evolution of execution time with code version (figure & table with speedup)
 * Strong scaling evolution (figure & table with efficiency)
 * [if unigrid] Weak scaling evolution (figure & table with efficiency)
+* [if unigrid] Combination of strong and weak scaling of the latest code release (figure)
 * Optimal MPI-OpenMP configuration (figures)
 * Memory usage (figure & table)
 
@@ -42,6 +42,7 @@ def text_section_scaling_combo(release_label,figfile):
 This figure shows the strong and weak scaling of the latest official release ({release_label}).
 Strong scaling can be inferred diagonally, while weak scaling is determined by reading horizontally.
 Dotted lines show ideal scaling.
+For the values of strong and weak scaling efficiency, see the tables in the previous sections.
 
 """
 
@@ -157,18 +158,6 @@ weak_scaling_map = get_weak_scaling_config2(args.benchmark)
 md = text_section_intro(args)
 
 
-#--------- In this part, we deal with the latest official release ------------
-
-data, release_label = load_latest_release_data(args.cluster, args.benchmark, timer)
-
-if len(data)>0 and args.benchmark in ['sedov']:
-
-    # Strong and weak scaling combo figure
-    figfile = f'../results/images/scaling_combo_{args.benchmark}_{timer}_{args.cluster}.png'
-    plot_scaling_combo_inverse(data,resos,weak_scaling_map, outname=figfile)
-    md += text_section_scaling_combo(release_label,figfile)
-
-
 #--------- In this part, we deal with the time evolution between versions ------------
 
 benchmarks, release_labels = load_release_data(args.cluster, args.benchmark, timer)
@@ -188,7 +177,7 @@ if len(benchmarks)>0:
     table_md = table_strong_scaling(benchmarks, release_labels, reso, fmt='markdown')
     md += text_section_strong_scaling(figfile, table_md)
 
-if len(benchmarks)>0 and args.benchmark in ['sedov']:
+if len(benchmarks)>0 and args.benchmark in ['sedov', 'cosmo']:
 
     # Weak scaling evolution
     nodes, resos = get_weak_scaling_config(args.benchmark)
@@ -196,6 +185,18 @@ if len(benchmarks)>0 and args.benchmark in ['sedov']:
     plot_weak_scaling(benchmarks, release_labels, nodes, resos, outname=figfile)
     table_md = table_weak_scaling(benchmarks, release_labels, nodes, resos, fmt='markdown')
     md += text_section_weak_scaling(figfile, table_md)
+
+
+#--------- In this part, we deal with the latest official release ------------
+
+data, release_label = load_latest_release_data(args.cluster, args.benchmark, timer)
+
+if len(data)>0 and args.benchmark in ['sedov', 'cosmo']:
+
+    # Strong and weak scaling combo figure
+    figfile = f'../results/images/scaling_combo_{args.benchmark}_{timer}_{args.cluster}.png'
+    plot_scaling_combo_inverse(data,resos,weak_scaling_map, outname=figfile)
+    md += text_section_scaling_combo(release_label,figfile)
 
 
 #--------- In this part, we deal with the latest OpenMP version ------------
