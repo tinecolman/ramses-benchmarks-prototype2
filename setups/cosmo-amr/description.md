@@ -17,6 +17,12 @@ See [cosmo](../cosmo/description.md)
 In this variation, we enable adaptive mesh refinement. The mesh is refined using a mass refinement criterion, for level 8 to level 12. For this setup, we want to reach a specified final output time instead of running a fixed number of time steps. The target expansion factor is a=0.09 (code units).
 
 The majority of the time is distributed between following modules:
+* `poisson`: calculation of the gravitational potential (%)
+* `particles`:
+* `rho`
+* `refine` 
+* `flag`
+* `load balance`
 
 
 ### Other versions

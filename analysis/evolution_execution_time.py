@@ -42,7 +42,9 @@ def plot_execution_time_multinode(benchmarks, release_labels, reso,
                 labels.append(label)
 
         # plot evolution of time as a function of release
-        axes.errorbar(labels, times, fmt='o',markersize=6,
+        #axes.errorbar(labels, times, fmt='o',markersize=6,
+        #                color=colorVals[nodes], label=str(nodes))
+        axes.plot(labels, times, marker='o',markersize=6,
                         color=colorVals[nodes], label=str(nodes))
 
         # plot a line from the first point to make comparison easier

@@ -15,13 +15,17 @@ Classical benchmarks
    * [sedov](setups/sedov/description.md): on a uniform grid (SPACE use-case 1)
    * [sedov-amr](setups/sedov-amr/description.md): using AMR
 
-Cosmological simulations
+Cosmological volumes
 * COSMO: a dark matter-only simulation
    * [cosmo](setups/cosmo/description.md): using a uniform grid (SPACE use-case 2)
    * [cosmo-amr](setups/cosmo-amr/description.md): using an AMR grid
 
-Isolated galaxy simulations
+Isolated galaxies
 * GALAXY:
+
+* Prestellar cores
+   * COLLAPSE: Boss-Bodenheimer setup of a gravitationally collapsing core forming a binary
+      * [COLLAPSE-mhd](setups/collapse-MHD/description.md): 
 
 ## Computing clusters
 
