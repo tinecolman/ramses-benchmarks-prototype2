@@ -10,8 +10,4 @@ This type of simulation uses a very deep AMR grid with time step subcycling. Due
 
 The deep refinement is also challenging for the hydrodynamics solver and gravity solver. The hydro solver suffers from non-contiguous data access due to the AMR. The gravity solver suffers from imbalanced MPI communication.
 
-![Evo](collapse_evo_stage1.png)
-![Evo](collapse_evo_stage2.png)
-![Evo](collapse_evo_stage3.png)
-![Evo](collapse_evo_stage4.png)
-![Evo](collapse_evo_stage4_zoom.png)
+![Evo](collapse.png)
