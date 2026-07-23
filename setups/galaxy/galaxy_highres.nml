@@ -7,7 +7,7 @@ nrestart=0
 nremap=10
 nsubcycle=1,1,10*2
 ncontrol=1
-nstepmax=50
+nstepmax=20
 /
 
 &OUTPUT_PARAMS
