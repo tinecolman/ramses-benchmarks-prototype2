@@ -1,4 +1,4 @@
-## AGORA Galaxy benchmark
+## Galaxy benchmark
 
 This benchmark models the evolution of an isolated Milky Way-mass galaxy embedded in a dark matter halo. As part of the [AGORA code comparison project](https://sites.google.com/site/santacruzcomparisonproject/), this setup was studied in their [paper II](https://ui.adsabs.harvard.edu/abs/2016ApJ...833..202K/abstract). 
 

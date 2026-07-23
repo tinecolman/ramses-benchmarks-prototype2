@@ -21,11 +21,15 @@ Cosmological volumes
    * [cosmo-amr](setups/cosmo-amr/description.md): using an AMR grid
 
 Isolated galaxies
-* GALAXY:
+* GALAXY: agora galaxy setup
+   * [galaxy](setups/galaxy/description.md): gas, stars and DM with refinement, but no star formation (SPACE use-case 3)
 
-* Prestellar cores
-   * COLLAPSE: Boss-Bodenheimer setup of a gravitationally collapsing core forming a binary
-      * [COLLAPSE-mhd](setups/collapse-MHD/description.md): 
+
+Interstellar mediumm
+
+Prestellar cores
+* COLLAPSE: Boss-Bodenheimer setup of a gravitationally collapsing core forming a binary
+   * [COLLAPSE-mhd](setups/collapse-MHD/description.md): 
 
 ## Computing clusters
 
