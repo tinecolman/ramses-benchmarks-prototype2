@@ -24,6 +24,6 @@ cat <<JOBSCRIPT > "$OUTPUT_FILE"
 #SBATCH --output=slurm_%j.out
 #SBATCH --error=slurm_%j.err
 
-export KMP_AFFINITY=\"granularity=fine,compact,1,0\"
+export KMP_AFFINITY="granularity=fine,compact,1,0"
 
 JOBSCRIPT
