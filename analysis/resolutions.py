@@ -8,6 +8,8 @@ def get_resolutions(test):
         return ['256','512','1024']
     elif test=='cosmo-amr':
         return ['lvl8-12']
+    elif test=='galaxy':
+        return ['mediumres', 'highres']
     else:
         print('ERROR: Add resolutions for benchmark:', test)
         exit(1)
@@ -25,6 +27,9 @@ def get_weak_scaling_config(test):
     elif test=='cosmo-amr':
         nodes = [1]
         resos = get_resolutions(test)
+    elif test=='galaxy':
+        nodes = [1]
+        resos = ['highres']
     else:
         print('ERROR: Add weak scaling configuration for benchmark:', test)
         exit(1)
@@ -47,6 +52,9 @@ def get_weak_scaling_config2(test):
     elif test=='cosmo-amr':
         weak_scaling_map = {
             'lvl8-12': 1}
+    elif test=='galaxy':
+        weak_scaling_map = {
+            'highres': 1}
     else:
         print('ERROR: Add weak scaling configuration for benchmark:', test)
         exit(1)

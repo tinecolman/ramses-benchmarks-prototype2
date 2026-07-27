@@ -65,6 +65,9 @@ def load_latest_openmp_data(cluster, test, timer='total'):
 
     data = add_data([], bench_home+'/'+cluster+'/'+'benchmark_openmp_2026-05-20_e9846974/',
                    test, which=timer)
+
+    data = add_data(data, bench_home+'/'+cluster+'/'+'benchmark_openmp_2026-07-23_2e39ba97/',
+                   test, which=timer)
     
     return data
 
