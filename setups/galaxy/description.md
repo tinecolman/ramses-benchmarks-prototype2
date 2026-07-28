@@ -1,21 +1,37 @@
 ## Galaxy benchmark
 
+Benchmark type: Galaxy, AGORA
+
+### Description of the setup
 This benchmark models the evolution of an isolated Milky Way-mass galaxy embedded in a dark matter halo. As part of the [AGORA code comparison project](https://sites.google.com/site/santacruzcomparisonproject/), this setup was studied in their [paper II](https://ui.adsabs.harvard.edu/abs/2016ApJ...833..202K/abstract). 
 
-
-### Scientific relevance
 Isolated galaxy setups are widely used to study galaxy-scale physics in a controlled environment, without the complications of cosmological accretion or mergers.
 
-### Benchmark focus
-For this benchmark, the simulation is evolved for a limited number of coarse timesteps with simplified thermochemistry and no star formation or feedback, to ensure reproducibility and to focus on numerical performance rather than detailed galaxy evolution physics.. Adaptive mesh refinement is driven by a quasi-Lagrangian mass criterion (and a Jeans-length condition), resulting in strong refinement in the dense galactic disk while the low-density halo remains coarse. As a consequence, most of the computational work is concentrated in a small fraction of the domain, making this setup particularly demanding for **load balancing, domain decomposition, and AMR communication**. 
+### This variation: AMR without star formation or feedback (SPACE)
+For this benchmark, the simulation is evolved for a limited number of coarse timesteps with simplified thermochemistry and no star formation or feedback, to ensure reproducibility and to focus on numerical performance rather than detailed galaxy evolution physics. Adaptive mesh refinement is driven by a quasi-Lagrangian mass criterion (and a Jeans-length condition), resulting in strong refinement in the dense galactic disk while the low-density halo remains coarse. As a consequence, most of the computational work is concentrated in a small fraction of the domain, making this setup particularly demanding for **load balancing, domain decomposition, and AMR communication**. 
 
-### Modules benchmarked
+Modules benchmarked:
 * hydrodynamics
 * self-gravity
 * particles
 * AMR
 * load balancing
 * communication
+
+### Other versions
+
+Currently none.
+
+### Benchmark results
+
+This setup has been benchmarked on the following clusters:
+* [MeluXina](../../results/results_galaxy_meluxina.md)
+
+### OpenMP configuration guidelines
+
+Using OpenMP generally leads to an improvement for the time-to-solution. The optimal number of threads depends on the number of MPI-ranks used (and thus the number of nodes). This is due to the balance between reduced time for the gravity solver versus OpenMP overhead for the particle linked-list book-keeping.
+
+To find the optimimal MPI-OpenMP configuration, the reader is advised to consult the benchmark results on individual clusters.
 
 ### How to generate the initial conditions
 
