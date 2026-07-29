@@ -25,7 +25,7 @@ initfile(1)='../../../ICs/ICs_highres'
 levelmin=9
 levelmax=14
 ngridtot=180000000
-npartmax=26000000
+nparttot=400000000
 boxlen=400.0
 /
 
