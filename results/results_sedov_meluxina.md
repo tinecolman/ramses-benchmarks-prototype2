@@ -95,6 +95,7 @@ The data is for the latest OpenMP version
 ![MPI-OMP](../results/images/mpi_omp_grid_sedov_256_total_meluxina.png)
 ![MPI-OMP](../results/images/mpi_omp_grid_sedov_512_total_meluxina.png)
 ![MPI-OMP](../results/images/mpi_omp_grid_sedov_1024_total_meluxina.png)
+![OMP-speedup](../results/images/omp_speedup_sedov_1024_meluxina.png)
 ## Memory usage
 
 ![Memory usage](../results/images/memory_sedov_1024_meluxina.png)

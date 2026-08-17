@@ -9,6 +9,7 @@ from scaling_strong import plot_strong_scaling, table_strong_scaling
 from scaling_weak import plot_weak_scaling, table_weak_scaling
 from scaling_combo import plot_scaling_combo_inverse
 from openmp_config_grid import plot_mpi_omp_grid
+from openmp_nthreads_execution_time import plot_openmp_speedup_nthreads
 from memory import plot_memory, table_memory
 import argparse
 
@@ -212,6 +213,14 @@ if len(data)>0:
         error = plot_mpi_omp_grid(data, reso, fig_name=figfile_grid_omp, show_overhead=False)
         if not error:
             md += f"""![MPI-OMP]({figfile_grid_omp})
+"""
+
+    # gain with respect to MPI-only on multiple nodes
+    reso = resos[-1]
+    figfile_omp_speedup = f'../results/images/omp_speedup_{args.benchmark}_{reso}_{args.cluster}.png'
+    error = plot_openmp_speedup_nthreads(data, reso, fig_name=figfile_omp_speedup)
+    if not error:
+        md += f"""![OMP-speedup]({figfile_omp_speedup})
 """
 
     # Memory

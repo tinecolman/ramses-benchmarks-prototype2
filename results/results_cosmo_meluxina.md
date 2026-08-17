@@ -94,6 +94,7 @@ The data is for the latest OpenMP version
 
 ![MPI-OMP](../results/images/mpi_omp_grid_cosmo_256_total_meluxina.png)
 ![MPI-OMP](../results/images/mpi_omp_grid_cosmo_1024_total_meluxina.png)
+![OMP-speedup](../results/images/omp_speedup_cosmo_1024_meluxina.png)
 ## Memory usage
 
 ![Memory usage](../results/images/memory_cosmo_1024_meluxina.png)
