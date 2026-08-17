@@ -6,6 +6,26 @@ As of 2025, we continuously assess the performance of RAMSES on various supercom
 * for maintainers, to verify code quality of pull requests.
 
 
+## Browsing benchmark results
+
+| Cluster     | sedov        | sedov-amr    | cosmo        | cosmo-amr    | galaxy       |
+| ----------- | :-----------:| :----------: | :----------: | :----------: | :----------: |
+| Meluxina    | [✓][SED-MEL] | [✓][SAM-MEL] | [✓][COS-MEL] | [✓][CAM-MEL] | [✓][GAL-MEL] |
+| Marenostrum | [✓][SED-MAR] | [✓][SAM-MAR] | [][COS-MAR] | [][CAM-MAR] | [][GAL-MAR] |
+
+[SED-MEL]: results/results_sedov_meluxina.md
+[SAM-MEL]: results/results_sedov-amr_meluxina.md
+[COS-MEL]: results/results_cosmo_meluxina.md
+[CAM-MEL]: results/results_cosmo-amr_meluxina.md
+[GAL-MEL]: results/results_galaxy_meluxina.md
+
+[SED-MAR]: results/results_sedov_marenostrum.md
+[SAM-MAR]: results/results_sedov-amr_marenostrum.md
+[COS-MAR]: results/results_cosmo_marenostrum.md
+[CAM-MAR]: results/results_cosmo-amr_marenostrum.md
+[GAL-MAR]: results/results_galaxy_marenostrum.md
+
+
 ## Benchmark setups
 
 Benchmarks can be divided into several categories, and each benchmark may have several variations.
@@ -31,6 +51,7 @@ Prestellar cores
 * COLLAPSE: Boss-Bodenheimer setup of a gravitationally collapsing core forming a binary
    * [COLLAPSE-mhd](setups/collapse-MHD/description.md): 
 
+
 ## Computing clusters
 
 EuroHPC
@@ -42,27 +63,6 @@ EuroHPC
 * [Vega](HPCclusters/vega/cluster_description.md)
 * [Karolina](HPCclusters/karolina/cluster_description.md)
 * [Deucalion](HPCclusters/deucalion/cluster_description.md)
-
-
-## Browsing benchmark results
-
-
-| Cluster     | sedov        | sedov-amr    | cosmo        | cosmo-amr    | galaxy       |
-| ----------- | :-----------:| :----------: | :----------: | :----------: | :----------: |
-| Meluxina    | [✓][SED-MEL] | [✓][SAM-MEL] | [✓][COS-MEL] | [✓][CAM-MEL] | [✓][GAL-MEL] |
-| Marenostrum | [✓][SED-MAR] | [✓][SAM-MAR] | [✓][COS-MAR] | [✓][CAM-MAR] | [][GAL-MAR] |
-
-[SED-MEL]: results/results_sedov_meluxina.md
-[SAM-MEL]: results/results_sedov-amr_meluxina.md
-[COS-MEL]: results/results_cosmo_meluxina.md
-[CAM-MEL]: results/results_cosmo-amr_meluxina.md
-[GAL-MEL]: results/results_galaxy_meluxina.md
-
-[SED-MAR]: results/results_sedov_marenostrum.md
-[SAM-MAR]: results/results_sedov-amr_marenostrum.md
-[COS-MAR]: results/results_cosmo_marenostrum.md
-[CAM-MAR]: results/results_cosmo-amr_marenostrum.md
-[GAL-MAR]: results/results_galaxy_marenostrum.md
 
 
 ## How to do your own benchmarking
