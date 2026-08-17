@@ -1,10 +1,9 @@
-from visualisation import process_times
+from io_timings import process_times
 
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as colorsx
 from collections import defaultdict
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 def plot_mpi_omp_grid(data, reso, fig_name='mpi_omp_grid', show_overhead=False):
     """

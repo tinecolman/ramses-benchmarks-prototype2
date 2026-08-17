@@ -2,7 +2,7 @@ import numpy as np
 import io
 from matplotlib import pyplot as plt
 import matplotlib.colors as colorsx
-from visualisation import process_times,search_best_config,scan_data
+from io_timings import search_best_config,scan_data
 
 
 ''' Plot evolution of execution time (different commits) for various number of nodes '''

@@ -1,5 +1,4 @@
-from io_timings import add_data
-from visualisation import *
+from io_timings import *
 from visu_openmp import *
 
 def load_data(test, cluster='meluxina', timer='total'):

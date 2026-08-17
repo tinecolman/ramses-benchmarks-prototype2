@@ -1,5 +1,4 @@
-from io_timings import add_data
-from visualisation import *
+from io_timings import *
 
 #def plot_time_vs_nodes(data, mapping_commits, reso, nodes, outname='compare.png'):
 

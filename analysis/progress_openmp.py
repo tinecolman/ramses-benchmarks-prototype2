@@ -1,5 +1,4 @@
-from io_timings import add_data
-from visualisation import *
+from io_timings import *
 
 # OpenMP in virtual boundaries: swap loop order
 def load_data_openmp_virtual(test, cluster='meluxina'):

@@ -1,5 +1,4 @@
-from io_timings import add_data
-from visualisation import *
+from io_timings import *
 
 TAGS = {'9e7b310b':'dev2017-09', # mpi not functioning?
         #'':'dev2018-04',

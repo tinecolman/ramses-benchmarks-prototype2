@@ -27,7 +27,6 @@ python evolution_execution_time.py -f benchmark_dev_2024-10-17_7308417b/ -l benc
 
 
 *  io_timings.py: routines to extract timings from log files and add them to a database
-* visualisation.py: 
 
 ### Gathering the results [TODO]
 

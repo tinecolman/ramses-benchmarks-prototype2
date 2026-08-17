@@ -1,7 +1,7 @@
 import numpy as np
 import io
 from matplotlib import pyplot as plt
-from visualisation import scan_data, get_colors
+from io_timings import scan_data, get_colors
 
 MAX_NNODES = 512
 

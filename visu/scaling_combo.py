@@ -3,7 +3,7 @@ import io
 from matplotlib import pyplot as plt
 import matplotlib.colors as colorsx
 import matplotlib.lines as mlines
-from visualisation import search_best_config
+from io_timings import search_best_config
 
 ''' Plot evolution of execution time (different commits) for various number of nodes '''
 def plot_scaling_combo1(benchmarks, release_labels, resos, input_axes=None, 

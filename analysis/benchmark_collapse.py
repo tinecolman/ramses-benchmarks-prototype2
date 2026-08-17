@@ -1,5 +1,5 @@
 from io_timings import add_data
-from visualisation import *
+from io_timings import *
 from visu_openmp import *
 
 

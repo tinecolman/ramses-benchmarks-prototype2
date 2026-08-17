@@ -2,7 +2,7 @@ import numpy as np
 import io
 from matplotlib import pyplot as plt
 import matplotlib.colors as colorsx
-from visualisation import process_times,search_best_config,scan_data
+from io_timings import process_times
 
 ''' Plot the evolution of execution time with the number of nodes for different
     number of threads, so we see which nthreads is best for different #nodes '''
