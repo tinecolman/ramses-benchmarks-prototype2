@@ -18,6 +18,7 @@ def parse_metadata(logfile):
     with open(logfile, "r") as f:
         start_meta = False
         end_meta = False
+        nlines_header = 0
         for line in f:
             if (not start_meta) and line.startswith("##################"):
                 # we have reached the start of the meta data
@@ -26,7 +27,6 @@ def parse_metadata(logfile):
                 if line.startswith("##################"):
                     # we have reached the end of the meta data
                     end_meta = True
-                    break
                 else:
                     # we are currently reading the meta data
                     line = line.strip()
@@ -35,7 +35,35 @@ def parse_metadata(logfile):
                         meta[key] = value
                     except:
                         continue
+            else:
+                # we are in the header printed by the code itself,
+                # which contains the compilation info
+                line = line.strip()
+                if line.startswith('compile command'):
+                    meta['compile command'] = line.split('=', 1)[1].strip()
+                    meta['compiler'] = get_compiler(meta['compile command'])
+                elif line.startswith('last commit'):
+                    # end of the header printed by the code
+                    break
+                nlines_header += 1
+                if nlines_header > 100:
+                    # no compilation info in this log file
+                    break
     return meta
+
+''' Get the compiler (value of MPIF90) from the compile command in the log file '''
+def get_compiler(compile_command):
+    for part in compile_command.split():
+        if part.startswith('MPIF90='):
+            # strip the escaped whitespace preceding the compilation flags
+            return part[len('MPIF90='):].rstrip('\\')
+    return None
+
+''' Check whether a run should be discarded because of the compiler it was built with '''
+def skip_compiler(meta, exclude_compilers):
+    if not exclude_compilers:
+        return False
+    return meta.get('compiler') in exclude_compilers
 
 
 # -------- Helper functions for folder names -----------
@@ -77,39 +105,47 @@ def get_info_from_subdir_name(subdir, version=2):
 
 # -------- Reading ramses logs --------
 
-''' Use grep to get the timings for a specified timer from all logfiles in a directory '''
-def get_timings_from_log(run_dir, which='total', version="ramses"):
+''' Use grep to get the timings for a specified timer from all logfiles in a directory.
+    Runs built with a compiler listed in exclude_compilers are ignored,
+    the corresponding logfiles are appended to the skipped list. '''
+def get_timings_from_log(run_dir, which='total', version="ramses", exclude_compilers=None, skipped=None):
     meta = {}
-    if which=='total':
-        # take the total time at the bottom
-        #subprocess.call("grep --no-filename 'Total elapsed time' {}/*.log".format(run_dir) +" | awk '{print $4}' > total_time.txt", shell=True)
-        subprocess.call("grep --no-filename 'TOTAL' {}/*.log".format(run_dir) +" | awk '{print $1}' > total_time.txt", shell=True)
-        with open('total_time.txt', 'r') as file:
-            times = [float(line.strip()) for line in file]
-        os.remove('total_time.txt')
-        # get meta data
-        for item in os.listdir(run_dir):
-            if item.endswith('.log'):
-                logfile = os.path.join(run_dir, item)
-                if version=="ramses":
-                    meta = parse_metadata(logfile)
+    times = []
+    logfiles = []
 
-    else:
-        # go through all files, to read the entire timing block
-        times = []
-        for item in os.listdir(run_dir):
-            if item.endswith('.log'):
-                logfile = os.path.join(run_dir, item)
-                if version=="ramses":
-                    timers = read_timers(logfile)
-                    meta = parse_metadata(logfile)
-                elif version=="mini-ramses":
-                    timers = read_timers_miniramses(logfile)
-                # store the data for the requested timer
-                try:
-                    times.append(timers[which])
-                except:
-                    continue
+    # go through all files, since different runs in the same directory
+    # can have been built with a different compiler
+    for item in os.listdir(run_dir):
+        if not item.endswith('.log'):
+            continue
+        logfile = os.path.join(run_dir, item)
+        if version=="ramses":
+            file_meta = parse_metadata(logfile)
+            if skip_compiler(file_meta, exclude_compilers):
+                if skipped is not None:
+                    skipped.append(logfile)
+                continue
+            meta = file_meta
+        logfiles.append(logfile)
+
+        if which=='total':
+            # take the total time at the bottom
+            #subprocess.call("grep --no-filename 'Total elapsed time' {}".format(logfile) +" | awk '{print $4}' > total_time.txt", shell=True)
+            subprocess.call("grep --no-filename 'TOTAL' {}".format(logfile) +" | awk '{print $1}' > total_time.txt", shell=True)
+            with open('total_time.txt', 'r') as file:
+                times += [float(line.strip()) for line in file]
+            os.remove('total_time.txt')
+        else:
+            # read the entire timing block
+            if version=="ramses":
+                timers = read_timers(logfile)
+            elif version=="mini-ramses":
+                timers = read_timers_miniramses(logfile)
+            # store the data for the requested timer
+            try:
+                times.append(timers[which])
+            except:
+                continue
     #if len(times)>0:
     #    # check for outlyers
     #    max_time = max(times)
@@ -120,7 +156,7 @@ def get_timings_from_log(run_dir, which='total', version="ramses"):
 
     # get memory consumption
     if len(times)>0:
-        subprocess.call("grep --no-filename 'Used memory' {}/*.log".format(run_dir) +" | awk '{print $3, $4}' > memory.txt", shell=True)
+        subprocess.call("grep --no-filename 'Used memory' {}".format(' '.join(logfiles)) +" | awk '{print $3, $4}' > memory.txt", shell=True)
         max_mem = 0
         with open('memory.txt', 'r') as file:
             for line in file:
@@ -182,13 +218,16 @@ def read_timers_miniramses(logfile):
 # -------- database IO -----------
 
 ''' Load benchmark results for a specified test '''
-def add_data(data, benchmark_dir, test_name, which='total', omp_nthr=None, version='ramses', cpu_per_node=128, bench_version=2):
+def add_data(data, benchmark_dir, test_name, which='total', omp_nthr=None, version='ramses', cpu_per_node=128, bench_version=2, exclude_compilers=None):
     branch, commit = get_info_from_benchmark_dir_name(benchmark_dir)
 
     data_dir = benchmark_dir+'/'+test_name
 
     if(not os.path.isdir(data_dir)):
         return data
+
+    # logfiles discarded because of the compiler they were built with
+    skipped = []
 
     #TODO version dir name
 
@@ -203,7 +242,9 @@ def add_data(data, benchmark_dir, test_name, which='total', omp_nthr=None, versi
             reso, nodes, mpi, omp = get_info_from_subdir_name(item,bench_version)
             if mpi=="max":
                 mpi = cpu_per_node
-            total_times,metadata = get_timings_from_log(name, which, version)
+            total_times,metadata = get_timings_from_log(name, which, version,
+                                                        exclude_compilers=exclude_compilers,
+                                                        skipped=skipped)
             if len(total_times)>0:
                 metadata["branch"] = branch
                 metadata["commit"] = commit
@@ -219,6 +260,8 @@ def add_data(data, benchmark_dir, test_name, which='total', omp_nthr=None, versi
                     data.append(new_entry)
 
     print('Added data from', benchmark_dir)
+    if len(skipped)>0:
+        print('  skipped', len(skipped), 'run(s) built with compiler', exclude_compilers)
 
     return data
 

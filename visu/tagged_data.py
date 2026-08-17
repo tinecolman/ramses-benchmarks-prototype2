@@ -1,5 +1,8 @@
 from io_timings import add_data
 
+# Compilers producing slower code, of which the data is not loaded
+EXCLUDED_COMPILERS = ['mpiifx']
+
 
 ''' Load data of current and previous releases of RAMSES '''
 def load_release_data(cluster, test, timer='total'):
@@ -18,25 +21,25 @@ def load_release_data(cluster, test, timer='total'):
     #benchmarks.append(data)
 
     data = add_data([], bench_home+'/'+cluster+'/'+'benchmark_dev_2024-10-17_7308417b/',
-                    test, which=timer)
+                    test, which=timer, exclude_compilers=EXCLUDED_COMPILERS)
     if len(data)>0:
         release_labels.append("2024-10")
         benchmarks.append(data)
 
     data = add_data([], bench_home+'/'+cluster+'/'+'benchmark_dev_2025-05-21_2d87442e/',
-                    test, which=timer)
+                    test, which=timer, exclude_compilers=EXCLUDED_COMPILERS)
     if len(data)>0:
         release_labels.append("2025-05")
         benchmarks.append(data)
 
     data = add_data([], bench_home+'/'+cluster+'/'+'benchmark_dev_2025-10-03_456b33e2/',
-                    test, which=timer)
+                    test, which=timer, exclude_compilers=EXCLUDED_COMPILERS)
     if len(data)>0:
         release_labels.append("2025-10")
         benchmarks.append(data)
 
     data = add_data([], bench_home+'/'+cluster+'/'+'benchmark_dev_2026-05-20_7050a55b/',
-                   test, which=timer)
+                   test, which=timer, exclude_compilers=EXCLUDED_COMPILERS)
     if len(data)>0:
         release_labels.append("2026-05")
         benchmarks.append(data)
@@ -54,7 +57,7 @@ def load_latest_release_data(cluster, test, timer='total'):
     bench_home = '/home/tcolman/Dropbox/SPACE/DATA_ARCHIVE_RELEASE'
 
     data = add_data([], bench_home+'/'+cluster+'/'+'benchmark_dev_2026-05-20_7050a55b/',
-                   test, which=timer)
+                   test, which=timer, exclude_compilers=EXCLUDED_COMPILERS)
     label = "2026-05"
 
     return data, label
@@ -64,10 +67,13 @@ def load_latest_openmp_data(cluster, test, timer='total'):
     bench_home = '/home/tcolman/Dropbox/SPACE/DATA_ARCHIVE_OPENMP_DEV'
 
     data = add_data([], bench_home+'/'+cluster+'/'+'benchmark_openmp_2026-05-20_e9846974/',
-                   test, which=timer)
+                   test, which=timer, exclude_compilers=EXCLUDED_COMPILERS)
 
     data = add_data(data, bench_home+'/'+cluster+'/'+'benchmark_openmp_2026-07-23_2e39ba97/',
-                   test, which=timer)
+                   test, which=timer, exclude_compilers=EXCLUDED_COMPILERS)
+
+    #data = add_data(data, bench_home+'/'+cluster+'/'+'benchmark_openmp_particle_list_improvements2_2026-08-17_cd68e57b/',
+    #               test, which=timer)
     
     return data
 
