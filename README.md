@@ -46,16 +46,23 @@ EuroHPC
 
 ## Browsing benchmark results
 
-* Meluxina:
-[sedov](results/results_sedov_meluxina.md), 
-[sedov-amr](results/results_sedov-amr_meluxina.md),
-[cosmo](results/results_cosmo_meluxina.md), 
-[cosmo-amr](results/results_cosmo-amr_meluxina.md),
-[galaxy](results/results_galaxy_meluxina.md)
 
-* MareNostrum:
-[sedov](results/results_sedov_marenostrum.md)
-[sedov-amr](results/results_sedov-amr_marenostrum.md)
+| Cluster     | sedov        | sedov-amr    | cosmo        | cosmo-amr    | galaxy       |
+| ----------- | :-----------:| :----------: | :----------: | :----------: | :----------: |
+| Meluxina    | [✓][SED-MEL] | [✓][SAM-MEL] | [✓][COS-MEL] | [✓][CAM-MEL] | [✓][GAL-MEL] |
+| Marenostrum | [✓][SED-MAR] | [✓][SAM-MAR] | [✓][COS-MAR] | [✓][CAM-MAR] | [][GAL-MAR] |
+
+[SED-MEL]: results/results_sedov_meluxina.md
+[SAM-MEL]: results/results_sedov-amr_meluxina.md
+[COS-MEL]: results/results_cosmo_meluxina.md
+[CAM-MEL]: results/results_cosmo-amr_meluxina.md
+[GAL-MEL]: results/results_galaxy_meluxina.md
+
+[SED-MAR]: results/results_sedov_marenostrum.md
+[SAM-MAR]: results/results_sedov-amr_marenostrum.md
+[COS-MAR]: results/results_cosmo_marenostrum.md
+[CAM-MAR]: results/results_cosmo-amr_marenostrum.md
+[GAL-MAR]: results/results_galaxy_marenostrum.md
 
 
 ## How to do your own benchmarking
