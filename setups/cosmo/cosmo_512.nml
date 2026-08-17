@@ -9,7 +9,6 @@ nstepmax=10
 /
 
 &OUTPUT_PARAMS
-noutput=3
 foutput=0
 /
 

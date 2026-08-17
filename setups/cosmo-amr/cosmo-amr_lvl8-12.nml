@@ -8,7 +8,6 @@ nsubcycle=1,30*2
 /
 
 &OUTPUT_PARAMS
-noutput=1
 foutput=0
 aout=9d-2
 /
