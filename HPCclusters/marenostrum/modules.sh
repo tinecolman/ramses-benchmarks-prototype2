@@ -1,2 +1,2 @@
-module load intel/2025.2
-module load impi/2021.16
+module load intel/2023.2.0
+module load impi/2021.10.0

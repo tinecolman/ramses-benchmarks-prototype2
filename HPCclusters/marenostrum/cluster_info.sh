@@ -3,4 +3,4 @@ CLUSTER_CORES_PER_NODE=112
 
 COMPILER_FLAVOR=INTEL
 RUN_COMMAND=srun
-MPIF90="mpiifx -march=native -qopt-zmm-usage=high"
+MPIF90="mpif90 -march=native -qopt-zmm-usage=high"
