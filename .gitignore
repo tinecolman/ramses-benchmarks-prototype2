@@ -10,3 +10,14 @@ setups/galaxy-agora/ICs_highres
 setups-mini-ramses/cosmo/cosmo_128
 setups-mini-ramses/merger/ICs_lowres
 setups-mini-ramses/galaxy-agora/ICs_lowres
+old_scripts
+analysis
+ICs_lowres
+setups-mini-ramses
+setups/galaxy-isolated/
+setups/cosmo-hydro-fb
+setups/collapse-MHD/lvl14
+setups/collapse-MHD/lvl20
+setups/galaxy-dwarf
+setups/ism-galbox
+setups/cosmo-hydro_lvl008
