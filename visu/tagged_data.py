@@ -66,15 +66,20 @@ def load_latest_openmp_data(cluster, test, timer='total'):
 
     bench_home = '/home/tcolman/Dropbox/SPACE/DATA_ARCHIVE_OPENMP_DEV'
 
-    data = add_data([], bench_home+'/'+cluster+'/'+'benchmark_openmp_2026-05-20_e9846974/',
-                   test, which=timer, exclude_compilers=EXCLUDED_COMPILERS)
+    data = []
 
-    data = add_data(data, bench_home+'/'+cluster+'/'+'benchmark_openmp_2026-07-23_2e39ba97/',
-                   test, which=timer, exclude_compilers=EXCLUDED_COMPILERS)
+    #data = add_data(data, bench_home+'/'+cluster+'/'+'benchmark_openmp_2026-05-20_e9846974/',
+    #               test, which=timer, exclude_compilers=EXCLUDED_COMPILERS)
+
+    #data = add_data(data, bench_home+'/'+cluster+'/'+'benchmark_openmp_2026-07-23_2e39ba97/',
+    #               test, which=timer, exclude_compilers=EXCLUDED_COMPILERS)
 
     #data = add_data(data, bench_home+'/'+cluster+'/'+'benchmark_openmp_particle_list_improvements2_2026-08-17_cd68e57b/',
     #               test, which=timer)
     
+    data = add_data(data, bench_home+'/'+cluster+'/'+'benchmark_openmp_2026-10-14_f5b7b39b/',
+                   test, which=timer, exclude_compilers=EXCLUDED_COMPILERS)
+
     return data
 
 
