@@ -363,6 +363,13 @@ def get_colors(labels,cmap_name):
     return colorVals
 
 
+''' Label log-scale x-axis with the given numbers of nodes, written as integers '''
+def set_node_ticks(axes, nodes):
+    ticks = sorted(set(nodes))
+    axes.set_xticks(ticks, labels=[str(n) for n in ticks])
+    axes.xaxis.set_minor_locator(plt.NullLocator())
+
+
 if __name__ == '__main__':
 
     import argparse

@@ -3,7 +3,7 @@ import io
 from matplotlib import pyplot as plt
 import matplotlib.colors as colorsx
 import matplotlib.lines as mlines
-from io_timings import search_best_config
+from io_timings import search_best_config, set_node_ticks
 
 ''' Plot evolution of execution time (different commits) for various number of nodes '''
 def plot_scaling_combo1(benchmarks, release_labels, resos, input_axes=None, 
@@ -481,6 +481,7 @@ def plot_scaling_combo_inverse(
     }
 
     weak_groups = {}
+    all_nodes = set()
 
     xmin = np.inf
     xmax = 0
@@ -509,6 +510,7 @@ def plot_scaling_combo_inverse(
 
             arr_nodes.append(nodes)
             throughputs.append(throughput)
+            all_nodes.add(nodes)
 
             xmin = min(xmin, nodes)
             xmax = max(xmax, nodes)
@@ -666,6 +668,7 @@ def plot_scaling_combo_inverse(
 
     ax.set_xscale('log')
     ax.set_yscale('log')
+    set_node_ticks(ax, all_nodes)
 
     # ---------- TITLE ----------
     if benchmark:

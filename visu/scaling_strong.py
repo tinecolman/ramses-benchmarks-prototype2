@@ -1,7 +1,7 @@
 import numpy as np
 import io
 from matplotlib import pyplot as plt
-from io_timings import scan_data, get_colors
+from io_timings import scan_data, get_colors, set_node_ticks
 
 MAX_NNODES = 512
 
@@ -24,6 +24,7 @@ def plot_strong_scaling(benchmarks, release_labels, reso, input_axes=None,
     arr_resos_in = [reso]*len(arr_nodes_in) # resolution is the same for each number of nodes
 
     max_nodes = 1
+    all_nodes = set()
     for data,label in zip(benchmarks,release_labels):
 
         times, arr_nodes, _, configs = scan_data(data, arr_nodes_in, arr_resos_in)
@@ -32,6 +33,7 @@ def plot_strong_scaling(benchmarks, release_labels, reso, input_axes=None,
             axes.plot(arr_nodes,np.array(times[0])/np.array(times),
                   color=colorVals[label], marker='o', markersize=4, label=label)
             max_nodes = max(max_nodes,max(arr_nodes))
+            all_nodes.update(arr_nodes)
 
     # add ideal scaling line
     axes.plot([1,max_nodes],[1,max_nodes], c=(0.25,0.85,0.25),ls=':', lw=2, label='ideal')
@@ -43,6 +45,7 @@ def plot_strong_scaling(benchmarks, release_labels, reso, input_axes=None,
         axes.set_ylabel('speedup')
         axes.set_xscale('log')
         axes.set_yscale('log')
+        set_node_ticks(axes, all_nodes)
         axes.legend()
         plt.savefig(outname, bbox_inches='tight', dpi=200)
         plt.close()

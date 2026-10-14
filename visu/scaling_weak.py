@@ -1,7 +1,8 @@
 import numpy as np
 import io
 from matplotlib import pyplot as plt
-from io_timings import scan_data, get_colors
+from matplotlib import ticker
+from io_timings import scan_data, get_colors, set_node_ticks
 
 
 ''' Make a figure of the weak scaling comparing different commits '''
@@ -18,6 +19,7 @@ def plot_weak_scaling(benchmarks, release_labels, arr_nodes_in, resos,
         axes = input_axes
 
     max_nodes = 1
+    all_nodes = set()
     for data,label in zip(benchmarks,release_labels):
         times, avail_nodes, avail_resos, configs = scan_data(data, arr_nodes_in, resos)
 
@@ -25,6 +27,7 @@ def plot_weak_scaling(benchmarks, release_labels, arr_nodes_in, resos,
             axes.plot(avail_nodes, np.array(times[0])/np.array(times),
                   color=colorVals[label], marker='o', markersize=4, label=label)
             max_nodes = max(max_nodes,max(avail_nodes))
+            all_nodes.update(avail_nodes)
 
     # add ideal scaling line
     axes.plot([1,max_nodes],[1,1], c=(0.25,0.85,0.25), ls=':', lw=2, label='ideal')
@@ -35,6 +38,11 @@ def plot_weak_scaling(benchmarks, release_labels, arr_nodes_in, resos,
         axes.set_ylabel('efficiency')
         axes.set_xscale('log')
         axes.set_yscale('log')
+        set_node_ticks(axes, all_nodes)
+        # write efficiency as plain decimals instead of scientific notation
+        plain = ticker.FuncFormatter(lambda y, _: f'{y:g}')
+        axes.yaxis.set_major_formatter(plain)
+        axes.yaxis.set_minor_formatter(plain)
         axes.legend()
         plt.savefig(outname, bbox_inches='tight', dpi=200)
         plt.close()

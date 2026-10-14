@@ -2,6 +2,7 @@ import numpy as np
 import io
 from matplotlib import pyplot as plt
 import matplotlib.colors as colorsx
+from io_timings import set_node_ticks
 
 MAX_NNODES = 512
 MAX_CORES = 128
@@ -67,6 +68,7 @@ def plot_memory(data, reso, input_axes=None, outname='memory.png'):
     cNorm  = colorsx.LogNorm(vmin=1, vmax=max(used_omp)*1.5)
 
     max_nodes = 0
+    all_nodes = set()
     reference = np.inf
     for omp in used_omp:
         used_nodes = results[omp][0]
@@ -80,6 +82,7 @@ def plot_memory(data, reso, input_axes=None, outname='memory.png'):
                 axes.plot(used_nodes, memory_usage, color=cmap(cNorm(omp)),
                           marker='o', markersize=4, label=f'OMP={omp}')
             max_nodes = max(max_nodes, max(used_nodes))
+            all_nodes.update(used_nodes)
             reference = min(reference, memory_usage[0])
 
     # add ideal scaling
@@ -93,6 +96,7 @@ def plot_memory(data, reso, input_axes=None, outname='memory.png'):
         axes.set_ylabel('memory per node [GB]')
         axes.set_xscale('log')
         axes.set_yscale('log')
+        set_node_ticks(axes, all_nodes)
         axes.legend()
         plt.savefig(outname, bbox_inches='tight', dpi=200)
         plt.close()
