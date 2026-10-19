@@ -64,23 +64,20 @@ def load_latest_release_data(cluster, test, timer='total'):
 
 def load_latest_openmp_data(cluster, test, timer='total'):
 
-    bench_home = '/home/tcolman/Dropbox/SPACE/DATA_ARCHIVE_OPENMP_DEV'
-
     data = []
-
-    #data = add_data(data, bench_home+'/'+cluster+'/'+'benchmark_openmp_2026-05-20_e9846974/',
-    #               test, which=timer, exclude_compilers=EXCLUDED_COMPILERS)
-
-    #data = add_data(data, bench_home+'/'+cluster+'/'+'benchmark_openmp_2026-07-23_2e39ba97/',
-    #               test, which=timer, exclude_compilers=EXCLUDED_COMPILERS)
-
-    #data = add_data(data, bench_home+'/'+cluster+'/'+'benchmark_openmp_particle_list_improvements2_2026-08-17_cd68e57b/',
-    #               test, which=timer)
-    
-    data = add_data(data, bench_home+'/'+cluster+'/'+'benchmark_openmp_2026-10-14_f5b7b39b/',
-                   test, which=timer, exclude_compilers=EXCLUDED_COMPILERS)
+    for benchmark_dir in get_latest_openmp_dirs(cluster):
+        data = add_data(data, benchmark_dir, test, which=timer, exclude_compilers=EXCLUDED_COMPILERS)
 
     return data
 
+''' Benchmark directories holding the latest OpenMP version, also used to read
+    the full timer breakdown from the log files '''
+def get_latest_openmp_dirs(cluster):
 
-    
+    bench_home = '/home/tcolman/Dropbox/SPACE/DATA_ARCHIVE_OPENMP_DEV'
+
+    #return [bench_home+'/'+cluster+'/'+'benchmark_openmp_2026-05-20_e9846974/']
+    #return [bench_home+'/'+cluster+'/'+'benchmark_openmp_2026-07-23_2e39ba97/']
+    #return [bench_home+'/'+cluster+'/'+'benchmark_openmp_particle_list_improvements2_2026-08-17_cd68e57b/']
+
+    return [bench_home+'/'+cluster+'/'+'benchmark_openmp_2026-10-14_f5b7b39b/']
