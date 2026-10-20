@@ -12,6 +12,7 @@ cat <<JOBSCRIPT > "$OUTPUT_FILE"
 #SBATCH --cpus-per-task=${CPUS_PER_TASK}
 #SBATCH --threads-per-core=1
 #SBATCH --exclusive
+#SBATCH --hint=nomultithread
 #SBATCH --time=${TEST_TIME}
 #SBATCH --output=slurm_%j.out
 #SBATCH --error=slurm_%j.err
