@@ -114,8 +114,8 @@ ALLOC_TARGET=0.8
 
 # MPI-only runs up to this number of nodes use the large memory nodes of the
 # cluster, if it has them (see job_script_params.sh of the cluster), for the
-# resolutions in LARGEMEM_MPI_RESOS (all resolutions if empty). Both can be
-# overwritten in scaling_config.sh
+# resolutions in LARGEMEM_MPI_RESOS (none if empty). Both can be overwritten
+# in scaling_config.sh
 LARGEMEM_MPI_MAX_NODES=0
 LARGEMEM_MPI_RESOS=""
 
@@ -508,7 +508,7 @@ for MPI_PROC in "${MPI_PROC_LIST[@]}"; do
    # number of nodes up to which MPI-only uses the large memory nodes,
    # for this resolution
    LARGEMEM_MPI_NODES=0
-   if [[ -z "$LARGEMEM_MPI_RESOS" || " $LARGEMEM_MPI_RESOS " == *" $RESO "* ]]; then
+   if [[ " $LARGEMEM_MPI_RESOS " == *" $RESO "* ]]; then
       LARGEMEM_MPI_NODES=$LARGEMEM_MPI_MAX_NODES
    fi
 
