@@ -4,8 +4,12 @@ CLUSTER_PARTITION=standard
 MEM_LINE=""
 
 # The large memory nodes (512GB and 1TB) are in the small partition, and are
-# allocated when requesting more memory than a standard node (256GB) has
-if [[ $NBNODES -eq 1 ]]; then
+# allocated when requesting more memory than a standard node (256GB) has.
+# They are used for the runs on 1 node (except the compilation job), and for
+# MPI-only up to 4 nodes (maximum of the small partition), as MPI-only needs
+# the most memory per node
+MPI_ONLY=$(( CPUS_PER_TASK == 1 && NTASKS_PER_NODE > 1 ))
+if (( (NBNODES == 1 && NTASKS_PER_NODE * CPUS_PER_TASK > 1) || (MPI_ONLY && NBNODES <= 4) )); then
     CLUSTER_PARTITION=small
     MEM_LINE="#SBATCH --mem=480G"
 fi
