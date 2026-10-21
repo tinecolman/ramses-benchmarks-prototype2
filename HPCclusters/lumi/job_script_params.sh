@@ -6,11 +6,11 @@ MEM_LINE=""
 # The large memory nodes (512GB and 1TB) are in the small partition, and are
 # allocated when requesting more memory than a standard node (256GB) has.
 # They are used for the runs on 1 node (except the compilation job), and for
-# MPI-only up to LARGEMEM_MPI_MAX_NODES nodes (set in scaling_config.sh), as
-# MPI-only needs the most memory per node. The small partition allows at most
-# 4 nodes per job.
+# MPI-only up to LARGEMEM_MPI_NODES nodes (set per resolution in
+# launch_benchmark_suite.sh from scaling_config.sh), as MPI-only needs the
+# most memory per node. The small partition allows at most 4 nodes per job.
 MPI_ONLY=$(( CPUS_PER_TASK == 1 && NTASKS_PER_NODE > 1 ))
-LARGEMEM_NODES=$(( ${LARGEMEM_MPI_MAX_NODES:-0} < 4 ? ${LARGEMEM_MPI_MAX_NODES:-0} : 4 ))
+LARGEMEM_NODES=$(( ${LARGEMEM_MPI_NODES:-0} < 4 ? ${LARGEMEM_MPI_NODES:-0} : 4 ))
 if (( (NBNODES == 1 && NTASKS_PER_NODE * CPUS_PER_TASK > 1) || (MPI_ONLY && NBNODES <= LARGEMEM_NODES) )); then
     CLUSTER_PARTITION=small
     MEM_LINE="#SBATCH --mem=480G"

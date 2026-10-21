@@ -5,9 +5,10 @@ CLUSTER_QOS=gp_ehpc
 MEM_NODE=lowmem
 
 # highmem nodes for the runs on 1 node, and for MPI-only up to
-# LARGEMEM_MPI_MAX_NODES nodes (set in scaling_config.sh)
+# LARGEMEM_MPI_NODES nodes (set per resolution in launch_benchmark_suite.sh
+# from scaling_config.sh)
 MPI_ONLY=$(( CPUS_PER_TASK == 1 && NTASKS_PER_NODE > 1 ))
-if (( NBNODES == 1 || (MPI_ONLY && NBNODES <= ${LARGEMEM_MPI_MAX_NODES:-0}) )); then
+if (( NBNODES == 1 || (MPI_ONLY && NBNODES <= ${LARGEMEM_MPI_NODES:-0}) )); then
     MEM_NODE=highmem
 fi
 

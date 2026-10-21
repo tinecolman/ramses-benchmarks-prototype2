@@ -113,9 +113,11 @@ ALLOC_OCCUPANCY=0.7
 ALLOC_TARGET=0.8
 
 # MPI-only runs up to this number of nodes use the large memory nodes of the
-# cluster, if it has them (see job_script_params.sh of the cluster), which can
-# be overwritten in scaling_config.sh
+# cluster, if it has them (see job_script_params.sh of the cluster), for the
+# resolutions in LARGEMEM_MPI_RESOS (all resolutions if empty). Both can be
+# overwritten in scaling_config.sh
 LARGEMEM_MPI_MAX_NODES=0
+LARGEMEM_MPI_RESOS=""
 
 # load benchmark configuration
 source ${RAMSES_BENCHMARK_DIR}/${SETUPS_DIR}/${TEST_NAME}/scaling_config.sh
@@ -502,6 +504,13 @@ for MPI_PROC in "${MPI_PROC_LIST[@]}"; do
 
    OUTPUT_FILE="job.sh"
    LOGFILE_RUN="run_\${DATE}_\${SLURM_JOBID}.log"
+
+   # number of nodes up to which MPI-only uses the large memory nodes,
+   # for this resolution
+   LARGEMEM_MPI_NODES=0
+   if [[ -z "$LARGEMEM_MPI_RESOS" || " $LARGEMEM_MPI_RESOS " == *" $RESO "* ]]; then
+      LARGEMEM_MPI_NODES=$LARGEMEM_MPI_MAX_NODES
+   fi
 
    # job parameters from template
    source ${RAMSES_BENCHMARK_DIR}/HPCclusters/${CLUSTER}/job_script_params.sh
