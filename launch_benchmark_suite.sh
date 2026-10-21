@@ -112,6 +112,11 @@ ALLOC_GHOST_COEF=""
 ALLOC_OCCUPANCY=0.7
 ALLOC_TARGET=0.8
 
+# MPI-only runs up to this number of nodes use the large memory nodes of the
+# cluster, if it has them (see job_script_params.sh of the cluster), which can
+# be overwritten in scaling_config.sh
+LARGEMEM_MPI_MAX_NODES=0
+
 # load benchmark configuration
 source ${RAMSES_BENCHMARK_DIR}/${SETUPS_DIR}/${TEST_NAME}/scaling_config.sh
 
