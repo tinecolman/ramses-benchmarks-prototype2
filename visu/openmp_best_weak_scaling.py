@@ -2,11 +2,15 @@ from matplotlib import pyplot as plt
 import matplotlib.lines as mlines
 from resolutions import get_weak_scaling_config2
 from openmp_best_speedup import (load_openmp_data, best_openmp_times, get_cluster_colors,
-                                 get_linestyle, set_nodes_axis, older_version_handles)
+                                 get_linestyle, set_nodes_axis, older_version_handles, cluster_label)
 from openmp_best_scaling import annotate_efficiency
 
 # benchmarks shown in the figure, one column each. The galaxy benchmark has no weak scaling.
 WEAK_BENCHMARKS = ['sedov', 'cosmo']
+
+
+# resolution of the saved figures, high enough to stay sharp in the paper
+DPI = 400
 
 
 ''' Weak scaling efficiency of the MPI-only runs and of the fastest MPI-OpenMP
@@ -119,7 +123,7 @@ def plot_best_openmp_weak_scaling(clusters, benchmarks=WEAK_BENCHMARKS, timer='t
                                                        for nnodes in ax.get_xticks()], fontsize=8.5)
                 ax.set_xlabel('number of nodes\n(resolution)')
             if icol==0:
-                ax.set_ylabel(cluster, color=colors[cluster], fontweight='bold')
+                ax.set_ylabel(cluster_label(cluster), color=colors[cluster], fontweight='bold')
 
     axes[0,0].set_ylim(0, 119)
     axes[0,0].set_yticks([0, 25, 50, 75, 100])
@@ -132,7 +136,7 @@ def plot_best_openmp_weak_scaling(clusters, benchmarks=WEAK_BENCHMARKS, timer='t
     style_handles = [mlines.Line2D([], [], color='grey', lw=1, alpha=0.6, marker='o', markersize=3,
                                    label='MPI-only'),
                      mlines.Line2D([], [], color='grey', lw=1.5, marker='o', markersize=4,
-                                   label='best OpenMP'),
+                                   label='best hybrid'),
                      mlines.Line2D([], [], color='lightgrey', lw=1.5, label='ideal')]
     # the clusters are given by the rows, so only the line styles are in the legend,
     # on two rows to fit above the two columns
@@ -142,7 +146,7 @@ def plot_best_openmp_weak_scaling(clusters, benchmarks=WEAK_BENCHMARKS, timer='t
 
     print(fig_name)
     # legends outside of the axes are not taken into account by default to fit the figure
-    plt.savefig(fig_name, bbox_inches='tight', bbox_extra_artists=[legend, ylabel], dpi=200)
+    plt.savefig(fig_name, bbox_inches='tight', bbox_extra_artists=[legend, ylabel], dpi=DPI)
     plt.close()
 
     return 0

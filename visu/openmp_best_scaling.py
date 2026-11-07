@@ -2,7 +2,12 @@ from matplotlib import pyplot as plt
 import matplotlib.lines as mlines
 import matplotlib.ticker as mticker
 from openmp_best_speedup import (BENCHMARKS, load_openmp_data, best_openmp_times,
-                                 get_cluster_colors, get_linestyle, set_nodes_axis, add_cluster_legend, older_version_handles)
+                                 get_cluster_colors, get_linestyle, set_nodes_axis, add_cluster_legend, older_version_handles,
+                                 benchmark_label, cluster_label)
+
+
+# resolution of the saved figures, high enough to stay sharp in the paper
+DPI = 400
 
 
 ''' Strong scaling of a curve given as {nodes: time}, with respect to its own
@@ -115,11 +120,11 @@ def plot_best_openmp_strong_scaling(clusters, benchmarks=BENCHMARKS, timer='tota
             ax.grid(axis='y', which='major', alpha=0.3)
             # only label the outer panels
             if irow==0:
-                ax.set_title(f'{bench} {reso}')
+                ax.set_title(benchmark_label(bench, reso))
             if irow<len(clusters)-1:
                 ax.set_xlabel('')
             if icol==0:
-                ax.set_ylabel(cluster, color=colors[cluster], fontweight='bold')
+                ax.set_ylabel(cluster_label(cluster), color=colors[cluster], fontweight='bold')
 
     axes[0,0].set_yscale('log', base=2)
     # label every power of 2
@@ -130,13 +135,13 @@ def plot_best_openmp_strong_scaling(clusters, benchmarks=BENCHMARKS, timer='tota
     axes[0,0].set_ylim(min(all_speedups)/1.4, max(all_speedups)*2.2)
     # common label left of the cluster names
     ylabel = fig.text(axes[0,0].get_position().x0-0.68/fig.get_figwidth(), 0.5,
-                      'speedup w.r.t. smallest #nodes', rotation='vertical',
+                      'strong scaling speedup', rotation='vertical',
                       ha='right', va='center', fontsize='large')
 
     style_handles = [mlines.Line2D([], [], color='grey', lw=1, alpha=0.6, marker='o', markersize=3,
                                    label='MPI-only'),
                      mlines.Line2D([], [], color='grey', lw=1.5, marker='o', markersize=4,
-                                   label='best OpenMP'),
+                                   label='best hybrid'),
                      mlines.Line2D([], [], color='lightgrey', lw=1.5, label='ideal')]
     # the clusters are given by the rows, so only the line styles are in the legend
     legend = add_cluster_legend(fig, [], colors,
@@ -145,7 +150,7 @@ def plot_best_openmp_strong_scaling(clusters, benchmarks=BENCHMARKS, timer='tota
 
     print(fig_name)
     # legends outside of the axes are not taken into account by default to fit the figure
-    plt.savefig(fig_name, bbox_inches='tight', bbox_extra_artists=[legend, ylabel], dpi=200)
+    plt.savefig(fig_name, bbox_inches='tight', bbox_extra_artists=[legend, ylabel], dpi=DPI)
     plt.close()
 
     return 0

@@ -1,3 +1,4 @@
+import numpy as np
 from matplotlib import pyplot as plt
 import matplotlib.lines as mlines
 import matplotlib.ticker as mticker
@@ -14,6 +15,11 @@ MARKERS = ['8', 'h', 's', '^', 'P',
 MARKER_SCALE = {'s': 0.8, 'D': 0.85, '*': 1.35}
 MARKER_SIZE = 7
 
+# height of the figure in inches, and space between the legend of the
+# configurations and the highest point of the first panel, in axes fraction
+FIG_HEIGHT = 3
+LEGEND_MARGIN = 0.03
+
 # colors of the clusters, marenostrum is the darkest while the other two are
 # respectively darker and lighter than the grey of the legend markers
 CLUSTER_COLORS = {'marenostrum': '#1F3A68', 'lumi': '#B5462F', 'meluxina': '#CC9124'}
@@ -25,6 +31,10 @@ OLDER_VERSION_DIRS = {
     ('meluxina', 'cosmo'): 'benchmark_openmp_2026-05-20_e9846974',
 }
 OLDER_VERSION_HOME = '/home/tcolman/Dropbox/SPACE/DATA_ARCHIVE_OPENMP_DEV'
+
+
+# resolution of the saved figures, high enough to stay sharp in the paper
+DPI = 400
 
 
 ''' Benchmark directories holding the latest OpenMP version, or an older one if
@@ -76,9 +86,9 @@ def best_openmp_times(data, reso):
     return mpi_times, omp_times
 
 
-''' Gain in execution time of the fastest MPI-OpenMP configuration with respect
+''' Speedup t_MPI/t_hybrid of the fastest MPI-OpenMP configuration with respect
     to the MPI-only run using the same number of nodes.
-    Returns the lists of numbers of nodes, gains in percent and configurations
+    Returns the lists of numbers of nodes, speedups and configurations
     (mpi_procs_per_node, omp_threads) of the fastest run. '''
 def best_openmp_speedup(data, reso):
 
@@ -91,7 +101,7 @@ def best_openmp_speedup(data, reso):
     for nnodes in sorted(set(mpi_times) & set(omp_times)):
         best_time, best_config = omp_times[nnodes]
         nodes.append(nnodes)
-        speedups.append(100.*(mpi_times[nnodes]-best_time)/mpi_times[nnodes])
+        speedups.append(mpi_times[nnodes]/best_time)
         configs.append(best_config)
 
     return nodes, speedups, configs
@@ -121,6 +131,21 @@ def get_cluster_colors(clusters, cmap_name='tab10'):
     return {cluster: CLUSTER_COLORS.get(cluster, cmap(i)) for i, cluster in enumerate(clusters)}
 
 
+''' Name of a benchmark in the figures. Only the high resolution of galaxy is used,
+    so its resolution is left out '''
+def benchmark_label(bench, reso):
+    return bench if reso=='highres' else f'{bench} {reso}'
+
+
+# names of the clusters in all figures
+CLUSTER_LABELS = {'marenostrum': 'MareNostrum', 'lumi': 'LUMI', 'meluxina': 'MeluXina'}
+
+
+''' Name of a cluster in the figures '''
+def cluster_label(cluster):
+    return CLUSTER_LABELS.get(cluster, cluster)
+
+
 ''' Line style of the curves, dashed when the data comes from an older OpenMP version '''
 def get_linestyle(cluster, bench):
     return '--' if (cluster, bench) in OLDER_VERSION_DIRS else '-'
@@ -134,10 +159,10 @@ def plot_config_markers(ax, nodes, values, configs, markers, color):
 
 
 ''' Figure with one column per benchmark, sharing the y-axis '''
-def create_benchmark_columns(benchmarks):
-    fig, axes = plt.subplots(nrows=1, ncols=len(benchmarks), figsize=(3.6*len(benchmarks),4),
-                             sharey=True, squeeze=False)
-    fig.subplots_adjust(wspace=0.05)
+def create_benchmark_columns(benchmarks, sharey=True, height=4):
+    fig, axes = plt.subplots(nrows=1, ncols=len(benchmarks), figsize=(3.6*len(benchmarks),height),
+                             sharey=sharey, squeeze=False)
+    fig.subplots_adjust(wspace=0.05 if sharey else 0.15)
     return fig, axes[0]
 
 
@@ -163,7 +188,7 @@ def add_cluster_legend(fig, clusters, colors, extra_handles=[], y=1.):
 
     blank = blank_handle
 
-    cluster_handles = [mlines.Line2D([], [], color=colors[cluster], lw=2, label=cluster)
+    cluster_handles = [mlines.Line2D([], [], color=colors[cluster], lw=2, label=cluster_label(cluster))
                        for cluster in clusters]
     if len(cluster_handles)+len(extra_handles)<=5:
         top_handles = cluster_handles + extra_handles
@@ -181,9 +206,9 @@ def add_cluster_legend(fig, clusters, colors, extra_handles=[], y=1.):
                       ncol=top_ncol, frameon=False)
 
 
-''' Legend of the configurations inside the given axes, with one column per
-    number of cores per node '''
-def add_config_legend(ax, core_configs, markers, loc='lower center'):
+''' Legend of the configurations inside the given axes (or figure), with one column
+    per number of cores per node. Other keyword arguments are passed to legend. '''
+def add_config_legend(ax, core_configs, markers, loc='lower center', bbox_to_anchor=None, **kwargs):
 
     blank = blank_handle
 
@@ -198,9 +223,9 @@ def add_config_legend(ax, core_configs, markers, loc='lower center'):
                                                 markeredgewidth=0, label=f'{config[0]}×{config[1]}'))
         config_handles += [blank('')]*(nrows-len(core_configs[cores]))
 
-    legend = ax.legend(handles=config_handles, title='MPI×OMP', loc=loc,
+    legend = ax.legend(handles=config_handles, title='MPI×OMP', loc=loc, bbox_to_anchor=bbox_to_anchor,
                        ncol=len(core_configs), fontsize=8, title_fontsize=8,
-                       handletextpad=0.2, columnspacing=1., labelspacing=0.3)
+                       handletextpad=0.2, columnspacing=1., labelspacing=0.3, **kwargs)
     # left align the column headers, which have no marker
     for handle, text in zip(legend.legend_handles, legend.get_texts()):
         if handle.get_marker() in ['None', None, '']:
@@ -212,16 +237,43 @@ def add_config_legend(ax, core_configs, markers, loc='lower center'):
 ''' Legend entry for the curves of an older OpenMP version, if any is plotted '''
 def older_version_handles(keys):
     if any((cluster, bench) in OLDER_VERSION_DIRS for bench, reso, cluster in keys):
-        return [mlines.Line2D([], [], color='black', lw=2, ls='--', label='older OpenMP version')]
+        return [mlines.Line2D([], [], color='black', lw=2, ls='--', label='older hybrid version')]
     return []
 
 
-''' Plot the gain in execution time of the best MPI-OpenMP configuration with
-    respect to MPI-only, as a function of the number of nodes. There is one
+''' Ticks of a logarithmic speedup axis. The labelled ticks are those matplotlib
+    chooses automatically for the range of the axis, written as plain numbers
+    and with a grid line. Finer unlabelled ticks are added in between, every 0.1
+    between 1 and 2 and every 0.5 above (times powers of ten). '''
+def set_log_speedup_ticks(ax):
+    low, high = ax.get_ylim()
+    auto = np.concatenate([mticker.LogLocator(base=10).tick_values(low, high),
+                           mticker.LogLocator(base=10, subs='auto').tick_values(low, high)])
+    auto = sorted({tick for tick in auto if low<=tick<=high})
+    # let matplotlib decide which of these ticks get a label
+    formatter = mticker.LogFormatter(labelOnlyBase=False, minor_thresholds=(2, 0.5))
+    formatter.set_axis(ax.yaxis)
+    formatter.set_locs(auto)
+    labelled = [tick for tick in auto if formatter(tick)!='']
+
+    decades = 10.**np.arange(np.floor(np.log10(low)), np.ceil(np.log10(high))+1)
+    coefficients = np.concatenate([np.arange(1., 2., 0.1), np.arange(2., 10., 0.5)])
+    fine = sorted({round(decade*c, 10) for decade in decades for c in coefficients
+                   if low<=decade*c<=high} - {round(tick, 10) for tick in labelled})
+
+    ax.yaxis.set_major_locator(mticker.FixedLocator(labelled))
+    ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda value, pos: f'{value:g}'))
+    ax.yaxis.set_minor_locator(mticker.FixedLocator(fine))
+    ax.yaxis.set_minor_formatter(mticker.NullFormatter())
+
+
+''' Plot the speedup of the best MPI-OpenMP configuration with respect to
+    MPI-only, as a function of the number of nodes. There is one
     column per benchmark and one color per cluster, while the marker shape
     shows which MPI×OMP configuration is the fastest. '''
-def plot_best_openmp_speedup(clusters, benchmarks=BENCHMARKS, timer='total',
-                             cmap_name='tab10', fig_name='omp_best_speedup.png'):
+def plot_best_openmp_speedup(clusters, benchmarks=BENCHMARKS, timer='total', sharey=False,
+                             yscale='log', height=FIG_HEIGHT, cmap_name='tab10',
+                             fig_name='omp_best_speedup.png'):
 
     # gather the results of all clusters and benchmarks first, to assign
     # the same marker to a configuration in all panels
@@ -244,12 +296,14 @@ def plot_best_openmp_speedup(clusters, benchmarks=BENCHMARKS, timer='total',
         return 1
     colors = get_cluster_colors(clusters, cmap_name)
 
-    fig, axes = create_benchmark_columns(benchmarks)
+    fig, axes = create_benchmark_columns(benchmarks, sharey=sharey, height=height)
 
-    all_speedups = []
+    # speedups of every panel, to set the range of the vertical axis
+    panel_speedups = []
     for ax, (bench, reso) in zip(axes, benchmarks):
+        panel_speedups.append([])
         # the MPI-only run is the reference
-        ax.axhline(0., color='black', linestyle='--', linewidth=1, zorder=0)
+        ax.axhline(1., color='black', linestyle='--', linewidth=1, zorder=0)
 
         plotted_nodes = set()
         for cluster in clusters:
@@ -259,31 +313,43 @@ def plot_best_openmp_speedup(clusters, benchmarks=BENCHMARKS, timer='total',
 
             ax.plot(nodes, speedups, color=colors[cluster], ls=get_linestyle(cluster, bench))
             plot_config_markers(ax, nodes, speedups, configs, markers, colors[cluster])
-            all_speedups += speedups
+            panel_speedups[-1] += speedups
             plotted_nodes.update(nodes)
 
-        ax.set_title(f'{bench} {reso}')
+        ax.set_title(benchmark_label(bench, reso))
         set_nodes_axis(ax, plotted_nodes)
         ax.grid(axis='y', which='major', alpha=0.3)
 
-    axes[0].set_ylabel('speedup of best OpenMP w.r.t. MPI-only [%]')
-    # linear in between -1% and 1%, logarithmic outside of it
-    axes[0].set_yscale('symlog', linthresh=1, linscale=0.2)
-    axes[0].yaxis.set_minor_locator(mticker.SymmetricalLogLocator(base=10, linthresh=1,
-                                                                  subs=range(2,10)))
-    # write the percentages as 1, 10, 100 instead of 10^0, 10^1, 10^2
-    axes[0].yaxis.set_major_formatter(mticker.FuncFormatter(lambda value, pos: f'{value:g}'))
+    axes[0].set_ylabel('speedup')
     # the automatic limits round up to the nearest tick, which cuts the markers.
-    # Go down to at least -10% to have a label below -1%
-    axes[0].set_ylim(pad_limits(axes[0].yaxis, min(min(all_speedups), -10), max(all_speedups)))
+    # Without a shared axis, every panel gets the range of its own speedups
+    if sharey:
+        panel_speedups = [sum(panel_speedups, [])]
+    for ax, speedups in zip(axes, panel_speedups):
+        ax.set_yscale(yscale)
+        ax.set_ylim(pad_limits(ax.yaxis, min(min(speedups), 0.95), max(speedups)))
+        if yscale=='log':
+            set_log_speedup_ticks(ax)
 
-    # shared legends, clusters above the panels and configurations in the last panel
+    # shared legends, clusters above the panels and configurations in the first panel
     legend1 = add_cluster_legend(fig, clusters, colors, extra_handles=older_version_handles(results))
-    legend2 = add_config_legend(axes[-1], core_configs, markers)
+    legend2 = add_config_legend(axes[0], core_configs, markers, loc='upper left')
+
+    # make room for the legend of the configurations at the top of the first panel,
+    # whose speedups are the smallest: the data stay below the bottom of the legend
+    fig.canvas.draw()
+    legend_bottom = axes[0].transAxes.inverted().transform(
+        legend2.get_window_extent().corners()[0])[1] - LEGEND_MARGIN
+    low, high = axes[0].get_ylim()
+    if yscale=='log':
+        axes[0].set_ylim(low, low*(high/low)**(1/legend_bottom))
+        set_log_speedup_ticks(axes[0])
+    else:
+        axes[0].set_ylim(low, low+(high-low)/legend_bottom)
 
     print(fig_name)
     # legends outside of the axes are not taken into account by default to fit the figure
-    plt.savefig(fig_name, bbox_inches='tight', bbox_extra_artists=[legend1, legend2], dpi=200)
+    plt.savefig(fig_name, bbox_inches='tight', bbox_extra_artists=[legend1, legend2], dpi=DPI)
     plt.close()
 
     return 0
