@@ -75,6 +75,10 @@ ssh-keygen -f '/<user_path>/.ssh/known_hosts' -R 'login.leonardo.cineca.it'
 ```
 and try again.
 
+The above problem is likely to persist, since the different login nodes have different finger prints. To get rid of this, run the following command:
+```
+mkdir -p ~/.ssh; ssh-keygen -f ~/.ssh/known_hosts -R login.leonardo.cineca.it; for address in login01-ext.leonardo.cineca.it login02-ext.leonardo.cineca.it login05-ext.leonardo.cineca.it login07-ext.leonardo.cineca.it; do ssh-keygen -f ~/.ssh/known_hosts -R $address; done; for keyal in rsa ecdsa ed25519 dsa; do for address in login01-ext.leonardo.cineca.it login02-ext.leonardo.cineca.it login05-ext.leonardo.cineca.it login07-ext.leonardo.cineca.it; do ssh-keyscan -t ${keyal} ${address} | sed "s/${address}/login*.leonardo.cineca.it/g" >> ~/.ssh/known_hosts; done; done
+```
 
 ## Usage
 
