@@ -10,15 +10,15 @@
 #   -c: (mandatory) specify on which cluster you are
 #       ./launch_benchmark_suite.sh -c meluxina
 #   -b: (mandatory) select benchmark
-#       ./launch_benchmark_suite.sh -t sedov
+#       ./launch_benchmark_suite.sh -b sedov
 #   -r: (mandatory) set a list of which resolutions to use
-#       ./launch_benchmark_suite.sh -l "256 512 1024"
-#   -n: (mandatory) set a list of which number of nodes to use
+#       ./launch_benchmark_suite.sh -r "256 512 1024"
+#   -n: (mandatory) set a list of number of nodes to use
 #       ./launch_benchmark_suite.sh -n "1 2 4"
 #   -a: specify allocation ID
 #       ./launch_benchmark_suite.sh -a EUR123456
 #   -p: set the number of MPI processes used per node, allows to use partial nodes (0=no MPI)
-#       ./launch_benchmark_suite.sh -r "1 32 64 128"
+#       ./launch_benchmark_suite.sh -p "1 32 64 128"
 #   -m: run with openmp with different number of omp threads
 #       ./launch_benchmark_suite.sh -m "1 2 4 8 16"
 #   -i: how many runs to launch of a benchmark, to take the average time (default 3)
