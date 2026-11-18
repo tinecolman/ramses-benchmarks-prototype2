@@ -5,6 +5,7 @@ ready to be uploaded to the git.
 '''
 
 import os
+import re
 import subprocess
 import json
 import numpy as np
@@ -102,6 +103,13 @@ def get_info_from_subdir_name(subdir, version=2):
         omp = omp[3:]
         mpi = mpi[3:]
     return reso, nodes, mpi, omp
+
+
+''' Number of cores per node in a subdirectory name (reso..._nodes..._cores<N>_...),
+    None if absent '''
+def subdir_cores(subdir):
+    match = re.search(r'_cores(\d+)_', subdir)
+    return int(match[1]) if match else None
 
 # -------- Reading ramses logs --------
 
@@ -228,6 +236,8 @@ def add_data(data, benchmark_dir, test_name, which='total', omp_nthr=None, versi
 
     # logfiles discarded because of the compiler they were built with
     skipped = []
+    # entries of this test, added to data at the end
+    new_entries = []
 
     #TODO version dir name
 
@@ -253,11 +263,20 @@ def add_data(data, benchmark_dir, test_name, which='total', omp_nthr=None, versi
                     "resolution": reso,
                     "mpi_procs_per_node": int(mpi),
                     "omp_threads": int(omp),
+                    "test": test_name,
+                    "cores": subdir_cores(item),
                     "timings": total_times,
                     "metadata": metadata
                 }
                 if (omp_nthr==None) or (int(omp) in omp_nthr):
-                    data.append(new_entry)
+                    new_entries.append(new_entry)
+
+    # the configurations using the full node are those with the largest number of
+    # cores in the subdirectory names of this test
+    full_cores = max((entry['cores'] for entry in new_entries if entry['cores'] is not None), default=None)
+    for entry in new_entries:
+        entry['full_node'] = entry['cores'] is None or entry['cores']==full_cores
+    data += new_entries
 
     print('Added data from', benchmark_dir)
     if len(skipped)>0:
@@ -296,8 +315,68 @@ def update_timings(cluster, benchmark_dir, test_name):
 
 # ---- Recipe for reducing data ----
 
-''' Get average time and error bars from the gathered total times printed in the log files '''
-def process_times(times):
+# Runs slower than OUTLIER_FACTOR times the fastest run of the same configuration
+# are discarded as outliers (slow node, system hiccup), and a warning is printed
+# when fewer than MIN_VALID_RUNS runs remain in a configuration using the full
+# node. On MareNostrum, LUMI and MeluXina the second fastest run is within 3%
+# of the fastest one in 90% of the configurations.
+OUTLIER_FACTOR = 1.15
+MIN_VALID_RUNS = 2
+# warnings already printed, so that they are only shown once
+_printed_warnings = set()
+
+def _warn_once(message):
+    if message not in _printed_warnings:
+        _printed_warnings.add(message)
+        print(message)
+
+
+''' Label of a configuration in the warnings, e.g. "cosmo 1024 nodes8 mpi28 omp4" '''
+def run_label(test, reso, nodes, mpi, omp):
+    return f'{test} {reso} nodes{nodes} mpi{mpi} omp{omp}'.strip()
+
+
+''' Label of a data entry as produced by add_data '''
+def entry_label(entry):
+    return run_label(entry.get('test', ''), entry['resolution'], entry['nodes'],
+                        entry['mpi_procs_per_node'], entry['omp_threads'])
+
+
+''' Label of the configuration with the given number of nodes and of threads among
+    the data entries (as gathered by collect_timings), None if not found '''
+def find_label(entries, nodes, omp):
+    for entry in entries:
+        if entry['nodes']==nodes and entry['omp_threads']==omp:
+            return entry_label(entry)
+    return None
+
+
+''' Whether a data entry uses the full node (see add_data), True if unknown '''
+def is_full_node(entry):
+    return entry.get('full_node', True)
+
+
+''' Indices of the runs to keep: the runs slower than OUTLIER_FACTOR times the
+    fastest one are removed, with a warning. With check_count (for the
+    configurations using the full node), another warning is printed if fewer
+    than MIN_VALID_RUNS runs remain. '''
+def remove_outliers(times, label=None, check_count=True):
+    times = np.asarray(times, dtype=float)
+    if len(times)==0:
+        return np.arange(0)
+    keep = np.flatnonzero(times<=OUTLIER_FACTOR*np.min(times))
+    name = f' for {label}' if label else ''
+    if len(keep)<len(times):
+        _warn_once(f'WARNING: outliers found, {len(times)-len(keep)}/{len(times)} entries removed{name}')
+    if check_count and len(keep)<MIN_VALID_RUNS:
+        _warn_once(f'WARNING: only {len(keep)} valid entries (fewer than {MIN_VALID_RUNS}){name}')
+    return keep
+
+
+''' Get average time and error bars from the gathered total times printed in the
+    log files, after removing the outliers (see remove_outliers) '''
+def process_times(times, label=None, check_count=True):
+    times = np.asarray(times, dtype=float)[remove_outliers(times, label, check_count)]
     if len(times)>0:
         time = np.average(times)
         error_min = time-np.min(times)
@@ -344,7 +423,8 @@ def search_best_config(data,reso,nodes):
         if entry['nodes']!=nodes:
             continue
         # reduce time data
-        time, error_min, error_max = process_times(entry['timings'])
+        time, error_min, error_max = process_times(entry['timings'], entry_label(entry),
+                                                   is_full_node(entry))
 
         # keep fastest config
         if time < best_time:

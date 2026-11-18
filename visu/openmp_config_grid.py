@@ -1,4 +1,4 @@
-from io_timings import process_times
+from io_timings import process_times, entry_label, is_full_node
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -25,7 +25,8 @@ def plot_mpi_omp_grid(data, reso, fig_name='mpi_omp_grid', show_overhead=False):
         if nodes>1: continue
         mpi = nodes*mpi
 
-        avg_time, err_min, err_max = process_times(entry["timings"])
+        avg_time, err_min, err_max = process_times(entry["timings"], entry_label(entry),
+                                                   is_full_node(entry))
         grid[(mpi, omp)].append(avg_time)
 
     # Step 2: get sorted unique values

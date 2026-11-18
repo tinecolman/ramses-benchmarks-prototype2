@@ -2,7 +2,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 import matplotlib.lines as mlines
 import matplotlib.ticker as mticker
-from io_timings import process_times
+from io_timings import process_times, find_label
 from openmp_nthreads_execution_time import select_full_node_runs, collect_timings, pad_limits
 
 # benchmarks shown in the figure, one column each
@@ -76,7 +76,7 @@ def best_openmp_times(data, reso):
     mpi_times = {}
     omp_times = {}
     for (nnodes, nthr), times in timings.items():
-        avg_time, err_min, err_max = process_times(times)
+        avg_time, err_min, err_max = process_times(times, find_label(entries, nnodes, nthr))
         if nthr==0:
             mpi_times[nnodes] = avg_time
         # keep the fastest hybrid run

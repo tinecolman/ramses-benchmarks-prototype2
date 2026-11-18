@@ -4,7 +4,8 @@ import numpy as np
 from matplotlib import pyplot as plt
 import matplotlib.lines as mlines
 from collections import defaultdict
-from io_timings import get_info_from_subdir_name, parse_metadata, skip_compiler, set_node_ticks
+from io_timings import get_info_from_subdir_name, parse_metadata, skip_compiler, set_node_ticks, \
+    remove_outliers, run_label, subdir_cores
 from openmp_nthreads_execution_time import get_cores_per_node
 
 # Timers that are shown together, as {timer: group name}
@@ -73,12 +74,16 @@ def group_timers(timers):
 
 
 ''' Load the timer breakdown of all runs at the given resolution.
-    Repeated runs of the same configuration are averaged. Each entry has the
+    Repeated runs of the same configuration are averaged, after removing the
+    outliers (remove_outliers in io_timings.py). Each entry has the
     same keys as the ones produced by add_data, but 'timers' holds the
     breakdown and 'total' the total time '''
 def load_timer_breakdown(benchmark_dirs, test_name, reso, exclude_compilers=None):
 
-    gathered = defaultdict(lambda: {'timers': defaultdict(list), 'total': []})
+    # (timers, total) of every run of every configuration
+    gathered = defaultdict(list)
+    # number of cores per node of every configuration, from the subdirectory name
+    config_cores = {}
 
     for benchmark_dir in benchmark_dirs:
         data_dir = os.path.join(benchmark_dir, test_name)
@@ -91,6 +96,7 @@ def load_timer_breakdown(benchmark_dirs, test_name, reso, exclude_compilers=None
             run_reso, nodes, mpi, omp = get_info_from_subdir_name(item)
             if run_reso!=reso:
                 continue
+            config_cores[(int(nodes), int(mpi), int(omp))] = subdir_cores(item)
             for logname in os.listdir(run_dir):
                 if not logname.endswith('.log'):
                     continue
@@ -100,20 +106,32 @@ def load_timer_breakdown(benchmark_dirs, test_name, reso, exclude_compilers=None
                 timers, total = read_timer_block(logfile)
                 if total is None:
                     continue
-                config = gathered[(int(nodes), int(mpi), int(omp))]
-                for name, value in timers.items():
-                    config['timers'][name].append(value)
-                config['total'].append(total)
+                gathered[(int(nodes), int(mpi), int(omp))].append((timers, total))
+
+    # the configurations using the full node have the largest number of cores
+    full_cores = max((c for c in config_cores.values() if c is not None), default=None)
 
     entries = []
-    for (nodes, mpi, omp), config in gathered.items():
+    for (nodes, mpi, omp), runs in gathered.items():
+        # the outlier runs (see remove_outliers) are left out of both the total
+        # and the timers. Too few remaining runs are only reported for the
+        # configurations using the full node.
+        cores = config_cores.get((nodes, mpi, omp))
+        keep = remove_outliers([total for timers, total in runs],
+                               run_label(test_name, reso, nodes, mpi, omp),
+                               check_count=cores is None or cores==full_cores)
+        runs = [runs[i] for i in keep]
+        timer_values = defaultdict(list)
+        for timers, total in runs:
+            for name, value in timers.items():
+                timer_values[name].append(value)
         entries.append({
             'nodes': nodes,
             'resolution': reso,
             'mpi_procs_per_node': mpi,
             'omp_threads': omp,
-            'timers': {name: np.mean(values) for name, values in config['timers'].items()},
-            'total': np.mean(config['total'])
+            'timers': {name: np.mean(values) for name, values in timer_values.items()},
+            'total': np.mean([total for timers, total in runs])
         })
     return entries
 

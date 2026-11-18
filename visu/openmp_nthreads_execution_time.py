@@ -2,7 +2,7 @@ from matplotlib import pyplot as plt
 import matplotlib.colors as colorsx
 import matplotlib.ticker as mticker
 from collections import defaultdict
-from io_timings import process_times
+from io_timings import process_times, find_label
 
 ''' Number of cores occupied on a node by a run.
     An MPI-only run has omp_threads=0 and an OpenMP-only run mpi_procs_per_node=0,
@@ -66,7 +66,8 @@ def plot_openmp_speedup_nthreads(data, reso, input_axes=None, cmap_name='turbo',
     ref_times = {}
     for nnodes in arr_nodes:
         if (nnodes, 0) in timings:
-            ref_times[nnodes], err_min, err_max = process_times(timings[(nnodes, 0)])
+            ref_times[nnodes], err_min, err_max = process_times(timings[(nnodes, 0)],
+                                                                find_label(entries, nnodes, 0))
 
     if len(arr_threads)==0 or len(ref_times)==0:
         print('[OMP speedup] Missing OpenMP runs or MPI-only reference for resolution:', reso)
@@ -105,7 +106,8 @@ def plot_openmp_speedup_nthreads(data, reso, input_axes=None, cmap_name='turbo',
             if nnodes not in ref_times:
                 continue
 
-            avg_time, err_min, err_max = process_times(timings[(nnodes, nthr)])
+            avg_time, err_min, err_max = process_times(timings[(nnodes, nthr)],
+                                                       find_label(entries, nnodes, nthr))
             # relative gain in execution time, in percent
             speedups.append(100.*(ref_times[nnodes]-avg_time)/ref_times[nnodes])
             nodes.append(nnodes)

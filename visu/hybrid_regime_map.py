@@ -19,6 +19,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from openmp_module_analysis import STYLE
 from openmp_best_speedup import load_openmp_data, cluster_label
+from io_timings import process_times, entry_label
 from omp_module_gain_heatmap import continuous_speedup_scale, EXCLUDED_THREADS
 
 CORES_PER_NODE = {'marenostrum': 112, 'lumi': 128, 'meluxina': 128}
@@ -41,7 +42,8 @@ def regime_points(cluster, bench):
         if entry['resolution'] not in RESOLUTIONS or len(entry['timings'])==0 or omp in excluded \
            or max(entry['mpi_procs_per_node'], 1)*max(omp, 1)!=cores:
             continue
-        times.setdefault((entry['resolution'], entry['nodes']), {})[omp] = np.mean(entry['timings'])
+        times.setdefault((entry['resolution'], entry['nodes']), {})[omp] = \
+            process_times(entry['timings'], entry_label(entry))[0]
 
     points = []
     for (reso, nodes), config_times in times.items():
