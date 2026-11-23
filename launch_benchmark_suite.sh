@@ -244,6 +244,9 @@ JOB_NAME=$TEST_NAME
 # per-rank ngridmax (npartmax) in the namelists for many MPI ranks (adapt_ngridmax)
 source ${RAMSES_BENCHMARK_DIR}/ngridmax_tools.sh
 
+# job script of a run (write_job_script)
+source ${RAMSES_BENCHMARK_DIR}/job_tools.sh
+
 # Loop over configurations
 for RESO in "${RESO_LIST[@]}"; do
 for NBNODES in "${NODES_LIST[@]}"; do
@@ -298,57 +301,10 @@ for MPI_PROC in "${MPI_PROC_LIST[@]}"; do
    adapt_ngridmax ${RUN_DIR}/${TEST_NAMELIST} $(( NBNODES * (ACT_MPI > 0 ? ACT_MPI : 1) ))
 
    #----------------------------------------------------------------------
-   # Create job script
+   # Create job script (see job_tools.sh)
    #----------------------------------------------------------------------
 
-   OUTPUT_FILE="${RUN_DIR}/job.sh"
-   LOGFILE_RUN="run_\${DATE}_\${SLURM_JOBID}.log"
-
-   # number of nodes up to which MPI-only uses the large memory nodes,
-   # for this resolution
-   LARGEMEM_MPI_NODES=0
-   if [[ " $LARGEMEM_MPI_RESOS " == *" $RESO "* ]]; then
-      LARGEMEM_MPI_NODES=$LARGEMEM_MPI_MAX_NODES
-   fi
-
-   # job parameters from template
-   source ${RAMSES_BENCHMARK_DIR}/HPCclusters/${CLUSTER}/job_script_params.sh
-
-   # export the date, which is used to add the execution timestamp to the name of the log-file of the simulation.
-   echo "export DATE=\$(date +%F_%Hh%M)" >> "$OUTPUT_FILE"
-
-   # OMP export statements (cluster specific)
-   if (( $ACT_OMP != 0 )); then
-      source ${RAMSES_BENCHMARK_DIR}/HPCclusters/${CLUSTER}/openmp.sh
-   fi
-
-   # modules to load
-   cat $MODULES >> $OUTPUT_FILE
-   echo "" >> "$OUTPUT_FILE"
-
-   # add some additional info to the log
-   echo "echo \"#########################################\" > ${LOGFILE_RUN}" >> "$OUTPUT_FILE"
-   echo "echo \"Benchmark: ${TEST_NAME}\" >> ${LOGFILE_RUN}" >> "$OUTPUT_FILE"
-   echo "echo \"Resolution: ${RESO}\" >> ${LOGFILE_RUN}" >> "$OUTPUT_FILE"
-   echo "echo \"Cluster: ${CLUSTER}\" >> ${LOGFILE_RUN}" >> "$OUTPUT_FILE"
-   echo "echo \"Partition: ${CLUSTER_PARTITION}\" >> ${LOGFILE_RUN}" >> "$OUTPUT_FILE"
-   echo "echo \"Nodes: ${NBNODES}\" >> ${LOGFILE_RUN}" >> "$OUTPUT_FILE"
-   echo "echo \"MPI per node: ${ACT_MPI}\" >> ${LOGFILE_RUN}" >> "$OUTPUT_FILE"
-   echo "echo \"OMP threads: ${ACT_OMP}\" >> ${LOGFILE_RUN}" >> "$OUTPUT_FILE"
-   echo "echo \"Job ID: \${SLURM_JOBID}\" >> ${LOGFILE_RUN}" >> "$OUTPUT_FILE"
-   echo "echo \"Node list: \${SLURM_JOB_NODELIST}\" >> ${LOGFILE_RUN}" >> "$OUTPUT_FILE"
-   echo "echo \"Executable: builds/${THIS_EXEC}\" >> ${LOGFILE_RUN}" >> "$OUTPUT_FILE"
-   echo "echo \"#########################################\" >> ${LOGFILE_RUN}" >> "$OUTPUT_FILE"
-   echo "" >> "$OUTPUT_FILE"
-
-   # run command
-   if (( ACT_MPI == 0 )); then
-      COMMANDSTRING="${EXEC_PATH} ${TEST_NAMELIST} >> ${LOGFILE_RUN}"
-   else
-      COMMANDSTRING="$(eval echo ${RUN_COMMAND}) ${EXEC_PATH} ${TEST_NAMELIST} >> ${LOGFILE_RUN}"
-   fi   
-   echo "$COMMANDSTRING" >> "$OUTPUT_FILE"
-   echo "" >> "$OUTPUT_FILE"
+   write_job_script
 
    #----------------------------------------------------------------------
    # launch job multiple times
