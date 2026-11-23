@@ -177,40 +177,10 @@ echo "--------------------------------------------" >> $LOGFILE
 # Select project allocation to run on, if not given by user
 #######################################################################
 
+source ${RAMSES_BENCHMARK_DIR}/slurm_tools.sh
+
 if [[ "$CLUSTER_ALLOCATION_ID" == "none" ]]; then
-
-   # Get the list of project IDs for the current user (works only for slurm)
-   #   - ignoring headers (tail -n +3)
-   #   - taking care of long account names (format=Account%-40)
-   #   - removing duplicates (sort -u)
-   MY_PROJECTS=$(sacctmgr show associations user=$USER format=Account%-40 | tail -n +3 | awk '{print $1}' | sort -u)
-
-   # Count the number of projects
-   NUM_PROJECTS=$(echo "$MY_PROJECTS" | wc -l)
-
-   # Process the number of projects
-   if [[ $NUM_PROJECTS -eq 1 ]]; then
-      CLUSTER_ALLOCATION_ID=$(echo "$MY_PROJECTS" | xargs)
-      log "Automatically selected allocation ID: $CLUSTER_ALLOCATION_ID"
-
-   elif [[ $NUM_PROJECTS -gt 1 ]]; then
-      # if multiple projects are found, present the user with a list to select from
-      echo "Multiple projects found. Please select one:"
-      select CLUSTER_ALLOCATION_ID in $MY_PROJECTS; do
-         if [[ -n "$CLUSTER_ALLOCATION_ID" ]]; then
-            CLUSTER_ALLOCATION_ID=$(echo "$CLUSTER_ALLOCATION_ID" | xargs)
-            log "You selected allocation ID: $CLUSTER_ALLOCATION_ID"
-            break
-         else
-            echo "Invalid selection, please try again."
-         fi
-      done
-
-   else
-      log "No valid allocation ID found."
-      exit 1
-   fi
-
+   select_allocation
 fi
 
 # load cluster info (to be done after allocation is set)
