@@ -23,7 +23,6 @@
 #       ./launch_benchmark_suite.sh -m "1 2 4 8 16"
 #   -i: how many runs to launch of a benchmark, to take the average time (default 3)
 #       ./launch_benchmark_suite.sh -i 5
-#   -d: do not clean up
 #   -v: use mini-ramses
 #
 #######################################################################
@@ -41,14 +40,13 @@ TEST_NAME=""
 RESO_LIST=""
 NODES_LIST=""
 CLUSTER_ALLOCATION_ID="none"
-DELDATA=true
 MPI_PROC_LIST="max"
 OMP_THREAD_LIST="0"
 ITERS=1
 USE_MINIRAMSES=false
 
 # Parse options
-while getopts "c:a:b:n:r:p:m:i:dvs" OPTION; do
+while getopts "c:a:b:n:r:p:m:i:v" OPTION; do
    case $OPTION in
       c) CLUSTER=$OPTARG ;;
       a) CLUSTER_ALLOCATION_ID=$OPTARG ;;
@@ -58,7 +56,6 @@ while getopts "c:a:b:n:r:p:m:i:dvs" OPTION; do
       p) MPI_PROC_LIST=($OPTARG) ;;
       m) OMP_THREAD_LIST=($OPTARG) ;;
       i) ITERS=$OPTARG ;;
-      d) DELDATA=false ;;
       v) USE_MINIRAMSES=true ;;
    esac
 done
@@ -418,14 +415,8 @@ for MPI_PROC in "${MPI_PROC_LIST[@]}"; do
    # export the date, which is used to add the execution timestamp to the name of the log-file of the simulation.
    echo "export DATE=\$(date +%F_%Hh%M)" >> "$OUTPUT_FILE"
 
-   # OMP export statements
-   # TODO: improve
+   # OMP export statements (cluster specific)
    if (( $ACT_OMP != 0 )); then
-      #echo "export OMP_NUM_THREADS=$ACT_OMP" >> "$OUTPUT_FILE"
-      #echo "export OMP_PLACES=cores" >> "$OUTPUT_FILE"
-      #echo "export OMP_PROC_BIND=true" >> "$OUTPUT_FILE"
-      #echo "export OMP_STACKSIZE=2048M" >> "$OUTPUT_FILE"
-      # add openmp-specific directives
       source ${RAMSES_BENCHMARK_DIR}/HPCclusters/${CLUSTER}/openmp.sh
    fi
 
@@ -491,13 +482,3 @@ done
 #source io_job.sh
 #DEPS=$(squeue --noheader --format %i --name ${TEST_NAME} | paste -sd,)
 #sbatch --dependency=${DEPS} $OUTPUT_FILE
-
-#######################################################################
-# Clean up
-#######################################################################
-if ${DELDATA} ; then
-   cd ${RAMSES_BIN_DIR};
-   make clean >> $LOGFILE 2>&1;
-   #rm -f ${EXECNAME}*d;
-fi
-
