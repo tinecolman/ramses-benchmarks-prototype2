@@ -21,8 +21,8 @@
 #       ./launch_benchmark_suite.sh -p "1 32 64 128"
 #   -m: run with openmp with different number of omp threads
 #       ./launch_benchmark_suite.sh -m "1 2 4 8 16"
-#   -i: how many runs to launch of a benchmark, to take the average time (default 3)
-#       ./launch_benchmark_suite.sh -i 5
+#   -i: how many runs to launch of a benchmark, to take the average time (default 1)
+#       ./launch_benchmark_suite.sh -i 3
 #   -v: use mini-ramses
 #
 #######################################################################
@@ -62,19 +62,19 @@ done
 
 # Validate input
 if [[ -z "$CLUSTER" ]]; then
-   echo "ERROR: you must specify a cluster with -c (e.g. meluxina)" | tee log
+   echo "ERROR: you must specify a cluster with -c (e.g. meluxina)" >&2
    exit 1
 fi
 if [[ -z "$TEST_NAME" ]]; then
-   echo "ERROR: you must specify a benchmark with -b (e.g. sedov)" | tee log
+   echo "ERROR: you must specify a benchmark with -b (e.g. sedov)" >&2
    exit 1
 fi
 if [[ -z "$RESO_LIST" ]]; then
-   echo "ERROR: you must specify the resolutions with -r (e.g. \"256 512 1024\")" | tee log
+   echo "ERROR: you must specify the resolutions with -r (e.g. \"256 512 1024\")" >&2
    exit 1
 fi
 if [[ -z "$NODES_LIST" ]]; then
-   echo "ERROR: you must specify the number of nodes to use with -n (e.g. \"1 2 4\")" | tee log
+   echo "ERROR: you must specify the number of nodes to use with -n (e.g. \"1 2 4\")" >&2
    exit 1
 fi
 
@@ -97,7 +97,6 @@ fi
 
 EXECNAME="benchmark_exe_"
 
-DATE=`date +%F`
 LOGFILE="${RAMSES_BENCHMARK_DIR}/benchmark_suite.log";
 
 # MPI-only runs up to this number of nodes use the large memory nodes of the
@@ -116,12 +115,10 @@ source ${RAMSES_BENCHMARK_DIR}/${SETUPS_DIR}/${TEST_NAME}/scaling_config.sh
 
 cd $RAMSES_BIN_DIR
 
-# list branches which contain this commit: git branch --contains 0f908c1
-# check if dev is in the list, if yes-> set branch to dev.
 COMMIT=$(git rev-parse --short HEAD)
 COMMIT_DATE=$(git show --no-patch --format=%cd --date=format:'%Y-%m-%d')
 GIT_URL=$(git config --get remote.origin.url | sed 's/git@github.com:/https:\/\/github.com\//g')
-GIT_URL=${GIT_URL:0:$((${#GIT_URL}-4))}
+GIT_URL=${GIT_URL%.git}
 
 # uncommitted changes to the tracked files, recorded with the builds; taken
 # now, since the source may be edited while the compile job is waiting
@@ -320,19 +317,6 @@ for MPI_PROC in "${MPI_PROC_LIST[@]}"; do
    # leave room for the ghost zones when there are many MPI ranks
    adapt_ngridmax ${TEST_NAMELIST} $(( NBNODES * (ACT_MPI > 0 ? ACT_MPI : 1) ))
 
-   # TO TEST
-   ## adjust the test time if needed
-   #TIME_SCALE=$(awk "BEGIN {print ${CLUSTER_CORES_PER_NODE}/${CORES_PER_NODE}}")
-   ## convert reference time to seconds
-   #IFS=: read HH MM SS <<< "$FULL_NODE_TIME"
-   #BASE_SECONDS=$((10#$HH * 3600 + 10#$MM * 60 + 10#$SS))
-   #SCALED_SECONDS=$(awk "BEGIN {print int(${BASE_SECONDS} * ${TIME_SCALE})}")
-   ## convert back to HH:MM:SS
-   #TEST_TIME=$(printf '%02d:%02d:%02d' \
-   #   $((SCALED_SECONDS/3600)) \
-   #   $(((SCALED_SECONDS%3600)/60)) \
-   #   $((SCALED_SECONDS%60)))
-
    #----------------------------------------------------------------------
    # Create job script
    #----------------------------------------------------------------------
@@ -403,20 +387,3 @@ done
 done
 done
 done
-
-
-#######################################################################
-# launch dependency job to gather results
-#######################################################################
-
-# TODO
-#cd ${RAMSES_BENCHMARK_DIR}
-#OUTPUT_FILE="io_${TEST_NAME}.sh"
-#NBNODES=1
-#NTASKS_PER_NODE=1
-#CPUS_PER_TASK=1
-#JOB_NAME=io-${TEST_NAME}
-#source ${RAMSES_BENCHMARK_DIR}/HPCclusters/${CLUSTER}/job_script_params.sh
-#source io_job.sh
-#DEPS=$(squeue --noheader --format %i --name ${TEST_NAME} | paste -sd,)
-#sbatch --dependency=${DEPS} $OUTPUT_FILE
