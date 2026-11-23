@@ -83,7 +83,8 @@ fi
 # Define paths and load additional info
 #######################################################################
 
-RAMSES_BENCHMARK_DIR=$(pwd)
+# directory of this script, holding the setups and cluster settings
+RAMSES_BENCHMARK_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 CLUSTER_DIR="${RAMSES_BENCHMARK_DIR}/HPCclusters/${CLUSTER}"
 CLUSTER_INFO="${CLUSTER_DIR}/cluster_info.sh"
 MODULES="${CLUSTER_DIR}/modules.sh"
@@ -118,26 +119,34 @@ source ${RAMSES_BENCHMARK_DIR}/${SETUPS_DIR}/${TEST_NAME}/scaling_config.sh
 # Get code repository info
 #######################################################################
 
-cd $RAMSES_BIN_DIR
+if [[ ! -d "$RAMSES_BIN_DIR" ]]; then
+   log "ERROR: RAMSES bin directory ${RAMSES_BIN_DIR} not found"
+   exit 1
+fi
 
-COMMIT=$(git rev-parse --short HEAD)
-COMMIT_DATE=$(git show --no-patch --format=%cd --date=format:'%Y-%m-%d')
-GIT_URL=$(git config --get remote.origin.url | sed 's/git@github.com:/https:\/\/github.com\//g')
+# git in the RAMSES repository, without changing directory
+ramses_git () {
+   git -C "$RAMSES_BIN_DIR" "$@"
+}
+
+COMMIT=$(ramses_git rev-parse --short HEAD)
+COMMIT_DATE=$(ramses_git show --no-patch --format=%cd --date=format:'%Y-%m-%d')
+GIT_URL=$(ramses_git config --get remote.origin.url | sed 's/git@github.com:/https:\/\/github.com\//g')
 GIT_URL=${GIT_URL%.git}
 
 # uncommitted changes to the tracked files, recorded with the builds; taken
 # now, since the source may be edited while the compile job is waiting
-GIT_DIFF=$(git diff HEAD)
+GIT_DIFF=$(ramses_git diff HEAD)
 if [[ -z "$GIT_DIFF" ]]; then
    UNCOMMITTED="no"
 else
    UNCOMMITTED="yes"
 fi
 
-BRANCH=$(git rev-parse --abbrev-ref HEAD)
+BRANCH=$(ramses_git rev-parse --abbrev-ref HEAD)
 # if detached HEAD, check if the commit is from on the dev branch
 if [[ "$BRANCH" == "HEAD" ]]; then
-   if git merge-base --is-ancestor "$COMMIT" origin/dev; then
+   if ramses_git merge-base --is-ancestor "$COMMIT" origin/dev; then
       BRANCH="dev"
    else
       BRANCH="detached"
@@ -260,8 +269,6 @@ prepare_builds
 # Loop over configuration: create job scripts and run simulations
 #######################################################################
 
-cd ${LAUNCH_DIR}
-
 JOB_NAME=$TEST_NAME
 
 # per-rank ngridmax (npartmax) in the namelists for many MPI ranks (adapt_ngridmax)
@@ -309,22 +316,22 @@ for MPI_PROC in "${MPI_PROC_LIST[@]}"; do
    fi
 
    # make subdirectory
-   RUN_DIR=reso${RESO}_nodes${NBNODES}_cores${CORES_PER_NODE}_mpi${ACT_MPI}_omp${ACT_OMP}
+   RUN_DIR=${LAUNCH_DIR}/reso${RESO}_nodes${NBNODES}_cores${CORES_PER_NODE}_mpi${ACT_MPI}_omp${ACT_OMP}
    mkdir -p ${RUN_DIR} || { log "ERROR: cannot create ${RUN_DIR}"; exit 1; }
-   cd ${RUN_DIR}
 
-   # the executable is run from the builds, only the input file is copied
+   # the executable is run from the builds (path relative to the run
+   # directory, where the job runs), only the input file is copied
    EXEC_PATH=../builds/${THIS_EXEC}
    TEST_NAMELIST=${TEST_NAME}_${RESO}.nml
-   cp ${RAMSES_BENCHMARK_DIR}/${SETUPS_DIR}/${TEST_NAME}/${TEST_NAMELIST} .
+   cp ${RAMSES_BENCHMARK_DIR}/${SETUPS_DIR}/${TEST_NAME}/${TEST_NAMELIST} ${RUN_DIR}/
    # leave room for the ghost zones when there are many MPI ranks
-   adapt_ngridmax ${TEST_NAMELIST} $(( NBNODES * (ACT_MPI > 0 ? ACT_MPI : 1) ))
+   adapt_ngridmax ${RUN_DIR}/${TEST_NAMELIST} $(( NBNODES * (ACT_MPI > 0 ? ACT_MPI : 1) ))
 
    #----------------------------------------------------------------------
    # Create job script
    #----------------------------------------------------------------------
 
-   OUTPUT_FILE="job.sh"
+   OUTPUT_FILE="${RUN_DIR}/job.sh"
    LOGFILE_RUN="run_\${DATE}_\${SLURM_JOBID}.log"
 
    # number of nodes up to which MPI-only uses the large memory nodes,
@@ -378,13 +385,11 @@ for MPI_PROC in "${MPI_PROC_LIST[@]}"; do
    #----------------------------------------------------------------------
 
    for iter in $(seq $ITERS); do
-      SUBMIT_MESSAGE=$(sbatch job.sh)
+      SUBMIT_MESSAGE=$(sbatch --chdir=${RUN_DIR} ${OUTPUT_FILE})
       STRINGARRAY=($SUBMIT_MESSAGE)
       JOB_ID=${STRINGARRAY[-1]}
       log "Launched ${TEST_NAME} ${RESO} on ${NBNODES} nodes with ${ACT_MPI} procs/node and ${ACT_OMP} threads/proc [JOB ID ${JOB_ID}]"
    done
-
-   cd ..
 
 done
 done

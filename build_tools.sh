@@ -133,11 +133,9 @@ prepare_builds () {
    # Compile code
    if ${B_SERIAL} || ${B_MPI} || ${B_OPENMP} || ${B_HYBRID}; then
 
-      cd ${RAMSES_BIN_DIR};
-
-      # write a job script to compile the code
-      # name of the job script file
-      OUTPUT_FILE="compile_job.sh"
+      # write a job script to compile the code, in the RAMSES bin directory
+      # where it runs
+      OUTPUT_FILE="${RAMSES_BIN_DIR}/compile_job.sh"
       # set jobscript params
       NBNODES=1
       NTASKS_PER_NODE=1
@@ -176,7 +174,7 @@ prepare_builds () {
       ${B_HYBRID} && add_compile_commands $TEST_EXECUTABLE_HYB "$MAKESTRING_HYB" "hybrid MPI+OpenMP"
 
       # submit the job script and wait until compilation is done
-      compile_job_id=$(sbatch compile_job.sh | awk '{print $4}')
+      compile_job_id=$(sbatch --chdir=${RAMSES_BIN_DIR} ${OUTPUT_FILE} | awk '{print $4}')
       if [[ -z "$compile_job_id" ]]; then
          log "ERROR: submission of the compile job failed (see the sbatch message above)"
          exit 1
