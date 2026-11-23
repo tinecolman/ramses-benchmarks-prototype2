@@ -79,12 +79,12 @@ check_build () {
       return
    fi
    if [[ -f $info && "$(build_field $info make)" != "$makestring" ]]; then
-      echo "ERROR: existing build ${BUILD_DIR}/${exe} was made with another make command:" | tee -a $LOGFILE
-      echo "       $(build_field $info make)" | tee -a $LOGFILE
-      echo "       Delete it to recompile." | tee -a $LOGFILE
+      log "ERROR: existing build ${BUILD_DIR}/${exe} was made with another make command:"
+      log "       $(build_field $info make)"
+      log "       Delete it to recompile."
       exit 1
    fi
-   echo "Reusing existing build ${exe}" | tee -a $LOGFILE
+   log "Reusing existing build ${exe}"
    printf -v $var false
 }
 
@@ -95,8 +95,8 @@ install_build () {
    local makelog=${BUILD_DIR}/${exe}.make.log
    local envfile=${BUILD_DIR}/${exe}.env
    if [[ ! -f ${RAMSES_BIN_DIR}/${exe} ]]; then
-      echo "ERROR: compilation of ${exe} failed, end of the build log:" | tee -a $LOGFILE
-      tail -n 20 $makelog | tee -a $LOGFILE
+      log "ERROR: compilation of ${exe} failed, end of the build log:"
+      log "$(tail -n 20 $makelog)"
       exit 1
    fi
    cp ${RAMSES_BIN_DIR}/${exe} ${BUILD_DIR}/${exe}
@@ -117,7 +117,7 @@ install_build () {
       cat $makelog
    } > ${BUILD_DIR}/${exe}.txt
    rm -f $makelog $envfile
-   echo "Stored build ${BUILD_DIR}/${exe}" | tee -a $LOGFILE
+   log "Stored build ${BUILD_DIR}/${exe}"
 }
 
 
@@ -179,21 +179,21 @@ prepare_builds () {
 
       # submit the job script and wait until compilation is done
       compile_job_id=$(sbatch compile_job.sh | awk '{print $4}')
-      echo "Compile job submitted with Job ID: $compile_job_id"
-      echo "Waiting for compile job to finish..."
+      log "Compile job submitted with Job ID: $compile_job_id"
+      log "Waiting for compile job to finish..."
       # Poll the job status and wait until it's completed
       while true; do
          job_status=$(sacct --jobs=$compile_job_id --noheader --format=JobID,State | awk -v job_id="$compile_job_id" '$1 == job_id {print $2}')
          if [[ "$job_status" == "COMPLETED" ]]; then
-            echo "Compile job completed successfully."
+            log "Compile job completed successfully."
             break
          elif [[ "$job_status" == "FAILED" || "$job_status" == "CANCELLED" ]]; then
-            echo "Compile job failed or was cancelled. Exiting..." | tee -a $LOGFILE
+            log "Compile job failed or was cancelled. Exiting..."
             # end of the build log of the variant that failed (the last one written)
             makelog=$(ls -t ${BUILD_DIR}/*.make.log 2>/dev/null | head -n 1)
             if [[ -n "$makelog" ]]; then
-               echo "End of $makelog:" | tee -a $LOGFILE
-               tail -n 20 $makelog | tee -a $LOGFILE
+               log "End of $makelog:"
+               log "$(tail -n 20 $makelog)"
             fi
             exit 1
          fi

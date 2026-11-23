@@ -99,6 +99,11 @@ EXECNAME="benchmark_exe_"
 
 LOGFILE="${RAMSES_BENCHMARK_DIR}/benchmark_suite.log";
 
+# print a message and add it to the logfile (arguments as for echo)
+log () {
+   echo "$@" | tee -a $LOGFILE
+}
+
 # MPI-only runs up to this number of nodes use the large memory nodes of the
 # cluster, if it has them (see job_script_params.sh of the cluster), for the
 # resolutions in LARGEMEM_MPI_RESOS (none if empty). Both can be overwritten
@@ -149,13 +154,13 @@ echo > $LOGFILE;
 # Welcome message
 COLOR='\033[0;36m' #cyan
 NC='\033[0m' # No Color
-echo -e "${COLOR}################################################${NC}" | tee -a $LOGFILE
-echo -e "${COLOR}#    Launching RAMSES performance benchmark    #${NC}" | tee -a $LOGFILE
-echo -e "${COLOR}################################################${NC}" | tee -a $LOGFILE
-echo "Repository url: ${GIT_URL}" | tee -a $LOGFILE
-echo "Branch: ${BRANCH}" | tee -a $LOGFILE
-echo "Commit hash: ${COMMIT}" | tee -a $LOGFILE
-echo "Benchmark: ${TEST_NAME}" | tee -a $LOGFILE
+log -e "${COLOR}################################################${NC}"
+log -e "${COLOR}#    Launching RAMSES performance benchmark    #${NC}"
+log -e "${COLOR}################################################${NC}"
+log "Repository url: ${GIT_URL}"
+log "Branch: ${BRANCH}"
+log "Commit hash: ${COMMIT}"
+log "Benchmark: ${TEST_NAME}"
 echo "--------------------------------------------" >> $LOGFILE
 
 
@@ -177,7 +182,7 @@ if [[ "$CLUSTER_ALLOCATION_ID" == "none" ]]; then
    # Process the number of projects
    if [[ $NUM_PROJECTS -eq 1 ]]; then
       CLUSTER_ALLOCATION_ID=$(echo "$MY_PROJECTS" | xargs)
-      echo "Automatically selected allocation ID: $CLUSTER_ALLOCATION_ID" | tee -a $LOGFILE
+      log "Automatically selected allocation ID: $CLUSTER_ALLOCATION_ID"
 
    elif [[ $NUM_PROJECTS -gt 1 ]]; then
       # if multiple projects are found, present the user with a list to select from
@@ -185,7 +190,7 @@ if [[ "$CLUSTER_ALLOCATION_ID" == "none" ]]; then
       select CLUSTER_ALLOCATION_ID in $MY_PROJECTS; do
          if [[ -n "$CLUSTER_ALLOCATION_ID" ]]; then
             CLUSTER_ALLOCATION_ID=$(echo "$CLUSTER_ALLOCATION_ID" | xargs)
-            echo "You selected allocation ID: $CLUSTER_ALLOCATION_ID" | tee -a $LOGFILE
+            log "You selected allocation ID: $CLUSTER_ALLOCATION_ID"
             break
          else
             echo "Invalid selection, please try again."
@@ -193,7 +198,7 @@ if [[ "$CLUSTER_ALLOCATION_ID" == "none" ]]; then
       done
 
    else
-      echo "No valid allocation ID found." | tee -a $LOGFILE
+      log "No valid allocation ID found."
       exit 1
    fi
 
@@ -378,7 +383,7 @@ for MPI_PROC in "${MPI_PROC_LIST[@]}"; do
       SUBMIT_MESSAGE=$(sbatch job.sh)
       STRINGARRAY=($SUBMIT_MESSAGE)
       JOB_ID=${STRINGARRAY[-1]}
-      echo "Launched ${TEST_NAME} ${RESO} on ${NBNODES} nodes with ${ACT_MPI} procs/node and ${ACT_OMP} threads/proc [JOB ID ${JOB_ID}]" | tee -a $LOGFILE;
+      log "Launched ${TEST_NAME} ${RESO} on ${NBNODES} nodes with ${ACT_MPI} procs/node and ${ACT_OMP} threads/proc [JOB ID ${JOB_ID}]"
    done
 
    cd ..

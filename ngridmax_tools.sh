@@ -61,7 +61,7 @@ adapt_ngridmax () {
       per_rank=$(per_rank_ngridmax $total $nranks)
       if [[ -n "$per_rank" ]]; then
          sed -i "s/^\(\s*\)${total_name}\s*=.*/\1${per_rank_name}=${per_rank} ! instead of ${total_name}=${total} for ${nranks} MPI ranks/I" $namelist
-         echo "   ${total_name}=${total} replaced by ${per_rank_name}=${per_rank} for ${nranks} MPI ranks" | tee -a $LOGFILE
+         log "   ${total_name}=${total} replaced by ${per_rank_name}=${per_rank} for ${nranks} MPI ranks"
       fi
    done
 }
