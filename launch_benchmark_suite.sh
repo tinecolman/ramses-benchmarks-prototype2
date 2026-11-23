@@ -241,9 +241,7 @@ fi
 LAUNCH_DIR=$BENCHMARK_DIR/${TEST_NAME}
 BUILD_DIR=$LAUNCH_DIR/builds
 
-set -e
-mkdir -p ${BUILD_DIR} >> $LOGFILE 2>&1;
-set +e
+mkdir -p ${BUILD_DIR} || { log "ERROR: cannot create ${BUILD_DIR}"; exit 1; }
 
 
 #######################################################################
@@ -312,7 +310,7 @@ for MPI_PROC in "${MPI_PROC_LIST[@]}"; do
 
    # make subdirectory
    RUN_DIR=reso${RESO}_nodes${NBNODES}_cores${CORES_PER_NODE}_mpi${ACT_MPI}_omp${ACT_OMP}
-   mkdir -p ${RUN_DIR} >> $LOGFILE 2>&1;
+   mkdir -p ${RUN_DIR} || { log "ERROR: cannot create ${RUN_DIR}"; exit 1; }
    cd ${RUN_DIR}
 
    # the executable is run from the builds, only the input file is copied

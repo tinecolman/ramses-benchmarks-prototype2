@@ -175,32 +175,45 @@ prepare_builds () {
       ${B_OPENMP} && add_compile_commands $TEST_EXECUTABLE_OMP "$MAKESTRING_OMP" OpenMP-only
       ${B_HYBRID} && add_compile_commands $TEST_EXECUTABLE_HYB "$MAKESTRING_HYB" "hybrid MPI+OpenMP"
 
-      set -e
-
       # submit the job script and wait until compilation is done
       compile_job_id=$(sbatch compile_job.sh | awk '{print $4}')
+      if [[ -z "$compile_job_id" ]]; then
+         log "ERROR: submission of the compile job failed (see the sbatch message above)"
+         exit 1
+      fi
       log "Compile job submitted with Job ID: $compile_job_id"
       log "Waiting for compile job to finish..."
       # Poll the job status and wait until it's completed
       while true; do
          job_status=$(sacct --jobs=$compile_job_id --noheader --format=JobID,State | awk -v job_id="$compile_job_id" '$1 == job_id {print $2}')
-         if [[ "$job_status" == "COMPLETED" ]]; then
-            log "Compile job completed successfully."
-            break
-         elif [[ "$job_status" == "FAILED" || "$job_status" == "CANCELLED" ]]; then
-            log "Compile job failed or was cancelled. Exiting..."
-            # end of the build log of the variant that failed (the last one written)
-            makelog=$(ls -t ${BUILD_DIR}/*.make.log 2>/dev/null | head -n 1)
-            if [[ -n "$makelog" ]]; then
-               log "End of $makelog:"
-               log "$(tail -n 20 $makelog)"
-            fi
-            exit 1
-         fi
+         case "$job_status" in
+
+            # finished successfully
+            COMPLETED)
+               log "Compile job completed successfully."
+               break
+               ;;
+
+            # not finished yet (empty: not yet known to sacct)
+            "" | PENDING | CONFIGURING | RUNNING | COMPLETING | REQUEUED | SUSPENDED)
+               ;;
+
+            # any other state: FAILED, CANCELLED, TIMEOUT, OUT_OF_MEMORY, NODE_FAIL, ...
+            *)
+               log "Compile job ended with state ${job_status}. Exiting..."
+               # end of the build log of the variant that failed (the last one written)
+               makelog=$(ls -t ${BUILD_DIR}/*.make.log 2>/dev/null | head -n 1)
+               if [[ -n "$makelog" ]]; then
+                  log "End of $makelog:"
+                  log "$(tail -n 20 $makelog)"
+               fi
+               exit 1
+               ;;
+
+         esac
          # Sleep for a while before checking the status again
          sleep 15
       done
-      set +e
 
       ${B_SERIAL} && install_build $TEST_EXECUTABLE_SER "$MAKESTRING_SER"
       ${B_MPI}    && install_build $TEST_EXECUTABLE_MPI "$MAKESTRING_MPI"
