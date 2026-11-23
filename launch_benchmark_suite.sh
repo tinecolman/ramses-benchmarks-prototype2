@@ -25,7 +25,6 @@
 #       ./launch_benchmark_suite.sh -i 5
 #   -d: do not clean up
 #   -v: use mini-ramses
-#   -s: don't recompile the code
 #
 #######################################################################
 
@@ -47,7 +46,6 @@ MPI_PROC_LIST="max"
 OMP_THREAD_LIST="0"
 ITERS=1
 USE_MINIRAMSES=false
-COMPILE=true
 
 # Parse options
 while getopts "c:a:b:n:r:p:m:i:dvs" OPTION; do
@@ -62,7 +60,6 @@ while getopts "c:a:b:n:r:p:m:i:dvs" OPTION; do
       i) ITERS=$OPTARG ;;
       d) DELDATA=false ;;
       v) USE_MINIRAMSES=true ;;
-      s) COMPILE=false ;;
    esac
 done
 
@@ -134,6 +131,15 @@ COMMIT=$(git rev-parse --short HEAD)
 COMMIT_DATE=$(git show --no-patch --format=%cd --date=format:'%Y-%m-%d')
 GIT_URL=$(git config --get remote.origin.url | sed 's/git@github.com:/https:\/\/github.com\//g')
 GIT_URL=${GIT_URL:0:$((${#GIT_URL}-4))}
+
+# uncommitted changes to the tracked files, recorded with the builds; taken
+# now, since the source may be edited while the compile job is waiting
+GIT_DIFF=$(git diff HEAD)
+if [[ -z "$GIT_DIFF" ]]; then
+   UNCOMMITTED="no"
+else
+   UNCOMMITTED="yes"
+fi
 
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
 # if detached HEAD, check if the commit is from on the dev branch
@@ -340,7 +346,94 @@ MAKESTRING_HYB="make EXEC=${EXECNAME}hyb COMPILER=${COMPILER_FLAVOR} MPI=1 OPENM
 TEST_EXECUTABLE_HYB=${EXECNAME}hyb3d
 
 
-if ${COMPILE}; then
+#######################################################################
+# Create benchmark directory on scratch
+#######################################################################
+
+if $USE_MINIRAMSES ; then
+   BENCHMARK_DIR=$CLUSTER_SCRATCH/mini-benchmark_${BRANCH}_${COMMIT_DATE}_${COMMIT};
+else
+   BENCHMARK_DIR=$CLUSTER_SCRATCH/benchmark_${BRANCH}_${COMMIT_DATE}_${COMMIT};
+fi
+
+# subdirectory for the setup, holding the run directories and the builds
+LAUNCH_DIR=$BENCHMARK_DIR/${TEST_NAME}
+BUILD_DIR=$LAUNCH_DIR/builds
+
+set -e
+mkdir -p ${BUILD_DIR} >> $LOGFILE 2>&1;
+set +e
+
+#######################################################################
+# Builds: reuse the existing ones, compile the missing ones
+#######################################################################
+
+# Value of a field ("key: value") in the description of a build
+build_field () {
+   sed -n "s/^$2: //p" $1 | head -n 1
+}
+
+# Decide whether a requested variant must be compiled, by setting the variable
+# named $1 to true or false. An existing build is reused; the script stops if
+# it was made with another make command (e.g. other flags in config.txt).
+check_build () {
+   local var=$1 exe=$2 makestring=$3
+   local info=${BUILD_DIR}/${exe}.txt
+   if [[ ! -f ${BUILD_DIR}/${exe} ]]; then
+      printf -v $var true
+      return
+   fi
+   if [[ -f $info && "$(build_field $info make)" != "$makestring" ]]; then
+      echo "ERROR: existing build ${BUILD_DIR}/${exe} was made with another make command:" | tee -a $LOGFILE
+      echo "       $(build_field $info make)" | tee -a $LOGFILE
+      echo "       Delete it to recompile." | tee -a $LOGFILE
+      exit 1
+   fi
+   echo "Reusing existing build ${exe}" | tee -a $LOGFILE
+   printf -v $var false
+}
+
+# Copy a fresh executable from the RAMSES bin directory to the builds and
+# write its description, from the files left by the compile job
+install_build () {
+   local exe=$1 makestring=$2
+   local makelog=${BUILD_DIR}/${exe}.make.log
+   local envfile=${BUILD_DIR}/${exe}.env
+   if [[ ! -f ${RAMSES_BIN_DIR}/${exe} ]]; then
+      echo "ERROR: compilation of ${exe} failed, end of the build log:" | tee -a $LOGFILE
+      tail -n 20 $makelog | tee -a $LOGFILE
+      exit 1
+   fi
+   cp ${RAMSES_BIN_DIR}/${exe} ${BUILD_DIR}/${exe}
+   {
+      echo "executable: ${exe}"
+      echo "repository: ${GIT_URL}"
+      echo "branch: ${BRANCH}"
+      echo "commit: ${COMMIT}"
+      echo "uncommitted changes: ${UNCOMMITTED}"
+      echo "benchmark: ${TEST_NAME}"
+      echo "cluster: ${CLUSTER}"
+      echo "make: ${makestring}"
+      echo "compile date: $(date '+%F %T')"
+      cat $envfile
+      echo "######## uncommitted changes (git diff HEAD)"
+      if [[ -n "$GIT_DIFF" ]]; then echo "$GIT_DIFF"; else echo "none"; fi
+      echo "######## build log"
+      cat $makelog
+   } > ${BUILD_DIR}/${exe}.txt
+   rm -f $makelog $envfile
+   echo "Stored build ${BUILD_DIR}/${exe}" | tee -a $LOGFILE
+}
+
+# Check which versions need compiling
+B_SERIAL=false; B_MPI=false; B_OPENMP=false; B_HYBRID=false
+${C_SERIAL} && check_build B_SERIAL $TEST_EXECUTABLE_SER "$MAKESTRING_SER"
+${C_MPI}    && check_build B_MPI    $TEST_EXECUTABLE_MPI "$MAKESTRING_MPI"
+${C_OPENMP} && check_build B_OPENMP $TEST_EXECUTABLE_OMP "$MAKESTRING_OMP"
+${C_HYBRID} && check_build B_HYBRID $TEST_EXECUTABLE_HYB "$MAKESTRING_HYB"
+
+# Compile code
+if ${B_SERIAL} || ${B_MPI} || ${B_OPENMP} || ${B_HYBRID}; then
 
    cd ${RAMSES_BIN_DIR};
 
@@ -357,31 +450,32 @@ if ${COMPILE}; then
    source ${CLUSTER_DIR}/job_script_params.sh
    # append modules to load to jobscript
    cat $MODULES >> $OUTPUT_FILE
-   # add compile commands
-   if ${C_SERIAL}; then
+   # directory receiving the build logs, used by the commands below
+   echo "" >> $OUTPUT_FILE
+   echo "BUILD_DIR=${BUILD_DIR}" >> $OUTPUT_FILE
+
+   # add the compile commands of one variant: the make output and the compiler
+   # version and modules are written next to the builds, for install_build
+   add_compile_commands () {
+      local exe=$1 makestring=$2 label=$3
       echo "" >> $OUTPUT_FILE
-      echo "make clean >> $LOGFILE 2>&1;"  >> $OUTPUT_FILE
-      echo "Compiling in serial mode..."  >> $LOGFILE 2>&1;
-      echo "$MAKESTRING_SER >> $LOGFILE 2>&1;"  >> $OUTPUT_FILE
-   fi
-   if ${C_MPI}; then
-      echo "" >> $OUTPUT_FILE
-      echo "make clean >> $LOGFILE 2>&1;"  >> $OUTPUT_FILE
-      echo "Compiling in MPI-only mode..."  >> $LOGFILE 2>&1;
-      echo "$MAKESTRING_MPI >> $LOGFILE 2>&1;"  >> $OUTPUT_FILE
-   fi
-   if ${C_OPENMP}; then
-      echo "" >> $OUTPUT_FILE
-      echo "make clean >> $LOGFILE 2>&1;"  >> $OUTPUT_FILE
-      echo "Compiling in OpenMP-only mode..."  >> $LOGFILE 2>&1;
-      echo "$MAKESTRING_OMP >> $LOGFILE 2>&1;"  >> $OUTPUT_FILE
-   fi
-   if ${C_HYBRID}; then
-      echo "" >> $OUTPUT_FILE
-      echo "make clean >> $LOGFILE 2>&1;"  >> $OUTPUT_FILE
-      echo "Compiling in hybrid MPI+OpenMP mode..."  >> $LOGFILE 2>&1;
-      echo "$MAKESTRING_HYB >> $LOGFILE 2>&1;"  >> $OUTPUT_FILE
-   fi
+      echo "make clean >> $LOGFILE 2>&1;" >> $OUTPUT_FILE
+      echo "rm -f ${exe};" >> $OUTPUT_FILE
+      echo "Compiling in ${label} mode..." >> $LOGFILE 2>&1;
+      # compiler version and loaded modules, for the description of the build
+      local compiler=${MPIF90%% *}   # first word of MPIF90, without the flags
+      local envfile=\${BUILD_DIR}/${exe}.env
+      echo "echo '######## compiler' > $envfile;" >> $OUTPUT_FILE
+      echo "$compiler --version 2>&1 | head -n 3 >> $envfile;" >> $OUTPUT_FILE
+      echo "echo '######## modules' >> $envfile;" >> $OUTPUT_FILE
+      echo "module list >> $envfile 2>&1;" >> $OUTPUT_FILE
+      # compile; stop the job at the first failure, which marks it as failed
+      echo "$makestring > \${BUILD_DIR}/${exe}.make.log 2>&1 || exit 1;" >> $OUTPUT_FILE
+   }
+   ${B_SERIAL} && add_compile_commands $TEST_EXECUTABLE_SER "$MAKESTRING_SER" serial
+   ${B_MPI}    && add_compile_commands $TEST_EXECUTABLE_MPI "$MAKESTRING_MPI" MPI-only
+   ${B_OPENMP} && add_compile_commands $TEST_EXECUTABLE_OMP "$MAKESTRING_OMP" OpenMP-only
+   ${B_HYBRID} && add_compile_commands $TEST_EXECUTABLE_HYB "$MAKESTRING_HYB" "hybrid MPI+OpenMP"
 
    set -e
 
@@ -396,7 +490,13 @@ if ${COMPILE}; then
          echo "Compile job completed successfully."
          break
       elif [[ "$job_status" == "FAILED" || "$job_status" == "CANCELLED" ]]; then
-         echo "Compile job failed or was cancelled. Exiting..."
+         echo "Compile job failed or was cancelled. Exiting..." | tee -a $LOGFILE
+         # end of the build log of the variant that failed (the last one written)
+         makelog=$(ls -t ${BUILD_DIR}/*.make.log 2>/dev/null | head -n 1)
+         if [[ -n "$makelog" ]]; then
+            echo "End of $makelog:" | tee -a $LOGFILE
+            tail -n 20 $makelog | tee -a $LOGFILE
+         fi
          exit 1
       fi
       # Sleep for a while before checking the status again
@@ -404,25 +504,12 @@ if ${COMPILE}; then
    done
    set +e
 
+   ${B_SERIAL} && install_build $TEST_EXECUTABLE_SER "$MAKESTRING_SER"
+   ${B_MPI}    && install_build $TEST_EXECUTABLE_MPI "$MAKESTRING_MPI"
+   ${B_OPENMP} && install_build $TEST_EXECUTABLE_OMP "$MAKESTRING_OMP"
+   ${B_HYBRID} && install_build $TEST_EXECUTABLE_HYB "$MAKESTRING_HYB"
+
 fi
-
-#######################################################################
-# Create benchmark directory on scratch
-#######################################################################
-
-if $USE_MINIRAMSES ; then
-   BENCHMARK_DIR=$CLUSTER_SCRATCH/mini-benchmark_${BRANCH}_${COMMIT_DATE}_${COMMIT};
-else
-   BENCHMARK_DIR=$CLUSTER_SCRATCH/benchmark_${BRANCH}_${COMMIT_DATE}_${COMMIT};
-fi
-
-set -e
-mkdir -p ${BENCHMARK_DIR} >> $LOGFILE 2>&1;
-set +e
-
-# create subdirectory for setup
-LAUNCH_DIR=$BENCHMARK_DIR/${TEST_NAME}
-mkdir -p ${LAUNCH_DIR} >> $LOGFILE 2>&1;
 
 #######################################################################
 # Loop over configuration: create job scripts and run simulations
@@ -478,8 +565,8 @@ for MPI_PROC in "${MPI_PROC_LIST[@]}"; do
    mkdir -p ${RUN_DIR} >> $LOGFILE 2>&1;
    cd ${RUN_DIR}
 
-   # Copy executable and input file
-   cp ${RAMSES_BIN_DIR}/${THIS_EXEC} .
+   # the executable is run from the builds, only the input file is copied
+   EXEC_PATH=../builds/${THIS_EXEC}
    TEST_NAMELIST=${TEST_NAME}_${RESO}.nml
    cp ${RAMSES_BENCHMARK_DIR}/${SETUPS_DIR}/${TEST_NAME}/${TEST_NAMELIST} .
    # leave room for the ghost zones when there are many MPI ranks
@@ -544,14 +631,15 @@ for MPI_PROC in "${MPI_PROC_LIST[@]}"; do
    echo "echo \"OMP threads: ${ACT_OMP}\" >> ${LOGFILE_RUN}" >> "$OUTPUT_FILE"
    echo "echo \"Job ID: \${SLURM_JOBID}\" >> ${LOGFILE_RUN}" >> "$OUTPUT_FILE"
    echo "echo \"Node list: \${SLURM_JOB_NODELIST}\" >> ${LOGFILE_RUN}" >> "$OUTPUT_FILE"
+   echo "echo \"Executable: builds/${THIS_EXEC}\" >> ${LOGFILE_RUN}" >> "$OUTPUT_FILE"
    echo "echo \"#########################################\" >> ${LOGFILE_RUN}" >> "$OUTPUT_FILE"
    echo "" >> "$OUTPUT_FILE"
 
    # run command
    if (( ACT_MPI == 0 )); then
-      COMMANDSTRING="./${THIS_EXEC} ${TEST_NAMELIST} >> ${LOGFILE_RUN}"
+      COMMANDSTRING="${EXEC_PATH} ${TEST_NAMELIST} >> ${LOGFILE_RUN}"
    else
-      COMMANDSTRING="$(eval echo ${RUN_COMMAND}) ./${THIS_EXEC} ${TEST_NAMELIST} >> ${LOGFILE_RUN}"
+      COMMANDSTRING="$(eval echo ${RUN_COMMAND}) ${EXEC_PATH} ${TEST_NAMELIST} >> ${LOGFILE_RUN}"
    fi   
    echo "$COMMANDSTRING" >> "$OUTPUT_FILE"
    echo "" >> "$OUTPUT_FILE"
