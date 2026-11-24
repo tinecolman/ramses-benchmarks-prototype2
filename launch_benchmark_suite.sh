@@ -148,13 +148,6 @@ log () {
    echo "$@" | tee -a $LOGFILE
 }
 
-# MPI-only runs up to this number of nodes use the large memory nodes of the
-# cluster, if it has them (see job_script_params.sh of the cluster), for the
-# resolutions in LARGEMEM_MPI_RESOS (none if empty). Both can be overwritten
-# in scaling_config.sh
-LARGEMEM_MPI_MAX_NODES=0
-LARGEMEM_MPI_RESOS=""
-
 # load benchmark configuration
 source ${SETUP_DIR}/scaling_config.sh
 
@@ -321,6 +314,9 @@ echo "$(date '+%F %T')  benchmarks=${BENCHMARKS_COMMIT}  ramses=${RAMSES_COMMIT}
 # per-rank ngridmax (npartmax) in the namelists for many MPI ranks (adapt_ngridmax)
 source ${RAMSES_BENCHMARK_DIR}/ngridmax_tools.sh
 
+# memory needed per node and node type (estimate_memory, choose_node_type)
+source ${RAMSES_BENCHMARK_DIR}/memory_tools.sh
+
 # job script of a run (write_job_script)
 source ${RAMSES_BENCHMARK_DIR}/job_tools.sh
 
@@ -376,6 +372,17 @@ for MPI_PROC in "${MPI_PROC_LIST[@]}"; do
    cp ${RAMSES_BENCHMARK_DIR}/${SETUPS_DIR}/${TEST_NAME}/${TEST_NAMELIST} ${RUN_DIR}/
    # leave room for the ghost zones when there are many MPI ranks
    adapt_ngridmax ${RUN_DIR}/${TEST_NAMELIST} $(( NBNODES * (ACT_MPI > 0 ? ACT_MPI : 1) ))
+
+   # memory needed per node, and the smallest node type of the cluster with
+   # enough memory; skip the configuration if no node type fits
+   estimate_memory ${RUN_DIR}/${TEST_NAMELIST} ${NUMPROCS} ${NTASKS_PER_NODE}
+   if ! choose_node_type; then
+      log "WARNING: skipped ${TEST_NAME} ${RESO} on ${NBNODES} nodes with ${ACT_MPI} procs/node and ${ACT_OMP} threads/proc: needs about ${MEM_ESTIMATE_GB} GB per node, more than the nodes of ${CLUSTER} have (for ${NBNODES} nodes)"
+      continue
+   fi
+   if [[ -n "$NODE_TYPE" && "$NODE_TYPE" != "${NODE_TYPES[0]}" ]]; then
+      log "   ${NODE_TYPE} nodes: about ${MEM_ESTIMATE_GB} GB per node needed"
+   fi
 
    #----------------------------------------------------------------------
    # Create job script (see job_tools.sh)

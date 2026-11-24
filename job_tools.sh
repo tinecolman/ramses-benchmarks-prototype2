@@ -16,13 +16,6 @@ write_job_script () {
    OUTPUT_FILE="${RUN_DIR}/job.sh"
    LOGFILE_RUN="run_\${DATE}_\${SLURM_JOBID}.log"
 
-   # number of nodes up to which MPI-only uses the large memory nodes,
-   # for this resolution
-   LARGEMEM_MPI_NODES=0
-   if [[ " $LARGEMEM_MPI_RESOS " == *" $RESO "* ]]; then
-      LARGEMEM_MPI_NODES=$LARGEMEM_MPI_MAX_NODES
-   fi
-
    # job parameters from template
    source ${RAMSES_BENCHMARK_DIR}/HPCclusters/${CLUSTER}/job_script_params.sh
 
@@ -53,6 +46,8 @@ write_job_script () {
    echo "Job ID: \${SLURM_JOBID}"
    echo "Node list: \${SLURM_JOB_NODELIST}"
    echo "Excluded nodes: ${EXCLUDE_NODES:-none}"
+   echo "Node type: ${NODE_TYPE:-default}"
+   echo "Memory estimate: ${MEM_ESTIMATE_GB:-unknown} GB per node"
    echo "Executable: builds/${THIS_EXEC}"
    echo "RAMSES version: ${RAMSES_VERSION}"
    echo "Benchmark scripts: ${BENCHMARKS_COMMIT}"

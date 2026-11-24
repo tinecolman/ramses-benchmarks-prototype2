@@ -1,5 +1,8 @@
 TEST_TIME=00:20:00
-# MPI-only highres does not fit in the memory of a standard node up to 4 nodes,
-# see LARGEMEM_MPI_MAX_NODES in launch_benchmark_suite.sh
-LARGEMEM_MPI_MAX_NODES=4
-LARGEMEM_MPI_RESOS="highres"
+# memory estimate per MPI rank (see memory_tools.sh), fitted on the LUMI runs
+# of the openmp branch of 2026-10/11: per allocated grid (kB), per allocated
+# particle (bytes), fixed per rank (GB), per rank in the run (kB)
+MEM_PER_GRID_KB=1.31
+MEM_PER_PARTICLE_B=74
+MEM_PER_RANK_GB=0.27
+MEM_PER_RANK_IN_RUN_KB=25

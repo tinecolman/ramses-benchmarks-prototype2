@@ -141,6 +141,7 @@ prepare_builds () {
       CPUS_PER_TASK=1
       JOB_NAME=compile
       TEST_TIME="00:15:00"
+      NODE_TYPE=${NODE_TYPES[0]:-}
       # write SBATCH parameters block for current cluster
       source ${CLUSTER_DIR}/job_script_params.sh
       # append modules to load to jobscript
