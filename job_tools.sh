@@ -54,6 +54,7 @@ write_job_script () {
    echo "Node list: \${SLURM_JOB_NODELIST}"
    echo "Excluded nodes: ${EXCLUDE_NODES:-none}"
    echo "Executable: builds/${THIS_EXEC}"
+   echo "RAMSES version: ${RAMSES_VERSION}"
    echo "Benchmark scripts: ${BENCHMARKS_COMMIT}"
    echo "Setup hash: ${SETUP_HASH}"
    echo "#########################################"

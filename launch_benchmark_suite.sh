@@ -175,6 +175,11 @@ ramses_git () {
 
 COMMIT=$(ramses_git rev-parse --short HEAD)
 COMMIT_DATE=$(ramses_git show --no-patch --format=%cd --date=format:'%Y-%m-%d')
+# version from the tags of the RAMSES repository: the tag of the commit (e.g.
+# SPACE-v1.0), or the last tag before it with the number of commits since and
+# the commit (SPACE-v1.0-12-gab12cd3), or only the commit if there is no tag;
+# "+" for uncommitted changes
+RAMSES_VERSION=$(ramses_git describe --tags --always --dirty=+)
 GIT_URL=$(ramses_git config --get remote.origin.url | sed 's/git@github.com:/https:\/\/github.com\//g')
 GIT_URL=${GIT_URL%.git}
 
@@ -270,10 +275,12 @@ resolve_layout () {
 # Create benchmark directory on scratch
 #######################################################################
 
+# benchmark_<branch>_<date>_<commit>_<cluster>: the same name on the cluster
+# and in the archive, where the folders of all clusters are side by side
 if $USE_MINIRAMSES ; then
-   BENCHMARK_DIR=$CLUSTER_SCRATCH/mini-benchmark_${BRANCH}_${COMMIT_DATE}_${COMMIT};
+   BENCHMARK_DIR=$CLUSTER_SCRATCH/mini-benchmark_${BRANCH}_${COMMIT_DATE}_${COMMIT}_${CLUSTER};
 else
-   BENCHMARK_DIR=$CLUSTER_SCRATCH/benchmark_${BRANCH}_${COMMIT_DATE}_${COMMIT};
+   BENCHMARK_DIR=$CLUSTER_SCRATCH/benchmark_${BRANCH}_${COMMIT_DATE}_${COMMIT}_${CLUSTER};
 fi
 
 # subdirectory for the setup, holding the run directories and the builds
@@ -305,11 +312,11 @@ JOB_NAME=$TEST_NAME
 # scripts and of RAMSES ("+": uncommitted changes), and the command line
 LAUNCHES_FILE=${LAUNCH_DIR}/launches.txt
 if [[ ! -f $LAUNCHES_FILE ]]; then
-   echo "# date time  commits of the benchmark scripts and of RAMSES (+: uncommitted changes)  command" > $LAUNCHES_FILE
+   echo "# date time  commits of the benchmark scripts and of RAMSES (+: uncommitted changes)  RAMSES version (git describe)  command" > $LAUNCHES_FILE
 fi
 RAMSES_COMMIT=${COMMIT}
 [[ "$UNCOMMITTED" == "yes" ]] && RAMSES_COMMIT+="+"
-echo "$(date '+%F %T')  benchmarks=${BENCHMARKS_COMMIT}  ramses=${RAMSES_COMMIT}  ${COMMAND_LINE}" >> $LAUNCHES_FILE
+echo "$(date '+%F %T')  benchmarks=${BENCHMARKS_COMMIT}  ramses=${RAMSES_COMMIT}  version=${RAMSES_VERSION}  ${COMMAND_LINE}" >> $LAUNCHES_FILE
 
 # per-rank ngridmax (npartmax) in the namelists for many MPI ranks (adapt_ngridmax)
 source ${RAMSES_BENCHMARK_DIR}/ngridmax_tools.sh

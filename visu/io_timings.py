@@ -69,19 +69,23 @@ def skip_compiler(meta, exclude_compilers):
 
 # -------- Helper functions for folder names -----------
 
-''' Dissect name of the base benchmark directory:
-    benchmark_<branch>_<commit> '''
+''' Dissect name of the base benchmark directory, one of
+       benchmark_<branch>_<date>_<commit>_<cluster>   (since 2026-11)
+       benchmark_<branch>_<date>_<commit>
+       benchmark_<branch>_<commit>                    (oldest)
+    The branch can contain underscores, so the name is read from the end,
+    using the date to recognise the form. The version argument is not used
+    anymore (the form is recognised from the name). '''
 def get_info_from_benchmark_dir_name(benchmark_dir, version=2):
-    parts = benchmark_dir.split('/')
-    # if dir name ends with /, remove last item which is empty
-    if parts[-1]=='':
-        parts.pop()
-    commit = parts[-1][-8:]     # last 8 characters
-    if version==2:
-        date = parts[-1][-19:-9]
-        branch = parts[-1][10:-20]
+    name = os.path.basename(os.path.normpath(benchmark_dir))
+    fields = name.split('_')
+    is_date = lambda s: re.fullmatch(r'\d{4}-\d{2}-\d{2}', s) is not None
+    if len(fields)>=5 and is_date(fields[-3]):
+        commit, branch = fields[-2], '_'.join(fields[1:-3])
+    elif len(fields)>=4 and is_date(fields[-2]):
+        commit, branch = fields[-1], '_'.join(fields[1:-2])
     else:
-        branch = parts[-1][10:-9]
+        commit, branch = fields[-1], '_'.join(fields[1:-1])
     return branch, commit
 
 ''' Dissect name of the benchmark configuration subdirectory:
