@@ -112,6 +112,32 @@ else
    RAMSES_BIN_DIR="${SOURCE_DIR_OPTION:-$RAMSES_SOURCE_DIR}/bin";
    SETUPS_DIR="setups";
 fi
+SETUP_DIR="${RAMSES_BENCHMARK_DIR}/${SETUPS_DIR}/${TEST_NAME}"
+
+# Names of the subdirectories of $1 that contain the file $2, on one line
+available () {
+   local d
+   for d in $1/*/; do
+      [[ -f $d/$2 ]] && echo -n "$(basename $d) "
+   done
+}
+
+# check that the cluster, the benchmark and its resolutions exist
+if [[ ! -f "${CLUSTER_DIR}/cluster_info.sh" ]]; then
+   echo "ERROR: unknown cluster '${CLUSTER}' (-c), available: $(available ${RAMSES_BENCHMARK_DIR}/HPCclusters cluster_info.sh)" >&2
+   exit 1
+fi
+if [[ ! -f "${SETUP_DIR}/scaling_config.sh" ]]; then
+   echo "ERROR: unknown benchmark '${TEST_NAME}' (-b), available: $(available ${RAMSES_BENCHMARK_DIR}/${SETUPS_DIR} scaling_config.sh)" >&2
+   exit 1
+fi
+for reso in "${RESO_LIST[@]}"; do
+   if [[ ! -f "${SETUP_DIR}/${TEST_NAME}_${reso}.nml" ]]; then
+      resos=$(cd ${SETUP_DIR} && ls ${TEST_NAME}_*.nml 2>/dev/null | sed "s/^${TEST_NAME}_//; s/\.nml$//" | tr '\n' ' ')
+      echo "ERROR: no namelist ${TEST_NAME}_${reso}.nml for resolution '${reso}' (-r), available: ${resos}" >&2
+      exit 1
+   fi
+done
 
 EXECNAME="benchmark_exe_"
 
@@ -130,7 +156,7 @@ LARGEMEM_MPI_MAX_NODES=0
 LARGEMEM_MPI_RESOS=""
 
 # load benchmark configuration
-source ${RAMSES_BENCHMARK_DIR}/${SETUPS_DIR}/${TEST_NAME}/scaling_config.sh
+source ${SETUP_DIR}/scaling_config.sh
 
 #######################################################################
 # Get code repository info
@@ -172,8 +198,7 @@ fi
 # fingerprint of the setup files (compile flags, scaling configuration and
 # namelists, not the initial conditions), to recognise runs made with the
 # same setup across versions of the benchmark scripts
-SETUP_FILES_DIR=${RAMSES_BENCHMARK_DIR}/${SETUPS_DIR}/${TEST_NAME}
-SETUP_HASH=$(cat ${SETUP_FILES_DIR}/config.txt ${SETUP_FILES_DIR}/scaling_config.sh ${SETUP_FILES_DIR}/*.nml | sha256sum | cut -c1-12)
+SETUP_HASH=$(cat ${SETUP_DIR}/config.txt ${SETUP_DIR}/scaling_config.sh ${SETUP_DIR}/*.nml | sha256sum | cut -c1-12)
 
 BRANCH=$(ramses_git rev-parse --abbrev-ref HEAD)
 # if detached HEAD, check if the commit is from on the dev branch
