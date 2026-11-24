@@ -35,6 +35,16 @@
 # Parse input parameters
 #######################################################################
 
+# command line as typed, for launches.txt (arguments with spaces in quotes)
+COMMAND_LINE="$0"
+for arg in "$@"; do
+   if [[ "$arg" == *" "* ]]; then
+      COMMAND_LINE+=" \"$arg\""
+   else
+      COMMAND_LINE+=" $arg"
+   fi
+done
+
 # location of the source code, if not set in the environment (see -s)
 RAMSES_SOURCE_DIR="${RAMSES_SOURCE_DIR:-$HOME/ramses}"
 MINI_RAMSES_SOURCE_DIR="${MINI_RAMSES_SOURCE_DIR:-$HOME/mini-ramses}"
@@ -151,6 +161,14 @@ else
    UNCOMMITTED="yes"
 fi
 
+# commit of these benchmark scripts ("+": uncommitted changes), for launches.txt
+BENCHMARKS_COMMIT=$(git -C "$RAMSES_BENCHMARK_DIR" rev-parse --short HEAD 2>/dev/null)
+if [[ -z "$BENCHMARKS_COMMIT" ]]; then
+   BENCHMARKS_COMMIT="unknown"
+elif ! git -C "$RAMSES_BENCHMARK_DIR" diff --quiet HEAD; then
+   BENCHMARKS_COMMIT+="+"
+fi
+
 BRANCH=$(ramses_git rev-parse --abbrev-ref HEAD)
 # if detached HEAD, check if the commit is from on the dev branch
 if [[ "$BRANCH" == "HEAD" ]]; then
@@ -251,6 +269,16 @@ prepare_builds
 #######################################################################
 
 JOB_NAME=$TEST_NAME
+
+# record this launch in the setup directory: date, commits of the benchmark
+# scripts and of RAMSES ("+": uncommitted changes), and the command line
+LAUNCHES_FILE=${LAUNCH_DIR}/launches.txt
+if [[ ! -f $LAUNCHES_FILE ]]; then
+   echo "# date time  commits of the benchmark scripts and of RAMSES (+: uncommitted changes)  command" > $LAUNCHES_FILE
+fi
+RAMSES_COMMIT=${COMMIT}
+[[ "$UNCOMMITTED" == "yes" ]] && RAMSES_COMMIT+="+"
+echo "$(date '+%F %T')  benchmarks=${BENCHMARKS_COMMIT}  ramses=${RAMSES_COMMIT}  ${COMMAND_LINE}" >> $LAUNCHES_FILE
 
 # per-rank ngridmax (npartmax) in the namelists for many MPI ranks (adapt_ngridmax)
 source ${RAMSES_BENCHMARK_DIR}/ngridmax_tools.sh
