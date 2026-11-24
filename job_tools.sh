@@ -10,7 +10,8 @@
 #######################################################################
 
 # Write ${RUN_DIR}/job.sh (OUTPUT_FILE): job parameters of the cluster,
-# OpenMP settings, modules, a header in the log file and the run command
+# OpenMP settings, modules, a header in the log file, the run command and
+# the Slurm accounting of the run
 write_job_script () {
    OUTPUT_FILE="${RUN_DIR}/job.sh"
    LOGFILE_RUN="run_\${DATE}_\${SLURM_JOBID}.log"
@@ -65,4 +66,8 @@ EOF
    fi   
    echo "$COMMANDSTRING" >> "$OUTPUT_FILE"
    echo "" >> "$OUTPUT_FILE"
+
+   # Slurm accounting of the run (time, state, memory, energy), written to the
+   # standard output of the job, slurm_<jobid>.out, and not to the run log
+   echo "sacct --jobs=\${SLURM_JOBID} --format=JobID,JobName,Elapsed,State,ExitCode,MaxRSS,ConsumedEnergy" >> "$OUTPUT_FILE"
 }
