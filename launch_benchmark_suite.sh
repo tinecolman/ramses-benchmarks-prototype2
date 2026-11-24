@@ -24,6 +24,10 @@
 #   -i: how many runs to launch of a benchmark, to take the average time (default 1)
 #       ./launch_benchmark_suite.sh -i 3
 #   -v: use mini-ramses
+#   -s: path to the RAMSES (or mini-ramses with -v) source code
+#       (otherwise taken from environment variable RAMSES_SOURCE_DIR or MINI_RAMSES_SOURCE_DIR)
+#       The version used is the one currently checked out by git.
+#       ./launch_benchmark_suite.sh -s $HOME/my_ramses
 #
 #######################################################################
 
@@ -31,8 +35,9 @@
 # Parse input parameters
 #######################################################################
 
-RAMSES_SOURCE_DIR="$HOME/ramses_tine_github";
-MINI_RAMSES_SOURCE_DIR="$HOME/mini-ramses";
+# location of the source code, if not set in the environment (see -s)
+RAMSES_SOURCE_DIR="${RAMSES_SOURCE_DIR:-$HOME/ramses}"
+MINI_RAMSES_SOURCE_DIR="${MINI_RAMSES_SOURCE_DIR:-$HOME/mini-ramses}"
 
 # Default options
 CLUSTER=""
@@ -44,9 +49,10 @@ MPI_PROC_LIST="max"
 OMP_THREAD_LIST="0"
 ITERS=1
 USE_MINIRAMSES=false
+SOURCE_DIR_OPTION=""
 
 # Parse options
-while getopts "c:a:b:n:r:p:m:i:v" OPTION; do
+while getopts "c:a:b:n:r:p:m:i:vs:" OPTION; do
    case $OPTION in
       c) CLUSTER=$OPTARG ;;
       a) CLUSTER_ALLOCATION_ID=$OPTARG ;;
@@ -57,6 +63,7 @@ while getopts "c:a:b:n:r:p:m:i:v" OPTION; do
       m) OMP_THREAD_LIST=($OPTARG) ;;
       i) ITERS=$OPTARG ;;
       v) USE_MINIRAMSES=true ;;
+      s) SOURCE_DIR_OPTION=$OPTARG ;;
    esac
 done
 
@@ -89,10 +96,10 @@ CLUSTER_DIR="${RAMSES_BENCHMARK_DIR}/HPCclusters/${CLUSTER}"
 CLUSTER_INFO="${CLUSTER_DIR}/cluster_info.sh"
 MODULES="${CLUSTER_DIR}/modules.sh"
 if $USE_MINIRAMSES ; then
-   RAMSES_BIN_DIR="${MINI_RAMSES_SOURCE_DIR}/bin";
+   RAMSES_BIN_DIR="${SOURCE_DIR_OPTION:-$MINI_RAMSES_SOURCE_DIR}/bin";
    SETUPS_DIR="setups-mini-ramses";
 else
-   RAMSES_BIN_DIR="${RAMSES_SOURCE_DIR}/bin";
+   RAMSES_BIN_DIR="${SOURCE_DIR_OPTION:-$RAMSES_SOURCE_DIR}/bin";
    SETUPS_DIR="setups";
 fi
 
@@ -121,6 +128,7 @@ source ${RAMSES_BENCHMARK_DIR}/${SETUPS_DIR}/${TEST_NAME}/scaling_config.sh
 
 if [[ ! -d "$RAMSES_BIN_DIR" ]]; then
    log "ERROR: RAMSES bin directory ${RAMSES_BIN_DIR} not found"
+   log "       Give the path to the source code with -s, or set RAMSES_SOURCE_DIR"
    exit 1
 fi
 
