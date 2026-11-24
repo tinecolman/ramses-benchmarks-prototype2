@@ -1,0 +1,5 @@
+# Nodes kept out of the benchmark jobs on Leonardo (sbatch --exclude).
+# One node per line: name, date found, reason. Empty lines and lines starting
+# with # are ignored; comment out a node to use it again.
+lrdn4780    2026-11-16   all timers ~1.9x slower in cosmo and sedov runs of 2026-11-16/17 (reported to CINECA)
+lrdn4067    2026-11-18   suspected bad network link: in all 8 slow cosmo 128-node runs (multigrid 1.2-1.8x slower) and 2 slow 32-node runs, never in a normal run

@@ -1,0 +1,4 @@
+# Nodes kept out of the benchmark jobs on LUMI (sbatch --exclude).
+# One node per line: name, date found, reason. Empty lines and lines starting
+# with # are ignored; comment out a node to use it again.
+nid002654   2026-10-20   in all 7 sedov 512 runs that were 1.31-1.68x slower (compute timer imbalanced), and in no normal run
