@@ -19,7 +19,7 @@ fi
 cat <<JOBSCRIPT > "$OUTPUT_FILE"
 #!/bin/bash -l
 #SBATCH --job-name=${JOB_NAME}
-#SBATCH --account=${CLUSTER_ALLOCATION_ID}
+#SBATCH --account=${CLUSTER_ACCOUNT}
 #SBATCH --partition=${CLUSTER_PARTITION}
 ${MEM_LINE}
 #SBATCH --nodes=${NBNODES}

@@ -4,16 +4,16 @@
 # Slurm helpers, used by launch_benchmark_suite.sh (sourced from it, it uses
 # the variables of the launcher).
 #
-# select_allocation: choose the project allocation (account) to run on,
-#                    when it is not given with -a
+# select_account:    choose the project account to run on, when it is not
+#                    given with -a
 # wait_for_job:      wait until a job has ended, and tell whether it completed
 # read_bad_nodes:    nodes of the cluster to keep out of the jobs
 #
 #######################################################################
 
-# Set CLUSTER_ALLOCATION_ID from the projects of the user: the only one, or
+# Set CLUSTER_ACCOUNT from the projects of the user: the only one, or
 # the one chosen from a list
-select_allocation () {
+select_account () {
    # Get the list of project IDs for the current user (works only for slurm)
    #   - ignoring headers (tail -n +3)
    #   - taking care of long account names (format=Account%-40)
@@ -30,16 +30,16 @@ select_allocation () {
 
    # Process the number of projects
    if [[ $NUM_PROJECTS -eq 1 ]]; then
-      CLUSTER_ALLOCATION_ID=$(echo "$MY_PROJECTS" | xargs)
-      log "Automatically selected allocation ID: $CLUSTER_ALLOCATION_ID"
+      CLUSTER_ACCOUNT=$(echo "$MY_PROJECTS" | xargs)
+      log "Automatically selected account: $CLUSTER_ACCOUNT"
 
    elif [[ $NUM_PROJECTS -gt 1 ]]; then
       # if multiple projects are found, present the user with a list to select from
       echo "Multiple projects found. Please select one:"
-      select CLUSTER_ALLOCATION_ID in $MY_PROJECTS; do
-         if [[ -n "$CLUSTER_ALLOCATION_ID" ]]; then
-            CLUSTER_ALLOCATION_ID=$(echo "$CLUSTER_ALLOCATION_ID" | xargs)
-            log "You selected allocation ID: $CLUSTER_ALLOCATION_ID"
+      select CLUSTER_ACCOUNT in $MY_PROJECTS; do
+         if [[ -n "$CLUSTER_ACCOUNT" ]]; then
+            CLUSTER_ACCOUNT=$(echo "$CLUSTER_ACCOUNT" | xargs)
+            log "You selected account: $CLUSTER_ACCOUNT"
             break
          else
             echo "Invalid selection, please try again."
@@ -47,7 +47,7 @@ select_allocation () {
       done
 
    else
-      log "No valid allocation ID found."
+      log "No valid account found."
       exit 1
    fi
 }

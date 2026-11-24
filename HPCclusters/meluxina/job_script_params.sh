@@ -6,7 +6,7 @@ CLUSTER_QOS=default
 cat <<JOBSCRIPT > "$OUTPUT_FILE"
 #!/bin/bash -l
 #SBATCH --job-name=${JOB_NAME}
-#SBATCH --account=${CLUSTER_ALLOCATION_ID}
+#SBATCH --account=${CLUSTER_ACCOUNT}
 #SBATCH --partition=${CLUSTER_PARTITION}
 #SBATCH --qos=${CLUSTER_QOS}
 #SBATCH --nodes=${NBNODES}

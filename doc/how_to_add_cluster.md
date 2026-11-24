@@ -73,7 +73,7 @@ The second part of this file contains a Here Document that will write the job sc
 cat <<JOBSCRIPT > "$OUTPUT_FILE"
 #!/bin/bash -l
 #SBATCH --job-name=${JOB_NAME}
-#SBATCH --account=${CLUSTER_ALLOCATION_ID}
+#SBATCH --account=${CLUSTER_ACCOUNT}
 #SBATCH --partition=${CLUSTER_PARTITION}
 #SBATCH --qos=${CLUSTER_QOS}
 #SBATCH --nodes=${NBNODES}
@@ -96,7 +96,7 @@ What is inbetween the two JOBSCRIPT markers, is the structure for any job script
 A job script should start with `#!/bin/bash -l`. Be careful to NOT leave an empty line before this statement, as this will cause the system to not recognize the file as a job script!
 Then, we specify the needed job script parameters, in this example indicated by `#SBATCH` for the SLURM scheduler. The bash parameters are filled in automatically when the benchmark launch script is calling this file. In addition to the variables you defined in the top of this file, use the variable names
 * `JOB_NAME`
-* `CLUSTER_ALLOCATION_ID`
+* `CLUSTER_ACCOUNT`
 * `NBNODES`
 * `CLUSTER_CORES_PER_NODE`
 * `TEST_TIME`

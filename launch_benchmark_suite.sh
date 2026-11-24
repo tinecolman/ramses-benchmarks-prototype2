@@ -15,7 +15,7 @@
 #       ./launch_benchmark_suite.sh -r "256 512 1024"
 #   -n: (mandatory) set a list of number of nodes to use
 #       ./launch_benchmark_suite.sh -n "1 2 4"
-#   -a: specify allocation ID
+#   -a: project account to run on (if not given, it is looked up or asked)
 #       ./launch_benchmark_suite.sh -a EUR123456
 #   -p: set the number of MPI processes used per node, allows to use partial nodes (0=no MPI)
 #       ./launch_benchmark_suite.sh -p "1 32 64 128"
@@ -54,7 +54,7 @@ CLUSTER=""
 TEST_NAME=""
 RESO_LIST=""
 NODES_LIST=""
-CLUSTER_ALLOCATION_ID="none"
+CLUSTER_ACCOUNT="none"
 MPI_PROC_LIST="max"
 OMP_THREAD_LIST="0"
 ITERS=1
@@ -65,7 +65,7 @@ SOURCE_DIR_OPTION=""
 while getopts "c:a:b:n:r:p:m:i:vs:" OPTION; do
    case $OPTION in
       c) CLUSTER=$OPTARG ;;
-      a) CLUSTER_ALLOCATION_ID=$OPTARG ;;
+      a) CLUSTER_ACCOUNT=$OPTARG ;;
       b) TEST_NAME=$OPTARG ;;
       n) NODES_LIST=($OPTARG) ;;   # Convert input string into an array
       r) RESO_LIST=($OPTARG) ;;
@@ -206,16 +206,16 @@ echo "--------------------------------------------" >> $LOGFILE
 
 
 #######################################################################
-# Select project allocation to run on, if not given by user
+# Select project account to run on, if not given by user
 #######################################################################
 
 source ${RAMSES_BENCHMARK_DIR}/slurm_tools.sh
 
-if [[ "$CLUSTER_ALLOCATION_ID" == "none" ]]; then
-   select_allocation
+if [[ "$CLUSTER_ACCOUNT" == "none" ]]; then
+   select_account
 fi
 
-# load cluster info (to be done after allocation is set)
+# load cluster info (to be done after the account is set)
 source ${CLUSTER_INFO}
 
 # nodes to keep out of the jobs, from bad_nodes.txt of the cluster (read_bad_nodes)
