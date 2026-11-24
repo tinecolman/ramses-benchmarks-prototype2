@@ -68,6 +68,8 @@ EOF
    echo "" >> "$OUTPUT_FILE"
 
    # Slurm accounting of the run (time, state, memory, energy), written to the
-   # standard output of the job, slurm_<jobid>.out, and not to the run log
-   echo "sacct --jobs=\${SLURM_JOBID} --format=JobID,JobName,Elapsed,State,ExitCode,MaxRSS,ConsumedEnergy" >> "$OUTPUT_FILE"
+   # standard output of the job, slurm_<jobid>.out, and not to the run log.
+   # MaxRSS is the peak memory of the largest task (MPI process, with its
+   # threads), on node MaxRSSNode; AveRSS is the average over the tasks.
+   echo "sacct --jobs=\${SLURM_JOBID} --format=JobID,JobName,Elapsed,State,ExitCode,MaxRSS,MaxRSSNode,MaxRSSTask,AveRSS,ConsumedEnergy" >> "$OUTPUT_FILE"
 }
