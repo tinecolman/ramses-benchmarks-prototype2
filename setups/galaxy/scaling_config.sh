@@ -1,5 +1,5 @@
 TEST_TIME=00:20:00
-# memory estimate per MPI rank (see memory_tools.sh), fitted on the LUMI runs
+# memory estimate per MPI rank (see launch_tools/memory_tools.sh), fitted on the LUMI runs
 # of the openmp branch of 2026-10/11: per allocated grid (kB), per allocated
 # particle (bytes), fixed per rank (GB), per rank in the run (kB)
 MEM_PER_GRID_KB=1.31

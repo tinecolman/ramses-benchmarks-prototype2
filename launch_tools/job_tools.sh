@@ -51,7 +51,6 @@ write_job_script () {
    echo "Executable: builds/${THIS_EXEC}"
    echo "RAMSES version: ${RAMSES_VERSION}"
    echo "Benchmark scripts: ${BENCHMARKS_COMMIT}"
-   echo "Setup hash: ${SETUP_HASH}"
    echo "#########################################"
 } > ${LOGFILE_RUN}
 
