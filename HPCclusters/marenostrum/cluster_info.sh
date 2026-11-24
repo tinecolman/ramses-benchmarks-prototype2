@@ -5,7 +5,7 @@ COMPILER_FLAVOR=INTEL
 RUN_COMMAND=srun
 MPIF90="mpif90 -march=native -qopt-zmm-usage=high"
 
-# node types, smallest memory first (see memory_tools.sh): usable memory per
+# node types, smallest memory first (see launch_tools/memory_tools.sh): usable memory per
 # node (GB) and maximum number of nodes per job (0: no limit). The names are
 # the constraints of job_script_params.sh
 NODE_TYPES=(lowmem highmem)

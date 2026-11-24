@@ -232,7 +232,7 @@ echo "--------------------------------------------" >> $LOGFILE
 # Select project account to run on, if not given by user
 #######################################################################
 
-source ${RAMSES_BENCHMARK_DIR}/slurm_tools.sh
+source ${RAMSES_BENCHMARK_DIR}/launch_tools/slurm_tools.sh
 
 if [[ "$CLUSTER_ACCOUNT" == "none" ]]; then
    select_account
@@ -284,10 +284,10 @@ mkdir -p ${BUILD_DIR} || { log "ERROR: cannot create ${BUILD_DIR}"; exit 1; }
 
 
 #######################################################################
-# Builds (see build_tools.sh)
+# Builds (see launch_tools/build_tools.sh)
 #######################################################################
 
-source ${RAMSES_BENCHMARK_DIR}/build_tools.sh
+source ${RAMSES_BENCHMARK_DIR}/launch_tools/build_tools.sh
 
 # variants needed, their make commands and executable names
 select_builds
@@ -311,13 +311,13 @@ fi
 echo "$(date '+%F %T')  benchmarks=${BENCHMARKS_COMMIT}  ${COMMAND_LINE}" >> $LAUNCHES_FILE
 
 # per-rank ngridmax (npartmax) in the namelists for many MPI ranks (adapt_ngridmax)
-source ${RAMSES_BENCHMARK_DIR}/ngridmax_tools.sh
+source ${RAMSES_BENCHMARK_DIR}/launch_tools/ngridmax_tools.sh
 
 # memory needed per node and node type (estimate_memory, choose_node_type)
-source ${RAMSES_BENCHMARK_DIR}/memory_tools.sh
+source ${RAMSES_BENCHMARK_DIR}/launch_tools/memory_tools.sh
 
 # job script of a run (write_job_script)
-source ${RAMSES_BENCHMARK_DIR}/job_tools.sh
+source ${RAMSES_BENCHMARK_DIR}/launch_tools/job_tools.sh
 
 # Loop over configurations
 for RESO in "${RESO_LIST[@]}"; do
@@ -384,7 +384,7 @@ for MPI_PROC in "${MPI_PROC_LIST[@]}"; do
    fi
 
    #----------------------------------------------------------------------
-   # Create job script (see job_tools.sh)
+   # Create job script (see launch_tools/job_tools.sh)
    #----------------------------------------------------------------------
 
    write_job_script
