@@ -89,11 +89,12 @@ check_build () {
 }
 
 # Copy a fresh executable from the RAMSES bin directory to the builds and
-# write its description, from the files left by the compile job
+# write its description (<exe>.txt); the compiler version and modules
+# (<exe>.env) and the build log (<exe>.make.log) written by the compile job
+# stay next to it
 install_build () {
    local exe=$1 makestring=$2
    local makelog=${BUILD_DIR}/${exe}.make.log
-   local envfile=${BUILD_DIR}/${exe}.env
    if [[ ! -f ${RAMSES_BIN_DIR}/${exe} ]]; then
       log "ERROR: compilation of ${exe} failed, end of the build log:"
       log "$(tail -n 20 $makelog)"
@@ -110,13 +111,11 @@ install_build () {
       echo "cluster: ${CLUSTER}"
       echo "make: ${makestring}"
       echo "compile date: $(date '+%F %T')"
-      cat $envfile
+      echo "build log: ${exe}.make.log"
+      echo "compiler and modules: ${exe}.env"
       echo "######## uncommitted changes (git diff HEAD)"
       if [[ -n "$GIT_DIFF" ]]; then echo "$GIT_DIFF"; else echo "none"; fi
-      echo "######## build log"
-      cat $makelog
    } > ${BUILD_DIR}/${exe}.txt
-   rm -f $makelog $envfile
    log "Stored build ${BUILD_DIR}/${exe}"
 }
 
