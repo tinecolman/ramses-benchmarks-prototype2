@@ -301,15 +301,14 @@ prepare_builds
 
 JOB_NAME=$TEST_NAME
 
-# record this launch in the setup directory: date, commits of the benchmark
-# scripts and of RAMSES ("+": uncommitted changes), and the command line
+# record this launch in the setup directory: date, commit of the benchmark
+# scripts ("+": uncommitted changes) and the command line (the RAMSES version
+# is in the name of the benchmark directory, the builds and the run logs)
 LAUNCHES_FILE=${LAUNCH_DIR}/launches.txt
 if [[ ! -f $LAUNCHES_FILE ]]; then
-   echo "# date time  commits of the benchmark scripts and of RAMSES (+: uncommitted changes)  RAMSES version (git describe)  command" > $LAUNCHES_FILE
+   echo "# date time  commit of the benchmark scripts (+: uncommitted changes)  command" > $LAUNCHES_FILE
 fi
-RAMSES_COMMIT=${COMMIT}
-[[ "$UNCOMMITTED" == "yes" ]] && RAMSES_COMMIT+="+"
-echo "$(date '+%F %T')  benchmarks=${BENCHMARKS_COMMIT}  ramses=${RAMSES_COMMIT}  version=${RAMSES_VERSION}  ${COMMAND_LINE}" >> $LAUNCHES_FILE
+echo "$(date '+%F %T')  benchmarks=${BENCHMARKS_COMMIT}  ${COMMAND_LINE}" >> $LAUNCHES_FILE
 
 # per-rank ngridmax (npartmax) in the namelists for many MPI ranks (adapt_ngridmax)
 source ${RAMSES_BENCHMARK_DIR}/ngridmax_tools.sh
