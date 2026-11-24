@@ -169,6 +169,12 @@ elif ! git -C "$RAMSES_BENCHMARK_DIR" diff --quiet HEAD; then
    BENCHMARKS_COMMIT+="+"
 fi
 
+# fingerprint of the setup files (compile flags, scaling configuration and
+# namelists, not the initial conditions), to recognise runs made with the
+# same setup across versions of the benchmark scripts
+SETUP_FILES_DIR=${RAMSES_BENCHMARK_DIR}/${SETUPS_DIR}/${TEST_NAME}
+SETUP_HASH=$(cat ${SETUP_FILES_DIR}/config.txt ${SETUP_FILES_DIR}/scaling_config.sh ${SETUP_FILES_DIR}/*.nml | sha256sum | cut -c1-12)
+
 BRANCH=$(ramses_git rev-parse --abbrev-ref HEAD)
 # if detached HEAD, check if the commit is from on the dev branch
 if [[ "$BRANCH" == "HEAD" ]]; then
