@@ -52,6 +52,7 @@ write_job_script () {
    echo "OMP threads: ${ACT_OMP}"
    echo "Job ID: \${SLURM_JOBID}"
    echo "Node list: \${SLURM_JOB_NODELIST}"
+   echo "Excluded nodes: ${EXCLUDE_NODES:-none}"
    echo "Executable: builds/${THIS_EXEC}"
    echo "#########################################"
 } > ${LOGFILE_RUN}

@@ -16,11 +16,6 @@ if (( (NBNODES == 1 && NTASKS_PER_NODE * CPUS_PER_TASK > 1) || (MPI_ONLY && NBNO
     MEM_LINE="#SBATCH --mem=480G"
 fi
 
-# nodes running much slower than the others (comma-separated list)
-# nid002654: in all 7 sedov 512 runs of 2026-10-20 that were 1.31-1.68x slower
-#            (compute timer imbalanced), and in no normal run
-EXCLUDE_NODES=nid002654
-
 cat <<JOBSCRIPT > "$OUTPUT_FILE"
 #!/bin/bash -l
 #SBATCH --job-name=${JOB_NAME}
@@ -32,7 +27,6 @@ ${MEM_LINE}
 #SBATCH --cpus-per-task=${CPUS_PER_TASK}
 #SBATCH --threads-per-core=1
 #SBATCH --exclusive
-#SBATCH --exclude=${EXCLUDE_NODES}
 #SBATCH --hint=nomultithread
 #SBATCH --time=${TEST_TIME}
 #SBATCH --output=slurm_%j.out

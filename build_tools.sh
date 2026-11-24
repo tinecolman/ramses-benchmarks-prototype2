@@ -174,7 +174,7 @@ prepare_builds () {
       ${B_HYBRID} && add_compile_commands $TEST_EXECUTABLE_HYB "$MAKESTRING_HYB" "hybrid MPI+OpenMP"
 
       # submit the job script and wait until compilation is done
-      compile_job_id=$(sbatch --chdir=${RAMSES_BIN_DIR} ${OUTPUT_FILE} | awk '{print $4}')
+      compile_job_id=$(sbatch ${SBATCH_EXCLUDE} --chdir=${RAMSES_BIN_DIR} ${OUTPUT_FILE} | awk '{print $4}')
       if [[ -z "$compile_job_id" ]]; then
          log "ERROR: submission of the compile job failed (see the sbatch message above)"
          exit 1

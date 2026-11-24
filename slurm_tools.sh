@@ -7,6 +7,7 @@
 # select_allocation: choose the project allocation (account) to run on,
 #                    when it is not given with -a
 # wait_for_job:      wait until a job has ended, and tell whether it completed
+# read_bad_nodes:    nodes of the cluster to keep out of the jobs
 #
 #######################################################################
 
@@ -77,4 +78,21 @@ wait_for_job () {
       # Sleep for a while before checking the status again
       sleep 15
    done
+}
+
+# Read the bad nodes of the cluster from HPCclusters/<cluster>/bad_nodes.txt
+# (first word of every line that is not empty or a comment) into
+# EXCLUDE_NODES (comma-separated), and set SBATCH_EXCLUDE to the sbatch option
+# excluding them (empty if there are none)
+read_bad_nodes () {
+   local file=${CLUSTER_DIR}/bad_nodes.txt
+   EXCLUDE_NODES=""
+   SBATCH_EXCLUDE=""
+   if [[ -f $file ]]; then
+      EXCLUDE_NODES=$(grep -v '^\s*#' $file | awk 'NF {print $1}' | paste -sd, -)
+   fi
+   if [[ -n "$EXCLUDE_NODES" ]]; then
+      SBATCH_EXCLUDE="--exclude=${EXCLUDE_NODES}"
+      log "Excluding bad nodes: ${EXCLUDE_NODES} (see ${file})"
+   fi
 }

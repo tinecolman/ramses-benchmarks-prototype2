@@ -194,6 +194,9 @@ fi
 # load cluster info (to be done after allocation is set)
 source ${CLUSTER_INFO}
 
+# nodes to keep out of the jobs, from bad_nodes.txt of the cluster (read_bad_nodes)
+read_bad_nodes
+
 #######################################################################
 # Layout resolver (MPI/OMP separation)
 #######################################################################
@@ -319,7 +322,7 @@ for MPI_PROC in "${MPI_PROC_LIST[@]}"; do
    #----------------------------------------------------------------------
 
    for iter in $(seq $ITERS); do
-      SUBMIT_MESSAGE=$(sbatch --chdir=${RUN_DIR} ${OUTPUT_FILE})
+      SUBMIT_MESSAGE=$(sbatch ${SBATCH_EXCLUDE} --chdir=${RUN_DIR} ${OUTPUT_FILE})
       STRINGARRAY=($SUBMIT_MESSAGE)
       JOB_ID=${STRINGARRAY[-1]}
       log "Launched ${TEST_NAME} ${RESO} on ${NBNODES} nodes with ${ACT_MPI} procs/node and ${ACT_OMP} threads/proc [JOB ID ${JOB_ID}]"
