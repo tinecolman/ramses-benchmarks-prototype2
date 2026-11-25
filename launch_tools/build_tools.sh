@@ -113,6 +113,7 @@ install_build () {
       echo "compile date: $(date '+%F %T')"
       echo "build log: ${exe}.make.log"
       echo "compiler and modules: ${exe}.env"
+      echo ""
       echo "######## uncommitted changes (git diff HEAD)"
       if [[ -n "$GIT_DIFF" ]]; then echo "$GIT_DIFF"; else echo "none"; fi
    } > ${BUILD_DIR}/${exe}.txt
