@@ -43,7 +43,7 @@ from openmp_best_speedup import load_openmp_data, cluster_label
 from omp_module_gain_heatmap import EXCLUDED_THREADS
 from io_timings import set_node_ticks
 from memory import gather_memory_results
-from io_timings import get_info_from_subdir_name, parse_metadata, skip_compiler
+from io_timings import get_info_from_subdir_name, parse_metadata, skip_compiler, setup_data_dir
 from openmp_best_speedup import get_openmp_dirs, FIG_HEIGHT, DPI
 
 CORES_PER_NODE = {'marenostrum': 112, 'lumi': 128, 'meluxina': 128}
@@ -95,7 +95,7 @@ def allocation_fill(cluster, bench, reso):
     fill = {}
     reference = None
     for benchmark_dir in get_openmp_dirs(cluster, bench):
-        data_dir = os.path.join(benchmark_dir, bench)
+        data_dir = setup_data_dir(benchmark_dir, bench)
         for item in os.listdir(data_dir):
             if not item.startswith('reso'):
                 continue

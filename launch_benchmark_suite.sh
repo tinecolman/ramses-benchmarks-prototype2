@@ -127,6 +127,12 @@ if [[ ! -f "${CLUSTER_DIR}/cluster_info.sh" ]]; then
    echo "ERROR: unknown cluster '${CLUSTER}' (-c), available: $(available ${RAMSES_BENCHMARK_DIR}/HPCclusters cluster_info.sh)" >&2
    exit 1
 fi
+# the cluster and the setup are the last two fields of the name of the
+# benchmark directory, read from the end (the branch can contain "_")
+if [[ "${CLUSTER}" == *_* || "${TEST_NAME}" == *_* ]]; then
+   echo "ERROR: cluster (-c) and benchmark (-b) names cannot contain '_'" >&2
+   exit 1
+fi
 if [[ ! -f "${SETUP_DIR}/scaling_config.sh" ]]; then
    echo "ERROR: unknown benchmark '${TEST_NAME}' (-b), available: $(available ${RAMSES_BENCHMARK_DIR}/${SETUPS_DIR} scaling_config.sh)" >&2
    exit 1
@@ -263,17 +269,15 @@ resolve_layout () {
 # Create benchmark directory on scratch
 #######################################################################
 
-# benchmark_<branch>_<date>_<commit>_<cluster>: the same name on the cluster
-# and in the archive, where the folders of all clusters are side by side
+# benchmark_<branch>_<date>_<commit>_<cluster>_<setup>: one folder per cell
+# (code version x cluster x setup), holding the builds, launches.txt and the
+# run directories. The same name on the cluster and in the archive.
 if $USE_MINIRAMSES ; then
-   BENCHMARK_DIR=$CLUSTER_SCRATCH/mini-benchmark_${BRANCH}_${COMMIT_DATE}_${COMMIT}_${CLUSTER};
+   BENCHMARK_DIR=$CLUSTER_SCRATCH/mini-benchmark_${BRANCH}_${COMMIT_DATE}_${COMMIT}_${CLUSTER}_${TEST_NAME};
 else
-   BENCHMARK_DIR=$CLUSTER_SCRATCH/benchmark_${BRANCH}_${COMMIT_DATE}_${COMMIT}_${CLUSTER};
+   BENCHMARK_DIR=$CLUSTER_SCRATCH/benchmark_${BRANCH}_${COMMIT_DATE}_${COMMIT}_${CLUSTER}_${TEST_NAME};
 fi
-
-# subdirectory for the setup, holding the run directories and the builds
-LAUNCH_DIR=$BENCHMARK_DIR/${TEST_NAME}
-BUILD_DIR=$LAUNCH_DIR/builds
+BUILD_DIR=$BENCHMARK_DIR/builds
 
 mkdir -p ${BUILD_DIR} || { log "ERROR: cannot create ${BUILD_DIR}"; exit 1; }
 
@@ -296,10 +300,10 @@ prepare_builds
 
 JOB_NAME=$TEST_NAME
 
-# record this launch in the setup directory: date, commit of the benchmark
+# record this launch in the benchmark directory: date, commit of the benchmark
 # scripts ("+": uncommitted changes) and the command line (the RAMSES version
 # is in the name of the benchmark directory, the builds and the run logs)
-LAUNCHES_FILE=${LAUNCH_DIR}/launches.txt
+LAUNCHES_FILE=${BENCHMARK_DIR}/launches.txt
 if [[ ! -f $LAUNCHES_FILE ]]; then
    echo "# date time  commit of the benchmark scripts (+: uncommitted changes)  command" > $LAUNCHES_FILE
 fi
@@ -356,7 +360,7 @@ for MPI_PROC in "${MPI_PROC_LIST[@]}"; do
    fi
 
    # make subdirectory
-   RUN_DIR=${LAUNCH_DIR}/reso${RESO}_nodes${NBNODES}_cores${CORES_PER_NODE}_mpi${ACT_MPI}_omp${ACT_OMP}
+   RUN_DIR=${BENCHMARK_DIR}/reso${RESO}_nodes${NBNODES}_cores${CORES_PER_NODE}_mpi${ACT_MPI}_omp${ACT_OMP}
    mkdir -p ${RUN_DIR} || { log "ERROR: cannot create ${RUN_DIR}"; exit 1; }
 
    # the executable is run from the builds (path relative to the run

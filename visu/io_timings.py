@@ -70,23 +70,22 @@ def skip_compiler(meta, exclude_compilers):
 # -------- Helper functions for folder names -----------
 
 ''' Dissect name of the base benchmark directory, one of
-       benchmark_<branch>_<date>_<commit>_<cluster>   (since 2026-11)
+       benchmark_<branch>_<date>_<commit>_<cluster>_<setup>   (since 2026-11-25, one cell)
+       benchmark_<branch>_<date>_<commit>_<cluster>           (2026-11, setups in subfolders)
        benchmark_<branch>_<date>_<commit>
-       benchmark_<branch>_<commit>                    (oldest)
+       benchmark_<branch>_<commit>                            (oldest)
     The branch can contain underscores, so the name is read from the end,
-    using the date to recognise the form. The version argument is not used
-    anymore (the form is recognised from the name). '''
+    using the date to recognise the form (cluster and setup names have no
+    underscore). The version argument is not used anymore. '''
 def get_info_from_benchmark_dir_name(benchmark_dir, version=2):
     name = os.path.basename(os.path.normpath(benchmark_dir))
     fields = name.split('_')
     is_date = lambda s: re.fullmatch(r'\d{4}-\d{2}-\d{2}', s) is not None
-    if len(fields)>=5 and is_date(fields[-3]):
-        commit, branch = fields[-2], '_'.join(fields[1:-3])
-    elif len(fields)>=4 and is_date(fields[-2]):
-        commit, branch = fields[-1], '_'.join(fields[1:-2])
-    else:
-        commit, branch = fields[-1], '_'.join(fields[1:-1])
-    return branch, commit
+    for ndate in [4, 3, 2]:
+        # position of the date counted from the end
+        if len(fields)>=ndate+2 and is_date(fields[-ndate]):
+            return '_'.join(fields[1:-ndate]), fields[-ndate+1]
+    return '_'.join(fields[1:-1]), fields[-1]
 
 ''' Dissect name of the benchmark configuration subdirectory:
     nodes<N>_<resolution>_omp<threads> '''
@@ -229,11 +228,20 @@ def read_timers_miniramses(logfile):
 
 # -------- database IO -----------
 
+''' Folder holding the run directories of a setup: the setup subfolder of the
+    benchmark directory (older layouts), or the benchmark directory itself when
+    it holds a single cell, benchmark_<branch>_<date>_<commit>_<cluster>_<setup> '''
+def setup_data_dir(benchmark_dir, test_name):
+    data_dir = os.path.join(benchmark_dir, test_name)
+    if not os.path.isdir(data_dir) and os.path.basename(os.path.normpath(benchmark_dir)).endswith('_'+test_name):
+        data_dir = benchmark_dir
+    return data_dir
+
 ''' Load benchmark results for a specified test '''
 def add_data(data, benchmark_dir, test_name, which='total', omp_nthr=None, version='ramses', cpu_per_node=128, bench_version=2, exclude_compilers=None):
     branch, commit = get_info_from_benchmark_dir_name(benchmark_dir)
 
-    data_dir = benchmark_dir+'/'+test_name
+    data_dir = setup_data_dir(benchmark_dir, test_name)
 
     if(not os.path.isdir(data_dir)):
         return data

@@ -4,7 +4,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 import matplotlib.lines as mlines
 from collections import defaultdict
-from io_timings import get_info_from_subdir_name, parse_metadata, skip_compiler, set_node_ticks, \
+from io_timings import get_info_from_subdir_name, parse_metadata, skip_compiler, set_node_ticks, setup_data_dir, \
     remove_outliers, run_label, subdir_cores
 from openmp_nthreads_execution_time import get_cores_per_node
 
@@ -86,7 +86,7 @@ def load_timer_breakdown(benchmark_dirs, test_name, reso, exclude_compilers=None
     config_cores = {}
 
     for benchmark_dir in benchmark_dirs:
-        data_dir = os.path.join(benchmark_dir, test_name)
+        data_dir = setup_data_dir(benchmark_dir, test_name)
         if not os.path.isdir(data_dir):
             continue
         for item in os.listdir(data_dir):
