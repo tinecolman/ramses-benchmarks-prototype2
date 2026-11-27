@@ -147,11 +147,9 @@ done
 
 EXECNAME="benchmark_exe_"
 
-LOGFILE="${RAMSES_BENCHMARK_DIR}/benchmark_suite.log";
-
-# print a message and add it to the logfile (arguments as for echo)
+# print a message (arguments as for echo)
 log () {
-   echo "$@" | tee -a $LOGFILE
+   echo "$@"
 }
 
 # load benchmark configuration
@@ -213,9 +211,6 @@ fi
 # Display info
 #######################################################################
 
-# begin logfile
-echo > $LOGFILE;
-
 # Welcome message
 COLOR='\033[0;36m' #cyan
 NC='\033[0m' # No Color
@@ -226,7 +221,6 @@ log "Repository url: ${GIT_URL}"
 log "Branch: ${BRANCH}"
 log "Commit hash: ${COMMIT}"
 log "Benchmark: ${TEST_NAME}"
-echo "--------------------------------------------" >> $LOGFILE
 
 
 #######################################################################

@@ -154,11 +154,10 @@ prepare_builds () {
       # add the compile commands of one variant: the make output and the compiler
       # version and modules are written next to the builds, for install_build
       add_compile_commands () {
-         local exe=$1 makestring=$2 label=$3
+         local exe=$1 makestring=$2
          echo "" >> $OUTPUT_FILE
-         echo "make clean >> $LOGFILE 2>&1;" >> $OUTPUT_FILE
+         echo "make clean > /dev/null 2>&1;" >> $OUTPUT_FILE
          echo "rm -f ${exe};" >> $OUTPUT_FILE
-         echo "Compiling in ${label} mode..." >> $LOGFILE 2>&1;
          # compiler version and loaded modules, for the description of the build
          local compiler=${MPIF90%% *}   # first word of MPIF90, without the flags
          local envfile=\${BUILD_DIR}/${exe}.env
@@ -169,10 +168,10 @@ prepare_builds () {
          # compile; stop the job at the first failure, which marks it as failed
          echo "$makestring > \${BUILD_DIR}/${exe}.make.log 2>&1 || exit 1;" >> $OUTPUT_FILE
       }
-      ${B_SERIAL} && add_compile_commands $TEST_EXECUTABLE_SER "$MAKESTRING_SER" serial
-      ${B_MPI}    && add_compile_commands $TEST_EXECUTABLE_MPI "$MAKESTRING_MPI" MPI-only
-      ${B_OPENMP} && add_compile_commands $TEST_EXECUTABLE_OMP "$MAKESTRING_OMP" OpenMP-only
-      ${B_HYBRID} && add_compile_commands $TEST_EXECUTABLE_HYB "$MAKESTRING_HYB" "hybrid MPI+OpenMP"
+      ${B_SERIAL} && add_compile_commands $TEST_EXECUTABLE_SER "$MAKESTRING_SER"
+      ${B_MPI}    && add_compile_commands $TEST_EXECUTABLE_MPI "$MAKESTRING_MPI"
+      ${B_OPENMP} && add_compile_commands $TEST_EXECUTABLE_OMP "$MAKESTRING_OMP"
+      ${B_HYBRID} && add_compile_commands $TEST_EXECUTABLE_HYB "$MAKESTRING_HYB"
 
       # submit the job script and wait until compilation is done
       compile_job_id=$(sbatch ${SBATCH_EXCLUDE} --chdir=${RAMSES_BIN_DIR} ${OUTPUT_FILE} | awk '{print $4}')
