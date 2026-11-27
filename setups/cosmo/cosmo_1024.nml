@@ -14,7 +14,7 @@ foutput=0
 
 &INIT_PARAMS
 filetype='grafic'
-initfile(1)='../../../ICs/cosmo_1024/'
+initfile(1)='../../ICs/cosmo_1024/'
 /
 
 &AMR_PARAMS

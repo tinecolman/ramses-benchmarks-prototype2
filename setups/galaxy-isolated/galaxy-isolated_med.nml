@@ -22,7 +22,7 @@ delta_tout=1.342 ! Output every 20 Myr
 
 &INIT_PARAMS
 filetype='dice'
-initfile(1)='../../../ICs/galaxy-isolated'
+initfile(1)='../../ICs/galaxy-isolated'
 /
 
 &AMR_PARAMS

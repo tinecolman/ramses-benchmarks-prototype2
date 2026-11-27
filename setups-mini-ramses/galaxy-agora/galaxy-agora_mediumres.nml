@@ -17,7 +17,7 @@ tend=1000
 
 &INIT_PARAMS
 filetype='ascii'
-initfile(1)='../../../ICs/ICs_mediumres'
+initfile(1)='../../ICs/ICs_mediumres'
 /
 
 &AMR_PARAMS
@@ -73,8 +73,8 @@ cut_height2=0.9
 rad_profile='exponential'
 !z_profile='exponential'
 IG_density_factor=1.0D-5
-Vcirc_dat_file1='../../../ICs/ICs_mediumres/Vcirc.dat'
-Vcirc_dat_file2='../../../ICs/ICs_mediumres/Vcirc.dat'
+Vcirc_dat_file1='../../ICs/ICs_mediumres/Vcirc.dat'
+Vcirc_dat_file2='../../ICs/ICs_mediumres/Vcirc.dat'
 gal_axis1=0.0D0,0.0D0,1.0D0
 gal_axis2=0.0D0,0.0D0,1.0D0
 Vgal1=0.0D0,0.0D0,0.0D0
